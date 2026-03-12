@@ -14,11 +14,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\steve\\Documents\\SysGestionVentas\\SysGestionVentas\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
+      "projectUniqueName": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
       "projectName": "SysGestionVentas.EN",
-      "projectPath": "C:\\Users\\steve\\Documents\\SysGestionVentas\\SysGestionVentas\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
+      "projectPath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
       "packagesPath": "C:\\Users\\steve\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\steve\\Documents\\SysGestionVentas\\SysGestionVentas\\SysGestionVentas.EN\\obj\\",
+      "outputPath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.EN\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -72,7 +72,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.311/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.312/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
