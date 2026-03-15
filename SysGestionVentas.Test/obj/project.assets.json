@@ -5563,23 +5563,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\steve\\.nuget\\packages\\": {},
+    "C:\\Users\\MINEDUCYT\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.Test\\SysGestionVentas.Test.csproj",
+      "projectUniqueName": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.Test\\SysGestionVentas.Test.csproj",
       "projectName": "SysGestionVentas.Test",
-      "projectPath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.Test\\SysGestionVentas.Test.csproj",
-      "packagesPath": "C:\\Users\\steve\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.Test\\obj\\",
+      "projectPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.Test\\SysGestionVentas.Test.csproj",
+      "packagesPath": "C:\\Users\\MINEDUCYT\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.Test\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\steve\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\MINEDUCYT\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -5594,14 +5594,14 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj": {
-              "projectPath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj"
+            "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj": {
+              "projectPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj"
             },
-            "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj": {
-              "projectPath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj"
+            "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj": {
+              "projectPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj"
             },
-            "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj": {
-              "projectPath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj"
+            "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj": {
+              "projectPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj"
             }
           }
         }
@@ -5616,7 +5616,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "9.0.300"
+      "SdkAnalysisLevel": "10.0.100"
     },
     "frameworks": {
       "net8.0": {
@@ -5655,7 +5655,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.312/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
