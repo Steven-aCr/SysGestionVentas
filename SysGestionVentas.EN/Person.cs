@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SysGestionVentas.EN
 {
@@ -7,11 +8,11 @@ namespace SysGestionVentas.EN
         [Key]
         public int PersonId { get; set; }
         [Required (ErrorMessage ="El nombre es obligatorio.")]
-        [StringLength(50)]
+        [StringLength(50, MinimumLength = 2)]
         public string? FirstName { get; set; }
 
         [Required(ErrorMessage ="El apellido es obligatorio.")]
-        [StringLength(50)]
+        [StringLength(50, MinimumLength =2)]
         public string? LastName { get; set; }
 
         [Required(ErrorMessage ="La dirección es obligatoria")]
@@ -22,12 +23,14 @@ namespace SysGestionVentas.EN
         [Phone(ErrorMessage ="Formato de número de teléfono invalido.")]
         public string? PhoneNumber { get; set; }
 
-        [StringLength(10, ErrorMessage = "ingrese un número de DUI valido.")]
+        [RegularExpression(@"^\d{8}-\d$", ErrorMessage ="Formato: 12345678-9")]
+        [StringLength(10)]
         public string? Dui { get; set; }
 
-        public DateTime CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         [Required]
+        [ForeignKey("Status")]
         public int StatusId { get; set; }
         public Status? Status { get; set; }
     }

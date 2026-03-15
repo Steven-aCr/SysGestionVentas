@@ -1,6 +1,10 @@
 {
   "version": 2,
+<<<<<<< HEAD
   "dgSpecHash": "atYUnhZ0pwc=",
+=======
+  "dgSpecHash": "/6oL8emwKfo=",
+>>>>>>> Feat: Add 4 entity classes to EN layer
   "success": true,
   "projectFilePath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
   "expectedPackageFiles": [
