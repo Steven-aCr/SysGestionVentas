@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "RkYnNs0NzH8=",
+  "dgSpecHash": "GyuwYdFs+Zs=",
   "success": true,
-  "projectFilePath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\MINEDUCYT\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.23\\microsoft.windowsdesktop.app.ref.8.0.23.nupkg.sha512",
+    "C:\\Users\\MINEDUCYT\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.23\\microsoft.netcore.app.ref.8.0.23.nupkg.sha512",
+    "C:\\Users\\MINEDUCYT\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.23\\microsoft.aspnetcore.app.ref.8.0.23.nupkg.sha512"
+  ],
   "logs": []
 }

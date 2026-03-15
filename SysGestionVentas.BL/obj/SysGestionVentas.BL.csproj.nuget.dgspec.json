@@ -1,42 +1,36 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj": {}
+    "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj": {}
   },
   "projects": {
-    "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj": {
+    "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj",
+        "projectUniqueName": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj",
         "projectName": "SysGestionVentas.BL",
-        "projectPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj",
+        "projectPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj",
         "packagesPath": "C:\\Users\\MINEDUCYT\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.BL\\obj\\",
+        "outputPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.BL\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\MINEDUCYT\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\MINEDUCYT\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj": {
-                "projectPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj"
+              "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj": {
+                "projectPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj"
               },
-              "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj": {
-                "projectPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj"
+              "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj": {
+                "projectPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj"
               }
             }
           }
@@ -67,6 +61,20 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
@@ -76,36 +84,30 @@
         }
       }
     },
-    "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj": {
+    "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj",
+        "projectUniqueName": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj",
         "projectName": "SysGestionVentas.DAL",
-        "projectPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj",
+        "projectPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.DAL\\SysGestionVentas.DAL.csproj",
         "packagesPath": "C:\\Users\\MINEDUCYT\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.DAL\\obj\\",
+        "outputPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.DAL\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\MINEDUCYT\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\MINEDUCYT\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj": {
-                "projectPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj"
+              "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj": {
+                "projectPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj"
               }
             }
           }
@@ -136,6 +138,20 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
@@ -145,28 +161,22 @@
         }
       }
     },
-    "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj": {
+    "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
+        "projectUniqueName": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
         "projectName": "SysGestionVentas.EN",
-        "projectPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
+        "projectPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
         "packagesPath": "C:\\Users\\MINEDUCYT\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\obj\\",
+        "outputPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\obj\\",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\MINEDUCYT\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "C:\\Users\\MINEDUCYT\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -201,6 +211,20 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            },
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[8.0.23, 8.0.23]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"

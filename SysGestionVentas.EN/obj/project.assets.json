@@ -8,31 +8,24 @@
     "net8.0": []
   },
   "packageFolders": {
-    "C:\\Users\\MINEDUCYT\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\MINEDUCYT\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
+      "projectUniqueName": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
       "projectName": "SysGestionVentas.EN",
-      "projectPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
+      "projectPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj",
       "packagesPath": "C:\\Users\\MINEDUCYT\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\MINEDUCYT\\Desktop\\GestionVentas1\\SysGestionVentas.EN\\obj\\",
+      "outputPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.EN\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\MINEDUCYT\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\MINEDUCYT\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
-        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -67,6 +60,20 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
+        "downloadDependencies": [
+          {
+            "name": "Microsoft.AspNetCore.App.Ref",
+            "version": "[8.0.23, 8.0.23]"
+          },
+          {
+            "name": "Microsoft.NETCore.App.Ref",
+            "version": "[8.0.23, 8.0.23]"
+          },
+          {
+            "name": "Microsoft.WindowsDesktop.App.Ref",
+            "version": "[8.0.23, 8.0.23]"
+          }
+        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
