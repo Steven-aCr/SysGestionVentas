@@ -1,17 +1,8 @@
 {
   "version": 2,
-<<<<<<< HEAD
-  "dgSpecHash": "XgQezzUXMfw=",
-=======
-  "dgSpecHash": "fqVR6rSUlUk=",
->>>>>>> Feat: Add 4 entity classes to EN layer
+  "dgSpecHash": "3seuzql2BNc=",
   "success": true,
-  "projectFilePath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.Web\\SysGestionVentas.Web.csproj",
-  "expectedPackageFiles": [
-    "C:\\Users\\MINEDUCYT\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.23\\microsoft.windowsdesktop.app.ref.8.0.23.nupkg.sha512",
-    "C:\\Users\\MINEDUCYT\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.23\\microsoft.netcore.app.ref.8.0.23.nupkg.sha512",
-    "C:\\Users\\MINEDUCYT\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.23\\microsoft.aspnetcore.app.ref.8.0.23.nupkg.sha512",
-    "C:\\Users\\MINEDUCYT\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\8.0.23\\microsoft.netcore.app.host.win-x64.8.0.23.nupkg.sha512"
-  ],
+  "projectFilePath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.Web\\SysGestionVentas.Web.csproj",
+  "expectedPackageFiles": [],
   "logs": []
 }

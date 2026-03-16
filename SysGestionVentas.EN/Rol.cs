@@ -9,8 +9,12 @@ namespace SysGestionVentas.EN
         [Required(ErrorMessage ="El nombre es obligatorio.")]
         [StringLength(30, MinimumLength =6, 
             ErrorMessage ="El nombre debe tener entre 6 y 30 caracteres.")]
+        [Display(Name ="Nombre de Rol")]
         public string? Name { get; set; }
+
+        [Display(Name ="Descripción")]
         public string? Description { get; set; }
-        public DateTime CreatedAt {  get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
 }

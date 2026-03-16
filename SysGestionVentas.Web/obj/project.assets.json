@@ -1,38 +1,109 @@
 {
   "version": 3,
   "targets": {
-    "net8.0": {}
+    "net8.0": {
+      "SysGestionVentas.BL/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "SysGestionVentas.DAL": "1.0.0",
+          "SysGestionVentas.EN": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/SysGestionVentas.BL.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/SysGestionVentas.BL.dll": {}
+        }
+      },
+      "SysGestionVentas.DAL/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "SysGestionVentas.EN": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/SysGestionVentas.DAL.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/SysGestionVentas.DAL.dll": {}
+        }
+      },
+      "SysGestionVentas.EN/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/SysGestionVentas.EN.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/SysGestionVentas.EN.dll": {}
+        }
+      }
+    }
   },
-  "libraries": {},
+  "libraries": {
+    "SysGestionVentas.BL/1.0.0": {
+      "type": "project",
+      "path": "../SysGestionVentas.BL/SysGestionVentas.BL.csproj",
+      "msbuildProject": "../SysGestionVentas.BL/SysGestionVentas.BL.csproj"
+    },
+    "SysGestionVentas.DAL/1.0.0": {
+      "type": "project",
+      "path": "../SysGestionVentas.DAL/SysGestionVentas.DAL.csproj",
+      "msbuildProject": "../SysGestionVentas.DAL/SysGestionVentas.DAL.csproj"
+    },
+    "SysGestionVentas.EN/1.0.0": {
+      "type": "project",
+      "path": "../SysGestionVentas.EN/SysGestionVentas.EN.csproj",
+      "msbuildProject": "../SysGestionVentas.EN/SysGestionVentas.EN.csproj"
+    }
+  },
   "projectFileDependencyGroups": {
-    "net8.0": []
+    "net8.0": [
+      "SysGestionVentas.BL >= 1.0.0",
+      "SysGestionVentas.EN >= 1.0.0"
+    ]
   },
   "packageFolders": {
-    "C:\\Users\\MINEDUCYT\\.nuget\\packages\\": {}
+    "C:\\Users\\steve\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.Web\\SysGestionVentas.Web.csproj",
+      "projectUniqueName": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.Web\\SysGestionVentas.Web.csproj",
       "projectName": "SysGestionVentas.Web",
-      "projectPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.Web\\SysGestionVentas.Web.csproj",
-      "packagesPath": "C:\\Users\\MINEDUCYT\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\MINEDUCYT\\OneDrive\\Desktop\\SysGestionVentas.1\\SysGestionVentas.Web\\obj\\",
+      "projectPath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.Web\\SysGestionVentas.Web.csproj",
+      "packagesPath": "C:\\Users\\steve\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.Web\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "C:\\Users\\MINEDUCYT\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\steve\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net8.0": {
           "framework": "net8.0",
           "targetAlias": "net8.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj": {
+              "projectPath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.BL\\SysGestionVentas.BL.csproj"
+            },
+            "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj": {
+              "projectPath": "C:\\Users\\steve\\Documents\\SysGestionVenta\\SysGestionVentas.EN\\SysGestionVentas.EN.csproj"
+            }
+          }
         }
       },
       "warningProperties": {
@@ -45,11 +116,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-<<<<<<< HEAD
-      "SdkAnalysisLevel": "10.0.100"
-=======
       "SdkAnalysisLevel": "10.0.200"
->>>>>>> Feat: Add 4 entity classes to EN layer
     },
     "frameworks": {
       "net8.0": {
@@ -66,24 +133,6 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[8.0.23, 8.0.23]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Host.win-x64",
-            "version": "[8.0.23, 8.0.23]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Ref",
-            "version": "[8.0.23, 8.0.23]"
-          },
-          {
-            "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[8.0.23, 8.0.23]"
-          }
-        ],
         "frameworkReferences": {
           "Microsoft.AspNetCore.App": {
             "privateAssets": "none"
@@ -92,11 +141,7 @@
             "privateAssets": "all"
           }
         },
-<<<<<<< HEAD
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json"
-=======
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.200/PortableRuntimeIdentifierGraph.json"
->>>>>>> Feat: Add 4 entity classes to EN layer
       }
     }
   }

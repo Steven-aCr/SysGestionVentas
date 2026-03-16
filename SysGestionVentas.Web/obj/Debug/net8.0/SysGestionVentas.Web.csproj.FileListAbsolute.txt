@@ -31,3 +31,6 @@ C:\Users\steve\Documents\SysGestionVentas\SysGestionVentas\SysGestionVentas.Web\
 C:\Users\steve\Documents\SysGestionVentas\SysGestionVentas\SysGestionVentas.Web\obj\Debug\net8.0\SysGestionVentas.Web.pdb
 C:\Users\steve\Documents\SysGestionVentas\SysGestionVentas\SysGestionVentas.Web\obj\Debug\net8.0\SysGestionVentas.Web.genruntimeconfig.cache
 C:\Users\steve\Documents\SysGestionVentas\SysGestionVentas\SysGestionVentas.Web\obj\Debug\net8.0\ref\SysGestionVentas.Web.dll
+C:\Users\steve\Documents\SysGestionVenta\SysGestionVentas.Web\obj\Debug\net8.0\SysGestionVentas.Web.dll
+C:\Users\steve\Documents\SysGestionVenta\SysGestionVentas.Web\obj\Debug\net8.0\refint\SysGestionVentas.Web.dll
+C:\Users\steve\Documents\SysGestionVenta\SysGestionVentas.Web\obj\Debug\net8.0\SysGestionVentas.Web.pdb

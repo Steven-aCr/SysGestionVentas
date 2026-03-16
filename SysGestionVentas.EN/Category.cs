@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace SysGestionVentas.EN
 {
@@ -12,15 +9,15 @@ namespace SysGestionVentas.EN
     {
         [Key]
         public int CategoryId { get; set; }
-        [Required(ErrorMessage = "El Nombre Es Obligatorio.")]
+        [Required(ErrorMessage = "El nombre es obligatorio.")]
         [StringLength(50, MinimumLength = 8,
-            ErrorMessage = "El Nombre Debe Tener Entre 8 Y 50 Caracteres.")]
-        public string Name { get; set; } = string.Empty;
+            ErrorMessage = "El nombre debe tener entre 8 Y 50 caracteres.")]
+        public string? Name { get; set; }
 
-        public string Description { get; set; } = string.Empty;
+        [StringLength(255)]
+        public string? Description { get; set; }
 
-
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [Required]
         [ForeignKey("Status")]
@@ -28,8 +25,8 @@ namespace SysGestionVentas.EN
         public Status? Status { get; set; }
 
         [Required]
-        [ForeignKey("User")]
+        [ForeignKey("CreatedBy")]
         public int CreatedByUser { get; set; }
-        public User? User { get; set; }
+        public User? CreatedBy { get; set; }
     }
 }

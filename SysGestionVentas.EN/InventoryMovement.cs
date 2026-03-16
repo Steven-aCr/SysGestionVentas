@@ -9,23 +9,26 @@ namespace SysGestionVentas.EN
         [Key]
         public int InventoryMovementId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage ="El tipo de movimiento es obligatorio.")]
         public bool MovementType { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "La cantidad es obligatoria.")]
+        [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0.")]
         public int Quantity { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "El costo unitario es obligatorio.")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El costo unitario debe ser mayor a $0.01.")]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal UnitCost { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        [Required]
-        [ForeignKey("User")]
+        [Required(ErrorMessage = "El usuario es obligatorio.")]
+        [ForeignKey("CreatedBy")]
         public int CreatedByuser { get; set; }
-        public User? User { get; set; }
+        public User? CreatedBy { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "El inventario es obligatorio.")]
         [ForeignKey("Inventory")]
         public int InventoryId { get; set; }
         public Inventory? Inventory { get; set; }

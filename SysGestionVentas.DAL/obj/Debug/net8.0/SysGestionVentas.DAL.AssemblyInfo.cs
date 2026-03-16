@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SysGestionVentas.DAL")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7b672cc9f185522d06fccc43104046e74360b9fa")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3214c4a548a53d9a149872907a7cf98d713fc767")]
 [assembly: System.Reflection.AssemblyProductAttribute("SysGestionVentas.DAL")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SysGestionVentas.DAL")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
