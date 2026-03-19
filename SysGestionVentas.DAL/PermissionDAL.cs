@@ -1,163 +1,123 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient;
+﻿
+using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.DAL;
+using SysGestionVentas.EN;
 
-namespace DataAccessLayer
+namespace BDGestionVentas.DAL
 {
-    public class Permission
-    {
-        public int PermissionId { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public DateTime CreateAt { get; set; }
-        public bool IsActive { get; set; } // Eliminación lógica
-    }
-
     public class PermissionDAL
     {
-        private readonly string _connectionString;
-
-        public PermissionDAL(string connectionString)
+        private static async Task<bool> ExisteNombre(Permission pPermission,
+            DbContexto pDBContexto)
         {
-            _connectionString = connectionString;
+            bool result = false;
+            var existe = await pDBContexto.Permission.FirstOrDefaultAsync(
+                p => p.Name == pPermission.Name &&
+                     p.PermissionId != pPermission.PermissionId);
+            if (existe != null && existe.PermissionId > 0)
+                result = true;
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // CREAR
-        // ──────────────────────────────────────────────
-        public int Create(Permission permission)
+        public static async Task<int> GuardarAsync(Permission pPermission)
         {
-            const string query = @"
-                INSERT INTO Permission (Name, Description, IsActive)
-                VALUES (@Name, @Description, 1);
-                SELECT SCOPE_IDENTITY();";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@Name", permission.Name);
-                cmd.Parameters.AddWithValue("@Description", (object?)permission.Description ?? DBNull.Value);
-
-                conn.Open();
-                object result = cmd.ExecuteScalar();
-                return Convert.ToInt32(result);
-            }
-        }
-
-        // ──────────────────────────────────────────────
-        // OBTENER POR ID
-        // ──────────────────────────────────────────────
-        public Permission? GetById(int permissionId)
-        {
-            const string query = @"
-                SELECT PermissionId, Name, Description, CreateAt, IsActive
-                FROM Permission
-                WHERE PermissionId = @PermissionId
-                  AND IsActive = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.AddWithValue("@PermissionId", permissionId);
-
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    if (reader.Read())
-                        return MapPermission(reader);
+                    bool existeNombre = await ExisteNombre(pPermission, dbContexto);
+                    if (existeNombre == false)
+                    {
+                        pPermission.CreatedAt = DateTime.Now;
+                        dbContexto.Add(pPermission);
+                        result = await dbContexto.SaveChangesAsync();
+                    }
+                    else
+                        throw new Exception("El permiso ya existe.");
                 }
             }
-
-            return null;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // OBTENER TODOS (activos)
-        // ──────────────────────────────────────────────
-        public List<Permission> GetAll()
+        public static async Task<int> ModificarAsync(Permission pPermission)
         {
-            const string query = @"
-                SELECT PermissionId, Name, Description, CreateAt, IsActive
-                FROM Permission
-                WHERE IsActive = 1;";
-
-            var list = new List<Permission>();
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    while (reader.Read())
-                        list.Add(MapPermission(reader));
+                    bool existeNombre = await ExisteNombre(pPermission, dbContexto);
+                    if (existeNombre == false)
+                    {
+                        var permission = await dbContexto.Permission.FirstOrDefaultAsync(
+                            p => p.PermissionId == pPermission.PermissionId);
+
+                        permission.Name = pPermission.Name;
+                        permission.Description = pPermission.Description;
+
+                        dbContexto.Update(permission);
+                        result = await dbContexto.SaveChangesAsync();
+                    }
+                    else
+                        throw new Exception("El permiso ya existe.");
                 }
             }
-
-            return list;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // MODIFICAR
-        // ──────────────────────────────────────────────
-        public bool Update(Permission permission)
+        public static async Task<int> EliminarAsync(Permission pPermission)
         {
-            const string query = @"
-                UPDATE Permission
-                SET Name        = @Name,
-                    Description = @Description
-                WHERE PermissionId = @PermissionId
-                  AND IsActive     = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@PermissionId", permission.PermissionId);
-                cmd.Parameters.AddWithValue("@Name", permission.Name);
-                cmd.Parameters.AddWithValue("@Description", (object?)permission.Description ?? DBNull.Value);
+                using (var dbContexto = new DbContexto())
+                {
+                    var permission = await dbContexto.Permission.FirstOrDefaultAsync(
+                        p => p.PermissionId == pPermission.PermissionId);
 
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                    dbContexto.Remove(permission);
+                    result = await dbContexto.SaveChangesAsync();
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // ELIMINAR (lógico)
-        // ──────────────────────────────────────────────
-        public bool Delete(int permissionId)
+        public static async Task<Permission> ObtenerPorIdAsync(Permission pPermission)
         {
-            const string query = @"
-                UPDATE Permission
-                SET IsActive = 0
-                WHERE PermissionId = @PermissionId
-                  AND IsActive     = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            var result = new Permission();
+            try
             {
-                cmd.Parameters.AddWithValue("@PermissionId", permissionId);
-
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Permission
+                        .FirstOrDefaultAsync(p => p.PermissionId == pPermission.PermissionId);
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // HELPER — mapear fila a objeto
-        // ──────────────────────────────────────────────
-        private Permission MapPermission(SqlDataReader reader)
+        public static async Task<List<Permission>> ObtenerTodosAsync(Permission pPermission)
         {
-            return new Permission
+            var result = new List<Permission>();
+            try
             {
-                PermissionId = Convert.ToInt32(reader["PermissionId"]),
-                Name = reader["Name"]?.ToString() ?? string.Empty,
-                Description = reader["Description"] == DBNull.Value ? null : reader["Description"].ToString(),
-                CreateAt = Convert.ToDateTime(reader["CreateAt"]),
-                IsActive = Convert.ToBoolean(reader["IsActive"])
-            };
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Permission
+                        .Where(p =>
+                            (pPermission.Name == null || p.Name.Contains(pPermission.Name))
+                        )
+                        .OrderBy(p => p.Name)
+                        .ToListAsync();
+                }
+            }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
     }
 }

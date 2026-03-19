@@ -1,163 +1,121 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient;
+﻿
+using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.DAL;
+using SysGestionVentas.EN;
 
-namespace DataAccessLayer
+namespace BDGestionVentas.DAL
 {
-    public class Rol
-    {
-        public int RolId { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public DateTime CreateAt { get; set; }
-        public bool IsActive { get; set; } // Eliminación lógica
-    }
-
     public class RolDAL
     {
-        private readonly string _connectionString;
-
-        public RolDAL(string connectionString)
+        private static async Task<bool> ExisteNombre(Rol pRol, DbContexto pDBContexto)
         {
-            _connectionString = connectionString;
+            bool result = false;
+            var existe = await pDBContexto.Rol.FirstOrDefaultAsync(
+                r => r.Name == pRol.Name && r.RolId != pRol.RolId);
+            if (existe != null && existe.RolId > 0)
+                result = true;
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // CREAR
-        // ──────────────────────────────────────────────
-        public int Create(Rol rol)
+        public static async Task<int> GuardarAsync(Rol pRol)
         {
-            const string query = @"
-                INSERT INTO Rol (Name, Description, IsActive)
-                VALUES (@Name, @Description, 1);
-                SELECT SCOPE_IDENTITY();";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@Name", rol.Name);
-                cmd.Parameters.AddWithValue("@Description", (object?)rol.Description ?? DBNull.Value);
-
-                conn.Open();
-                object result = cmd.ExecuteScalar();
-                return Convert.ToInt32(result);
-            }
-        }
-
-        // ──────────────────────────────────────────────
-        // OBTENER POR ID
-        // ──────────────────────────────────────────────
-        public Rol? GetById(int rolId)
-        {
-            const string query = @"
-                SELECT RolId, Name, Description, CreateAt, IsActive
-                FROM Rol
-                WHERE RolId = @RolId
-                  AND IsActive = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.AddWithValue("@RolId", rolId);
-
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    if (reader.Read())
-                        return MapRol(reader);
+                    bool existeNombre = await ExisteNombre(pRol, dbContexto);
+                    if (existeNombre == false)
+                    {
+                        pRol.CreatedAt = DateTime.Now;
+                        dbContexto.Add(pRol);
+                        result = await dbContexto.SaveChangesAsync();
+                    }
+                    else
+                        throw new Exception("El nombre del rol ya existe.");
                 }
             }
-
-            return null;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // OBTENER TODOS (activos)
-        // ──────────────────────────────────────────────
-        public List<Rol> GetAll()
+        public static async Task<int> ModificarAsync(Rol pRol)
         {
-            const string query = @"
-                SELECT RolId, Name, Description, CreateAt, IsActive
-                FROM Rol
-                WHERE IsActive = 1;";
-
-            var list = new List<Rol>();
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    while (reader.Read())
-                        list.Add(MapRol(reader));
+                    bool existeNombre = await ExisteNombre(pRol, dbContexto);
+                    if (existeNombre == false)
+                    {
+                        var rol = await dbContexto.Rol.FirstOrDefaultAsync(
+                            r => r.RolId == pRol.RolId);
+
+                        rol.Name = pRol.Name;
+                        rol.Description = pRol.Description;
+
+                        dbContexto.Update(rol);
+                        result = await dbContexto.SaveChangesAsync();
+                    }
+                    else
+                        throw new Exception("El nombre del rol ya existe.");
                 }
             }
-
-            return list;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // MODIFICAR
-        // ──────────────────────────────────────────────
-        public bool Update(Rol rol)
+        public static async Task<int> EliminarAsync(Rol pRol)
         {
-            const string query = @"
-                UPDATE Rol
-                SET Name        = @Name,
-                    Description = @Description
-                WHERE RolId  = @RolId
-                  AND IsActive = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@RolId", rol.RolId);
-                cmd.Parameters.AddWithValue("@Name", rol.Name);
-                cmd.Parameters.AddWithValue("@Description", (object?)rol.Description ?? DBNull.Value);
+                using (var dbContexto = new DbContexto())
+                {
+                    var rol = await dbContexto.Rol.FirstOrDefaultAsync(
+                        r => r.RolId == pRol.RolId);
 
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                    dbContexto.Remove(rol);
+                    result = await dbContexto.SaveChangesAsync();
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // ELIMINAR (lógico)
-        // ──────────────────────────────────────────────
-        public bool Delete(int rolId)
+        public static async Task<Rol> ObtenerPorIdAsync(Rol pRol)
         {
-            const string query = @"
-                UPDATE Rol
-                SET IsActive = 0
-                WHERE RolId  = @RolId
-                  AND IsActive = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            var result = new Rol();
+            try
             {
-                cmd.Parameters.AddWithValue("@RolId", rolId);
-
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Rol
+                        .FirstOrDefaultAsync(r => r.RolId == pRol.RolId);
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // HELPER — mapear fila a objeto
-        // ──────────────────────────────────────────────
-        private Rol MapRol(SqlDataReader reader)
+        public static async Task<List<Rol>> ObtenerTodosAsync(Rol pRol)
         {
-            return new Rol
+            var result = new List<Rol>();
+            try
             {
-                RolId = Convert.ToInt32(reader["RolId"]),
-                Name = reader["Name"]?.ToString() ?? string.Empty,
-                Description = reader["Description"] == DBNull.Value ? null : reader["Description"].ToString(),
-                CreateAt = Convert.ToDateTime(reader["CreateAt"]),
-                IsActive = Convert.ToBoolean(reader["IsActive"])
-            };
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Rol
+                        .Where(r =>
+                            (pRol.Name == null || r.Name.Contains(pRol.Name))
+                        )
+                        .OrderBy(r => r.Name)
+                        .ToListAsync();
+                }
+            }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
     }
 }

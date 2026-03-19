@@ -1,156 +1,99 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient;
+﻿using SysGestionVentas.EN;
+using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.DAL;
+using SysGestionVentas.EN;
 
-namespace DataAccessLayer
+namespace BDGestionVentas.DAL
 {
-    public class Client
-    {
-        public int ClientId { get; set; }
-        public int PersonId { get; set; }
-        public bool IsActive { get; set; } // Eliminación lógica
-    }
-
     public class ClientDAL
     {
-        private readonly string _connectionString;
-
-        public ClientDAL(string connectionString)
+        public static async Task<int> GuardarAsync(Client pClient)
         {
-            _connectionString = connectionString;
-        }
-
-        // ──────────────────────────────────────────────
-        // CREAR
-        // ──────────────────────────────────────────────
-        public int Create(Client client)
-        {
-            const string query = @"
-                INSERT INTO Client (PersonId, IsActive)
-                VALUES (@PersonId, 1);
-                SELECT SCOPE_IDENTITY();";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@PersonId", client.PersonId);
-
-                conn.Open();
-                object result = cmd.ExecuteScalar();
-                return Convert.ToInt32(result);
-            }
-        }
-
-        // ──────────────────────────────────────────────
-        // OBTENER POR ID
-        // ──────────────────────────────────────────────
-        public Client? GetById(int clientId)
-        {
-            const string query = @"
-                SELECT ClientId, PersonId, IsActive
-                FROM Client
-                WHERE ClientId = @ClientId
-                  AND IsActive = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.AddWithValue("@ClientId", clientId);
-
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    if (reader.Read())
-                        return MapClient(reader);
+                    dbContexto.Add(pClient);
+                    result = await dbContexto.SaveChangesAsync();
                 }
             }
-
-            return null;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // OBTENER TODOS (activos)
-        // ──────────────────────────────────────────────
-        public List<Client> GetAll()
+        public static async Task<int> ModificarAsync(Client pClient)
         {
-            const string query = @"
-                SELECT ClientId, PersonId, IsActive
-                FROM Client
-                WHERE IsActive = 1;";
-
-            var list = new List<Client>();
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    while (reader.Read())
-                        list.Add(MapClient(reader));
+                    var client = await dbContexto.Client.FirstOrDefaultAsync(
+                        c => c.ClientId == pClient.ClientId);
+
+                    client.PersonId = pClient.PersonId;
+
+                    dbContexto.Update(client);
+                    result = await dbContexto.SaveChangesAsync();
                 }
             }
-
-            return list;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // MODIFICAR
-        // ──────────────────────────────────────────────
-        public bool Update(Client client)
+        public static async Task<int> EliminarAsync(Client pClient)
         {
-            const string query = @"
-                UPDATE Client
-                SET PersonId = @PersonId
-                WHERE ClientId = @ClientId
-                  AND IsActive = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@ClientId", client.ClientId);
-                cmd.Parameters.AddWithValue("@PersonId", client.PersonId);
+                using (var dbContexto = new DbContexto())
+                {
+                    var client = await dbContexto.Client.FirstOrDefaultAsync(
+                        c => c.ClientId == pClient.ClientId);
 
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                    dbContexto.Remove(client);
+                    result = await dbContexto.SaveChangesAsync();
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // ELIMINAR (lógico)
-        // ──────────────────────────────────────────────
-        public bool Delete(int clientId)
+        public static async Task<Client> ObtenerPorIdAsync(Client pClient)
         {
-            const string query = @"
-                UPDATE Client
-                SET IsActive = 0
-                WHERE ClientId = @ClientId
-                  AND IsActive = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            var result = new Client();
+            try
             {
-                cmd.Parameters.AddWithValue("@ClientId", clientId);
-
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Client
+                        .Include(c => c.Person)
+                        .FirstOrDefaultAsync(c => c.ClientId == pClient.ClientId);
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // HELPER — mapear fila a objeto
-        // ──────────────────────────────────────────────
-        private Client MapClient(SqlDataReader reader)
+        public static async Task<List<Client>> ObtenerTodosAsync(Client pClient)
         {
-            return new Client
+            var result = new List<Client>();
+            try
             {
-                ClientId = Convert.ToInt32(reader["ClientId"]),
-                PersonId = Convert.ToInt32(reader["PersonId"]),
-                IsActive = Convert.ToBoolean(reader["IsActive"])
-            };
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Client
+                        .Include(c => c.Person)
+                        .Where(c =>
+                            (pClient.PersonId == 0 || c.PersonId == pClient.PersonId)
+                        )
+                        .OrderBy(c => c.Person.LastName)
+                        .ToListAsync();
+                }
+            }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
     }
 }

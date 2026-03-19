@@ -1,171 +1,105 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient; // ✅ Paquete correcto para .NET Core/5+
+﻿using SysGestionVentas.EN;
+using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.DAL;
 
-namespace DataAccessLayer
+namespace BDGestionVentas.DAL
 {
-    public class Document
-    {
-        public int DocumentId { get; set; }
-        public int DocTypeId { get; set; }
-        public string DocNumber { get; set; } = string.Empty; // ✅ Evita warning de nullable
-        public DateTime IssueDate { get; set; }
-        public int PersonId { get; set; }
-        public bool IsActive { get; set; } // Para eliminación lógica
-    }
-
     public class DocumentDAL
     {
-        private readonly string _connectionString;
-
-        public DocumentDAL(string connectionString)
+        public static async Task<int> GuardarAsync(Document pDocument)
         {
-            _connectionString = connectionString;
-        }
-
-        // ──────────────────────────────────────────────
-        // CREAR
-        // ──────────────────────────────────────────────
-        public int Create(Document document)
-        {
-            const string query = @"
-                INSERT INTO Document (DocTypeId, DocNumber, IssueDate, PersonId, IsActive)
-                VALUES (@DocTypeId, @DocNumber, @IssueDate, @PersonId, 1);
-                SELECT SCOPE_IDENTITY();";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@DocTypeId", document.DocTypeId);
-                cmd.Parameters.AddWithValue("@DocNumber", document.DocNumber);
-                cmd.Parameters.AddWithValue("@IssueDate", document.IssueDate);
-                cmd.Parameters.AddWithValue("@PersonId", document.PersonId);
-
-                conn.Open();
-                object result = cmd.ExecuteScalar();
-                return Convert.ToInt32(result);
-            }
-        }
-
-        // ──────────────────────────────────────────────
-        // OBTENER POR ID
-        // ──────────────────────────────────────────────
-        public Document? GetById(int documentId) // ✅ Nullable porque puede no encontrarse
-        {
-            const string query = @"
-                SELECT DocumentId, DocTypeId, DocNumber, IssueDate, PersonId, IsActive
-                FROM Document
-                WHERE DocumentId = @DocumentId
-                  AND IsActive = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.AddWithValue("@DocumentId", documentId);
-
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    if (reader.Read())
-                        return MapDocument(reader);
+                    dbContexto.Add(pDocument);
+                    result = await dbContexto.SaveChangesAsync();
                 }
             }
-
-            return null;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // OBTENER TODOS (activos)
-        // ──────────────────────────────────────────────
-        public List<Document> GetAll()
+        public static async Task<int> ModificarAsync(Document pDocument)
         {
-            const string query = @"
-                SELECT DocumentId, DocTypeId, DocNumber, IssueDate, PersonId, IsActive
-                FROM Document
-                WHERE IsActive = 1;";
-
-            var list = new List<Document>();
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    while (reader.Read())
-                        list.Add(MapDocument(reader));
+                    var document = await dbContexto.Document.FirstOrDefaultAsync(
+                        d => d.DocumentId == pDocument.DocumentId);
+
+                    document.DocTypeId = pDocument.DocTypeId;
+                    document.DocNumber = pDocument.DocNumber;
+                    document.IssueDate = pDocument.IssueDate;
+                    document.PersonId = pDocument.PersonId;
+
+                    dbContexto.Update(document);
+                    result = await dbContexto.SaveChangesAsync();
                 }
             }
-
-            return list;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // MODIFICAR
-        // ──────────────────────────────────────────────
-        public bool Update(Document document)
+        public static async Task<int> EliminarAsync(Document pDocument)
         {
-            const string query = @"
-                UPDATE Document
-                SET DocTypeId = @DocTypeId,
-                    DocNumber  = @DocNumber,
-                    IssueDate  = @IssueDate,
-                    PersonId   = @PersonId
-                WHERE DocumentId = @DocumentId
-                  AND IsActive   = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@DocumentId", document.DocumentId);
-                cmd.Parameters.AddWithValue("@DocTypeId", document.DocTypeId);
-                cmd.Parameters.AddWithValue("@DocNumber", document.DocNumber);
-                cmd.Parameters.AddWithValue("@IssueDate", document.IssueDate);
-                cmd.Parameters.AddWithValue("@PersonId", document.PersonId);
+                using (var dbContexto = new DbContexto())
+                {
+                    var document = await dbContexto.Document.FirstOrDefaultAsync(
+                        d => d.DocumentId == pDocument.DocumentId);
 
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                    dbContexto.Remove(document);
+                    result = await dbContexto.SaveChangesAsync();
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // ELIMINAR (lógico — solo marca IsActive = 0)
-        // ──────────────────────────────────────────────
-        public bool Delete(int documentId)
+        public static async Task<Document> ObtenerPorIdAsync(Document pDocument)
         {
-            const string query = @"
-                UPDATE Document
-                SET IsActive = 0
-                WHERE DocumentId = @DocumentId
-                  AND IsActive   = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            var result = new Document();
+            try
             {
-                cmd.Parameters.AddWithValue("@DocumentId", documentId);
-
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Document
+                        .Include(d => d.DocumentType)
+                        .Include(d => d.Person)
+                        .FirstOrDefaultAsync(d => d.DocumentId == pDocument.DocumentId);
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // HELPER — mapear fila a objeto
-        // ──────────────────────────────────────────────
-        private Document MapDocument(SqlDataReader reader)
+        public static async Task<List<Document>> ObtenerTodosAsync(Document pDocument)
         {
-            return new Document
+            var result = new List<Document>();
+            try
             {
-                DocumentId = Convert.ToInt32(reader["DocumentId"]),
-                DocTypeId = Convert.ToInt32(reader["DocTypeId"]),
-                DocNumber = reader["DocNumber"]?.ToString() ?? string.Empty, // ✅ Evita null
-                IssueDate = Convert.ToDateTime(reader["IssueDate"]),
-                PersonId = Convert.ToInt32(reader["PersonId"]),
-                IsActive = Convert.ToBoolean(reader["IsActive"])
-            };
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Document
+                        .Include(d => d.DocumentType)
+                        .Include(d => d.Person)
+                        .Where(d =>
+                            (pDocument.DocNumber == null || d.DocNumber.Contains(pDocument.DocNumber)) &&
+                            (pDocument.DocTypeId == 0 || d.DocTypeId == pDocument.DocTypeId) &&
+                            (pDocument.PersonId == 0 || d.PersonId == pDocument.PersonId)
+                        )
+                        .OrderBy(d => d.IssueDate)
+                        .ToListAsync();
+                }
+            }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
     }
 }

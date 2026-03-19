@@ -1,178 +1,105 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient;
+﻿
+using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.DAL;
+using SysGestionVentas.EN;
 
-namespace DataAccessLayer
+namespace BDGestionVentas.DAL
 {
-    public class Inventory
-    {
-        public int InventoryId { get; set; }
-        public decimal PurchasePrice { get; set; }
-        public decimal SalePrice { get; set; }
-        public int MinimumStock { get; set; }
-        public int CurrentStock { get; set; }
-        public int ProductId { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public bool IsActive { get; set; } // Eliminación lógica
-    }
-
     public class InventoryDAL
     {
-        private readonly string _connectionString;
-
-        public InventoryDAL(string connectionString)
+        public static async Task<int> GuardarAsync(Inventory pInventory)
         {
-            _connectionString = connectionString;
-        }
-
-        // ──────────────────────────────────────────────
-        // CREAR
-        // ──────────────────────────────────────────────
-        public int Create(Inventory inventory)
-        {
-            const string query = @"
-                INSERT INTO Inventory (PurchasePrice, SalePrice, MinimumStock, CurrentStock, ProductId, IsActive)
-                VALUES (@PurchasePrice, @SalePrice, @MinimumStock, @CurrentStock, @ProductId, 1);
-                SELECT SCOPE_IDENTITY();";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@PurchasePrice", inventory.PurchasePrice);
-                cmd.Parameters.AddWithValue("@SalePrice", inventory.SalePrice);
-                cmd.Parameters.AddWithValue("@MinimumStock", inventory.MinimumStock);
-                cmd.Parameters.AddWithValue("@CurrentStock", inventory.CurrentStock);
-                cmd.Parameters.AddWithValue("@ProductId", inventory.ProductId);
-
-                conn.Open();
-                object result = cmd.ExecuteScalar();
-                return Convert.ToInt32(result);
-            }
-        }
-
-        // ──────────────────────────────────────────────
-        // OBTENER POR ID
-        // ──────────────────────────────────────────────
-        public Inventory? GetById(int inventoryId)
-        {
-            const string query = @"
-                SELECT InventoryId, PurchasePrice, SalePrice, MinimumStock, CurrentStock, ProductId, CreatedAt, IsActive
-                FROM Inventory
-                WHERE InventoryId = @InventoryId
-                  AND IsActive = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.AddWithValue("@InventoryId", inventoryId);
-
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    if (reader.Read())
-                        return MapInventory(reader);
+                    pInventory.CreatedAt = DateTime.Now;
+                    dbContexto.Add(pInventory);
+                    result = await dbContexto.SaveChangesAsync();
                 }
             }
-
-            return null;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // OBTENER TODOS (activos)
-        // ──────────────────────────────────────────────
-        public List<Inventory> GetAll()
+        public static async Task<int> ModificarAsync(Inventory pInventory)
         {
-            const string query = @"
-                SELECT InventoryId, PurchasePrice, SalePrice, MinimumStock, CurrentStock, ProductId, CreatedAt, IsActive
-                FROM Inventory
-                WHERE IsActive = 1;";
-
-            var list = new List<Inventory>();
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    while (reader.Read())
-                        list.Add(MapInventory(reader));
+                    var inventory = await dbContexto.Inventory.FirstOrDefaultAsync(
+                        i => i.InventoryId == pInventory.InventoryId);
+
+                    inventory.PurchasePrice = pInventory.PurchasePrice;
+                    inventory.SalePrice = pInventory.SalePrice;
+                    inventory.MinimumStock = pInventory.MinimumStock;
+                    inventory.CurrentStock = pInventory.CurrentStock;
+                    inventory.ProductId = pInventory.ProductId;
+
+                    dbContexto.Update(inventory);
+                    result = await dbContexto.SaveChangesAsync();
                 }
             }
-
-            return list;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // MODIFICAR
-        // ──────────────────────────────────────────────
-        public bool Update(Inventory inventory)
+        public static async Task<int> EliminarAsync(Inventory pInventory)
         {
-            const string query = @"
-                UPDATE Inventory
-                SET PurchasePrice = @PurchasePrice,
-                    SalePrice     = @SalePrice,
-                    MinimumStock  = @MinimumStock,
-                    CurrentStock  = @CurrentStock,
-                    ProductId     = @ProductId
-                WHERE InventoryId = @InventoryId
-                  AND IsActive    = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@InventoryId", inventory.InventoryId);
-                cmd.Parameters.AddWithValue("@PurchasePrice", inventory.PurchasePrice);
-                cmd.Parameters.AddWithValue("@SalePrice", inventory.SalePrice);
-                cmd.Parameters.AddWithValue("@MinimumStock", inventory.MinimumStock);
-                cmd.Parameters.AddWithValue("@CurrentStock", inventory.CurrentStock);
-                cmd.Parameters.AddWithValue("@ProductId", inventory.ProductId);
+                using (var dbContexto = new DbContexto())
+                {
+                    var inventory = await dbContexto.Inventory.FirstOrDefaultAsync(
+                        i => i.InventoryId == pInventory.InventoryId);
 
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                    dbContexto.Remove(inventory);
+                    result = await dbContexto.SaveChangesAsync();
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // ELIMINAR (lógico)
-        // ──────────────────────────────────────────────
-        public bool Delete(int inventoryId)
+        public static async Task<Inventory> ObtenerPorIdAsync(Inventory pInventory)
         {
-            const string query = @"
-                UPDATE Inventory
-                SET IsActive = 0
-                WHERE InventoryId = @InventoryId
-                  AND IsActive    = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            var result = new Inventory();
+            try
             {
-                cmd.Parameters.AddWithValue("@InventoryId", inventoryId);
-
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Inventory
+                        .Include(i => i.ProductList)
+                        .FirstOrDefaultAsync(i => i.InventoryId == pInventory.InventoryId);
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // HELPER — mapear fila a objeto
-        // ──────────────────────────────────────────────
-        private Inventory MapInventory(SqlDataReader reader)
+        public static async Task<List<Inventory>> ObtenerTodosAsync(Inventory pInventory)
         {
-            return new Inventory
+            var result = new List<Inventory>();
+            try
             {
-                InventoryId = Convert.ToInt32(reader["InventoryId"]),
-                PurchasePrice = Convert.ToDecimal(reader["PurchasePrice"]),
-                SalePrice = Convert.ToDecimal(reader["SalePrice"]),
-                MinimumStock = Convert.ToInt32(reader["MinimumStock"]),
-                CurrentStock = Convert.ToInt32(reader["CurrentStock"]),
-                ProductId = Convert.ToInt32(reader["ProductId"]),
-                CreatedAt = Convert.ToDateTime(reader["CreatedAt"]),
-                IsActive = Convert.ToBoolean(reader["IsActive"])
-            };
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Inventory
+                        .Include(i => i.ProductList)
+                        .Where(i =>
+                            (pInventory.ProductId == 0 || i.ProductId == pInventory.ProductId) &&
+                            (pInventory.CurrentStock == 0 || i.CurrentStock <= pInventory.CurrentStock)
+                        )
+                        .OrderBy(i => i.ProductId)
+                        .ToListAsync();
+                }
+            }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
     }
 }

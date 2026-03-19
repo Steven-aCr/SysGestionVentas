@@ -1,176 +1,130 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient;
+﻿
+using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.DAL;
+using SysGestionVentas.EN;
 
-namespace DataAccessLayer
+namespace BDGestionVentas.DAL
 {
-    public class Employee
-    {
-        public int EmployeeId { get; set; }
-        public string EmployeeCode { get; set; } = string.Empty;
-        public DateTime HireDate { get; set; }
-        public decimal Salary { get; set; }
-        public int PersonId { get; set; }
-        public int StatusId { get; set; }
-        public bool IsActive { get; set; } // Eliminación lógica
-    }
-
     public class EmployeeDAL
     {
-        private readonly string _connectionString;
-
-        public EmployeeDAL(string connectionString)
+        private static async Task<bool> ExisteCode(Employee pEmployee,
+            DbContexto pDBContexto)
         {
-            _connectionString = connectionString;
+            bool result = false;
+            var existe = await pDBContexto.Employee.FirstOrDefaultAsync(
+                e => e.EmployeeCode == pEmployee.EmployeeCode &&
+                     e.EmployeeId != pEmployee.EmployeeId);
+            if (existe != null && existe.EmployeeId > 0)
+                result = true;
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // CREAR
-        // ──────────────────────────────────────────────
-        public int Create(Employee employee)
+        public static async Task<int> GuardarAsync(Employee pEmployee)
         {
-            const string query = @"
-                INSERT INTO Employee (EmployeeCode, HireDate, Salary, PersonId, StatusId, IsActive)
-                VALUES (@EmployeeCode, @HireDate, @Salary, @PersonId, @StatusId, 1);
-                SELECT SCOPE_IDENTITY();";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@EmployeeCode", employee.EmployeeCode);
-                cmd.Parameters.AddWithValue("@HireDate", employee.HireDate);
-                cmd.Parameters.AddWithValue("@Salary", employee.Salary);
-                cmd.Parameters.AddWithValue("@PersonId", employee.PersonId);
-                cmd.Parameters.AddWithValue("@StatusId", employee.StatusId);
-
-                conn.Open();
-                object result = cmd.ExecuteScalar();
-                return Convert.ToInt32(result);
-            }
-        }
-
-        // ──────────────────────────────────────────────
-        // OBTENER POR ID
-        // ──────────────────────────────────────────────
-        public Employee? GetById(int employeeId)
-        {
-            const string query = @"
-                SELECT EmployeeId, EmployeeCode, HireDate, Salary, PersonId, StatusId, IsActive
-                FROM Employee
-                WHERE EmployeeId = @EmployeeId
-                  AND IsActive   = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
-
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    if (reader.Read())
-                        return MapEmployee(reader);
+                    bool existeCode = await ExisteCode(pEmployee, dbContexto);
+                    if (existeCode == false)
+                    {
+                        dbContexto.Add(pEmployee);
+                        result = await dbContexto.SaveChangesAsync();
+                    }
+                    else
+                        throw new Exception("El código de empleado ya existe.");
                 }
             }
-
-            return null;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // OBTENER TODOS (activos)
-        // ──────────────────────────────────────────────
-        public List<Employee> GetAll()
+        public static async Task<int> ModificarAsync(Employee pEmployee)
         {
-            const string query = @"
-                SELECT EmployeeId, EmployeeCode, HireDate, Salary, PersonId, StatusId, IsActive
-                FROM Employee
-                WHERE IsActive = 1;";
-
-            var list = new List<Employee>();
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    while (reader.Read())
-                        list.Add(MapEmployee(reader));
+                    bool existeCode = await ExisteCode(pEmployee, dbContexto);
+                    if (existeCode == false)
+                    {
+                        var employee = await dbContexto.Employee.FirstOrDefaultAsync(
+                            e => e.EmployeeId == pEmployee.EmployeeId);
+
+                        employee.EmployeeCode = pEmployee.EmployeeCode;
+                        employee.HireDate = pEmployee.HireDate;
+                        employee.Salary = pEmployee.Salary;
+                        employee.PersonId = pEmployee.PersonId;
+                        employee.StatusId = pEmployee.StatusId;
+
+                        dbContexto.Update(employee);
+                        result = await dbContexto.SaveChangesAsync();
+                    }
+                    else
+                        throw new Exception("El código de empleado ya existe.");
                 }
             }
-
-            return list;
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // MODIFICAR
-        // ──────────────────────────────────────────────
-        public bool Update(Employee employee)
+        public static async Task<int> EliminarAsync(Employee pEmployee)
         {
-            const string query = @"
-                UPDATE Employee
-                SET EmployeeCode = @EmployeeCode,
-                    HireDate     = @HireDate,
-                    Salary       = @Salary,
-                    PersonId     = @PersonId,
-                    StatusId     = @StatusId
-                WHERE EmployeeId = @EmployeeId
-                  AND IsActive   = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@EmployeeId", employee.EmployeeId);
-                cmd.Parameters.AddWithValue("@EmployeeCode", employee.EmployeeCode);
-                cmd.Parameters.AddWithValue("@HireDate", employee.HireDate);
-                cmd.Parameters.AddWithValue("@Salary", employee.Salary);
-                cmd.Parameters.AddWithValue("@PersonId", employee.PersonId);
-                cmd.Parameters.AddWithValue("@StatusId", employee.StatusId);
+                using (var dbContexto = new DbContexto())
+                {
+                    var employee = await dbContexto.Employee.FirstOrDefaultAsync(
+                        e => e.EmployeeId == pEmployee.EmployeeId);
 
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                    dbContexto.Remove(employee);
+                    result = await dbContexto.SaveChangesAsync();
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // ELIMINAR (lógico)
-        // ──────────────────────────────────────────────
-        public bool Delete(int employeeId)
+        public static async Task<Employee> ObtenerPorIdAsync(Employee pEmployee)
         {
-            const string query = @"
-                UPDATE Employee
-                SET IsActive = 0
-                WHERE EmployeeId = @EmployeeId
-                  AND IsActive   = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            var result = new Employee();
+            try
             {
-                cmd.Parameters.AddWithValue("@EmployeeId", employeeId);
-
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Employee
+                        .Include(e => e.Person)
+                        .Include(e => e.Status)
+                        .FirstOrDefaultAsync(e => e.EmployeeId == pEmployee.EmployeeId);
+                }
             }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // HELPER — mapear fila a objeto
-        // ──────────────────────────────────────────────
-        private Employee MapEmployee(SqlDataReader reader)
+        public static async Task<List<Employee>> ObtenerTodosAsync(Employee pEmployee)
         {
-            return new Employee
+            var result = new List<Employee>();
+            try
             {
-                EmployeeId = Convert.ToInt32(reader["EmployeeId"]),
-                EmployeeCode = reader["EmployeeCode"]?.ToString() ?? string.Empty,
-                HireDate = Convert.ToDateTime(reader["HireDate"]),
-                Salary = Convert.ToDecimal(reader["Salary"]),
-                PersonId = Convert.ToInt32(reader["PersonId"]),
-                StatusId = Convert.ToInt32(reader["StatusId"]),
-                IsActive = Convert.ToBoolean(reader["IsActive"])
-            };
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Employee
+                        .Include(e => e.Person)
+                        .Include(e => e.Status)
+                        .Where(e =>
+                            (pEmployee.EmployeeCode == null || e.EmployeeCode.Contains(pEmployee.EmployeeCode)) &&
+                            (pEmployee.StatusId == 0 || e.StatusId == pEmployee.StatusId)
+                        )
+                        .OrderBy(e => e.EmployeeCode)
+                        .ToListAsync();
+                }
+            }
+            catch (Exception ex) { throw new Exception(ex.Message); }
+            return result;
         }
     }
 }

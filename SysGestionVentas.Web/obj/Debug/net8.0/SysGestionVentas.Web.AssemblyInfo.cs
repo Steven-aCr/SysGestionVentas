@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SysGestionVentas.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+090872c1926ebd14843d310322bc6bffafe757dd")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a7046a4e434db9a682e7e65c47be1e5ab6063850")]
 [assembly: System.Reflection.AssemblyProductAttribute("SysGestionVentas.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SysGestionVentas.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

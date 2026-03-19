@@ -1,173 +1,170 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.DAL;
+using SysGestionVentas.EN;
 
 namespace DataAccessLayer
 {
-    public class Category
-    {
-        public int CategoryId { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public int StatusId { get; set; }
-        public int CreatedByUser { get; set; }
-        public bool IsActive { get; set; } // Eliminación lógica
-    }
-
     public class CategoryDAL
     {
-        private readonly string _connectionString;
+        #region "Validaciones privadas"
 
-        public CategoryDAL(string connectionString)
+        private static async Task<bool> ExisteNombre(Category pCategory,
+            DbContexto pDBContexto)
         {
-            _connectionString = connectionString;
+            bool result = false;
+            var categoryExiste = await pDBContexto.Category.FirstOrDefaultAsync(
+                c => c.Name == pCategory.Name && c.CategoryId != pCategory.CategoryId);
+
+            if (categoryExiste != null && categoryExiste.CategoryId > 0)
+                result = true;
+
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // CREAR
-        // ──────────────────────────────────────────────
-        public int Create(Category category)
+        #endregion
+
+        #region "CRUD"
+
+        public static async Task<int> GuardarAsync(Category pCategory)
         {
-            const string query = @"
-                INSERT INTO Category (Name, Description, StatusId, CreatedByUser, IsActive)
-                VALUES (@Name, @Description, @StatusId, @CreatedByUser, 1);
-                SELECT SCOPE_IDENTITY();";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@Name", category.Name);
-                cmd.Parameters.AddWithValue("@Description", (object?)category.Description ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@StatusId", category.StatusId);
-                cmd.Parameters.AddWithValue("@CreatedByUser", category.CreatedByUser);
-
-                conn.Open();
-                object result = cmd.ExecuteScalar();
-                return Convert.ToInt32(result);
-            }
-        }
-
-        // ──────────────────────────────────────────────
-        // OBTENER POR ID
-        // ──────────────────────────────────────────────
-        public Category? GetById(int categoryId)
-        {
-            const string query = @"
-                SELECT CategoryId, Name, Description, CreatedAt, StatusId, CreatedByUser, IsActive
-                FROM Category
-                WHERE CategoryId = @CategoryId
-                  AND IsActive = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.AddWithValue("@CategoryId", categoryId);
-
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    if (reader.Read())
-                        return MapCategory(reader);
+                    bool existeNombre = await ExisteNombre(pCategory, dbContexto);
+                    if (existeNombre == false)
+                    {
+                        pCategory.CreatedAt = DateTime.Now;
+                        dbContexto.Add(pCategory);
+                        result = await dbContexto.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        throw new Exception("El nombre de la categoría ya existe.");
+                    }
                 }
             }
-
-            return null;
+            catch (Exception ex)
+            {
+                result = 0;
+                throw new Exception(ex.Message);
+            }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // OBTENER TODOS (activos)
-        // ──────────────────────────────────────────────
-        public List<Category> GetAll()
+        public static async Task<int> ModificarAsync(Category pCategory)
         {
-            const string query = @"
-                SELECT CategoryId, Name, Description, CreatedAt, StatusId, CreatedByUser, IsActive
-                FROM Category
-                WHERE IsActive = 1;";
-
-            var list = new List<Category>();
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                conn.Open();
-                using (SqlDataReader reader = cmd.ExecuteReader())
+                using (var dbContexto = new DbContexto())
                 {
-                    while (reader.Read())
-                        list.Add(MapCategory(reader));
+                    bool existeNombre = await ExisteNombre(pCategory, dbContexto);
+                    if (existeNombre == false)
+                    {
+                        var category = await dbContexto.Category.FirstOrDefaultAsync(
+                            c => c.CategoryId == pCategory.CategoryId);
+
+                        category.Name = pCategory.Name;
+                        category.Description = pCategory.Description;
+                        category.StatusId = pCategory.StatusId;
+                        category.CreatedByUser = pCategory.CreatedByUser;
+
+                        dbContexto.Update(category);
+                        result = await dbContexto.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        throw new Exception("El nombre de la categoría ya existe.");
+                    }
                 }
             }
-
-            return list;
-        }
-
-        // ──────────────────────────────────────────────
-        // MODIFICAR
-        // ──────────────────────────────────────────────
-        public bool Update(Category category)
-        {
-            const string query = @"
-                UPDATE Category
-                SET Name          = @Name,
-                    Description   = @Description,
-                    StatusId      = @StatusId,
-                    CreatedByUser = @CreatedByUser
-                WHERE CategoryId = @CategoryId
-                  AND IsActive   = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            catch (Exception ex)
             {
-                cmd.Parameters.AddWithValue("@CategoryId", category.CategoryId);
-                cmd.Parameters.AddWithValue("@Name", category.Name);
-                cmd.Parameters.AddWithValue("@Description", (object?)category.Description ?? DBNull.Value);
-                cmd.Parameters.AddWithValue("@StatusId", category.StatusId);
-                cmd.Parameters.AddWithValue("@CreatedByUser", category.CreatedByUser);
-
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                result = 0;
+                throw new Exception(ex.Message);
             }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // ELIMINAR (lógico)
-        // ──────────────────────────────────────────────
-        public bool Delete(int categoryId)
+        public static async Task<int> EliminarAsync(Category pCategory)
         {
-            const string query = @"
-                UPDATE Category
-                SET IsActive = 0
-                WHERE CategoryId = @CategoryId
-                  AND IsActive   = 1;";
-
-            using (SqlConnection conn = new SqlConnection(_connectionString))
-            using (SqlCommand cmd = new SqlCommand(query, conn))
+            int result = 0;
+            try
             {
-                cmd.Parameters.AddWithValue("@CategoryId", categoryId);
+                using (var dbContexto = new DbContexto())
+                {
+                    var category = await dbContexto.Category.FirstOrDefaultAsync(
+                        c => c.CategoryId == pCategory.CategoryId);
 
-                conn.Open();
-                int rowsAffected = cmd.ExecuteNonQuery();
-                return rowsAffected > 0;
+                    if (category != null)
+                    {
+                        dbContexto.Remove(category);
+                        result = await dbContexto.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        throw new Exception("La categoría no fue encontrada.");
+                    }
+                }
             }
+            catch (Exception ex)
+            {
+                result = 0;
+                throw new Exception(ex.Message);
+            }
+            return result;
         }
 
-        // ──────────────────────────────────────────────
-        // HELPER — mapear fila a objeto
-        // ──────────────────────────────────────────────
-        private Category MapCategory(SqlDataReader reader)
+        public static async Task<Category> ObtenerPorIdAsync(Category pCategory)
         {
-            return new Category
+            var result = new Category();
+            try
             {
-                CategoryId = Convert.ToInt32(reader["CategoryId"]),
-                Name = reader["Name"]?.ToString() ?? string.Empty,
-                Description = reader["Description"] == DBNull.Value ? null : reader["Description"].ToString(),
-                CreatedAt = Convert.ToDateTime(reader["CreatedAt"]),
-                StatusId = Convert.ToInt32(reader["StatusId"]),
-                CreatedByUser = Convert.ToInt32(reader["CreatedByUser"]),
-                IsActive = Convert.ToBoolean(reader["IsActive"])
-            };
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Category
+                        .Include(c => c.Status)       // StatusId → navegación
+                        .FirstOrDefaultAsync(c => c.CategoryId == pCategory.CategoryId);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            return result;
         }
+
+        public static async Task<List<Category>> ObtenerTodosAsync(Category pCategory)
+        {
+            var result = new List<Category>();
+            try
+            {
+                using (var dbContexto = new DbContexto())
+                {
+                    // Filtros opcionales según lo que venga en pCategory
+                    result = await dbContexto.Category
+                        .Include(c => c.Status)
+                        .Where(c =>
+                            (pCategory.Name == null || c.Name.Contains(pCategory.Name)) &&
+                            (pCategory.StatusId == 0 || c.StatusId == pCategory.StatusId)
+                        )
+                        .OrderBy(c => c.Name)
+                        .ToListAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            return result;
+        }
+
+        #endregion
     }
+
 }
