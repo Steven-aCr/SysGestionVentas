@@ -13,5 +13,6 @@ namespace SysGestionVentas.EN
 
         [StringLength(255)]
         public string? Description { get; set; }
+        public object StatusId { get; set; }
     }
 }

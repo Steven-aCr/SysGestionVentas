@@ -40,12 +40,14 @@ namespace SysGestionVentas.EN
         [ForeignKey("Category")]
         public int CategoryId { get; set; }
         public Category? category { get; set; }
-
+        public object Category { get; set; }
         [Required]
         [ForeignKey("CreatedBy")]
         public int CreatedByUser { get; set; }
         public User? CreatedBy { get; set; }
 
         public Inventory? Inventory { get; set; }
+        public object Product { get; set; }
+        public int ProductId { get; set; }
     }
 }
