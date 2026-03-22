@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 ﻿using Microsoft.EntityFrameworkCore;
+=======
+﻿
+ using Microsoft.EntityFrameworkCore;
+>>>>>>> Dev2
 using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
 

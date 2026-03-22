@@ -11,7 +11,8 @@ namespace SysGestionVentas.EN
         [StringLength(100, MinimumLength = 3)]
         public string? Name { get; set; }
 
-        [StringLength(255)]
+        [StringLength(255, MinimumLength =3,
+            ErrorMessage ="La descripción debe tener un máximo de 255 caracteres.")]
         public string? Description { get; set; }
         public object StatusId { get; set; }
     }

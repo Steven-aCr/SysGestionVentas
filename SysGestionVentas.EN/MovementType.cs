@@ -2,23 +2,19 @@
 
 namespace SysGestionVentas.EN
 {
-    public class StatusType
+    public class MovementType
     {
         [Key]
-        public int StatusTypeId { get; set; }
+        public int MovementTypeId { get; set; }
 
         [Required(ErrorMessage = "El nombre es obligatorio.")]
-        [StringLength(100, MinimumLength = 6,
-            ErrorMessage = "El nombre debe tener entre 6 y 100 caracteres.")]
-        [Display(Name = "Tipo de estado")]
+        [StringLength(50, MinimumLength = 3,
+            ErrorMessage = "El nombre debe tener entre 3 y 50 caracteres.")]
         public string? Name { get; set; }
 
         [StringLength(200)]
-        [Display(Name = "Descripción")]
         public string? Description { get; set; }
 
         public bool IsActive { get; set; } = true;
-
-        public ICollection<Status>? Status { get; set; }
     }
 }
