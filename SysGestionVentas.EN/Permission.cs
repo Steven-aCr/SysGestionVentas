@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace SysGestionVentas.EN
 {
@@ -7,15 +8,18 @@ namespace SysGestionVentas.EN
         [Key]
         public int PermissionId { get; set; }
 
-        [Required(ErrorMessage ="El nombre es obligatorio.")]
-        [StringLength(100, MinimumLength = 6, 
-            ErrorMessage ="El nombre debe tener un máximo de 100 caracteres.")]
-        [Display(Name="Nombre del Permiso")]
+        [Required(ErrorMessage = "El nombre es obligatorio.")]
+        [StringLength(100, MinimumLength = 6,
+            ErrorMessage = "El nombre debe tener entre 6 y 100 caracteres.")]
+        [Display(Name = "Nombre del Permiso")]
         public string? Name { get; set; }
 
-        [Display(Name="Descripción")]
+        [StringLength(200)]
+        [Display(Name = "Descripción")]
         public string? Description { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public bool IsActive { get; set; } = true;
     }
 }

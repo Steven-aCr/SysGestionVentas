@@ -11,13 +11,13 @@ namespace SysGestionVentas.EN
 
         [Required(ErrorMessage = "El precio de compra es obligatorio.")]
         [Range(0.01, double.MaxValue, ErrorMessage = "El precio de compra debe ser mayor a $0.00.")]
-        [Column(TypeName = "decimal(18,2)")]
+        [Column(TypeName = "decimal(10,2)")]
         [Display(Name = "Precio de compra")]
         public decimal PurchasePrice { get; set; }
 
         [Required(ErrorMessage = "El precio de venta es obligatorio.")]
         [Range(0.01, double.MaxValue, ErrorMessage = "El precio de venta debe ser mayor a $0.00.")]
-        [Column(TypeName = "decimal(18,2)")]
+        [Column(TypeName = "decimal(10,2)")]
         [Display(Name = "Precio de venta")]
         public decimal SalePrice { get; set; }
 
@@ -31,11 +31,16 @@ namespace SysGestionVentas.EN
         [Display(Name = "Stock actual")]
         public int CurrentStock { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "El producto es obligatorio.")]
         [ForeignKey("Product")]
         public int ProductId { get; set; }
-        public ProductList? ProductList { get; set; }
+        public ProductList? Product { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Required(ErrorMessage = "El estado es obligatorio.")]
+        [ForeignKey("Status")]
+        public int StatusId { get; set; }
+        public Status? Status { get; set; }
     }
 }
