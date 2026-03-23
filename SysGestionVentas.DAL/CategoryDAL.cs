@@ -20,7 +20,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    pCategory.CreatedAt = DateTime.Now;
+                    pCategory.CreatedAt = DateTime.UtcNow;
                     dbContexto.Add(pCategory);
                     result = await dbContexto.SaveChangesAsync();
                 }
@@ -62,7 +62,6 @@ namespace SysGestionVentas.DAL
                     category.Name = pCategory.Name;
                     category.Description = pCategory.Description;
                     category.StatusId = pCategory.StatusId;
-                    category.CreatedByUser = pCategory.CreatedByUser;
 
                     dbContexto.Update(category);
                     result = await dbContexto.SaveChangesAsync();
@@ -82,7 +81,7 @@ namespace SysGestionVentas.DAL
         /// </summary>
         /// <param name="pCategory">
         /// Objeto <see cref="Category"/> con el <c>CategoryId</c> del registro
-        /// y el <c>StatusId</c> correspondiente al estado "inactivo/eliminado".
+        /// y el <c>StatusId</c> correspondiente al estado inactivo.
         /// </param>
         /// <returns>
         /// Número de filas afectadas. Retorna <c>1</c> si se cambió el estado correctamente, <c>0</c> si falló.
@@ -121,22 +120,22 @@ namespace SysGestionVentas.DAL
 
         /// <summary>
         /// Obtiene una categoría específica por su identificador, incluyendo
-        /// su relación con <see cref="SysStatus"/>.
+        /// sus relaciones con <see cref="Status"/> y <see cref="User"/> creador.
         /// </summary>
         /// <param name="pCategory">Objeto <see cref="Category"/> con el <c>CategoryId</c> a buscar.</param>
         /// <returns>
         /// El objeto <see cref="Category"/> encontrado, o <c>null</c> si no existe.
         /// </returns>
         /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
-        public static async Task<Category> ObtenerPorIdAsync(Category pCategory)
+        public static async Task<Category?> ObtenerPorIdAsync(Category pCategory)
         {
-            var result = new Category();
             try
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    result = await dbContexto.Category
-                        .Include(c => c.SysStatus)
+                    return await dbContexto.Category
+                        .Include(c => c.Status)
+                        .Include(c => c.CreatedBy)
                         .FirstOrDefaultAsync(c => c.CategoryId == pCategory.CategoryId);
                 }
             }
@@ -144,7 +143,6 @@ namespace SysGestionVentas.DAL
             {
                 throw new Exception(ex.Message);
             }
-            return result;
         }
 
         /// <summary>
@@ -154,8 +152,8 @@ namespace SysGestionVentas.DAL
         /// <param name="pCategory">
         /// Objeto <see cref="Category"/> usado como filtro de búsqueda:
         /// <list type="bullet">
-        ///   <item><description><c>Name</c>: filtra por coincidencia parcial en el nombre.</description></item>
-        ///   <item><description><c>StatusId</c>: filtra por estado (0 = sin filtro).</description></item>
+        ///   <item><description><c>Name</c>: filtra por coincidencia parcial en el nombre (null = sin filtro).</description></item>
+        ///   <item><description><c>StatusId</c>: filtra por estado (0 = sin filtro, devuelve todos).</description></item>
         /// </list>
         /// </param>
         /// <returns>
@@ -171,9 +169,10 @@ namespace SysGestionVentas.DAL
                 using (var dbContexto = new DbContexto())
                 {
                     result = await dbContexto.Category
-                        .Include(c => c.SysStatus)
+                        .Include(c => c.Status)
+                        .Include(c => c.CreatedBy)
                         .Where(c =>
-                            (pCategory.Name == null || c.Name.Contains(pCategory.Name)) &&
+                            (pCategory.Name == null || c.Name!.Contains(pCategory.Name)) &&
                             (pCategory.StatusId == 0 || c.StatusId == pCategory.StatusId)
                         )
                         .OrderBy(c => c.Name)

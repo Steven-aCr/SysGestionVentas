@@ -20,7 +20,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    pRol.CreateAt = DateTime.Now;
+                    pRol.CreatedAt = DateTime.UtcNow;
                     dbContexto.Add(pRol);
                     result = await dbContexto.SaveChangesAsync();
                 }
@@ -61,6 +61,7 @@ namespace SysGestionVentas.DAL
 
                     rol.Name = pRol.Name;
                     rol.Description = pRol.Description;
+                    rol.StatusId = pRol.StatusId;
 
                     dbContexto.Update(rol);
                     result = await dbContexto.SaveChangesAsync();
@@ -80,7 +81,7 @@ namespace SysGestionVentas.DAL
         /// </summary>
         /// <param name="pRol">
         /// Objeto <see cref="Rol"/> con el <c>RolId</c> del registro
-        /// y el <c>StatusId</c> correspondiente al estado "inactivo/eliminado".
+        /// y el <c>StatusId</c> correspondiente al estado inactivo.
         /// </param>
         /// <returns>
         /// Número de filas afectadas. Retorna <c>1</c> si se cambió el estado correctamente, <c>0</c> si falló.
@@ -101,8 +102,6 @@ namespace SysGestionVentas.DAL
                     if (rol == null)
                         throw new Exception($"No se encontró el rol con ID {pRol.RolId}.");
 
-                    // Eliminación lógica: se cambia el estado del rol
-                    // en lugar de eliminarlo físicamente de la base de datos.
                     rol.StatusId = pRol.StatusId;
 
                     dbContexto.Update(rol);
@@ -119,22 +118,21 @@ namespace SysGestionVentas.DAL
 
         /// <summary>
         /// Obtiene un rol específico por su identificador, incluyendo
-        /// su relación con <see cref="RolPermission"/>.
+        /// su relación con <see cref="Status"/>.
         /// </summary>
         /// <param name="pRol">Objeto <see cref="Rol"/> con el <c>RolId</c> a buscar.</param>
         /// <returns>
         /// El objeto <see cref="Rol"/> encontrado, o <c>null</c> si no existe.
         /// </returns>
         /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
-        public static async Task<Rol> ObtenerPorIdAsync(Rol pRol)
+        public static async Task<Rol?> ObtenerPorIdAsync(Rol pRol)
         {
-            var result = new Rol();
             try
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    result = await dbContexto.Rol
-                        .Include(r => r.RolPermission)
+                    return await dbContexto.Rol
+                        .Include(r => r.Status)
                         .FirstOrDefaultAsync(r => r.RolId == pRol.RolId);
                 }
             }
@@ -142,17 +140,17 @@ namespace SysGestionVentas.DAL
             {
                 throw new Exception(ex.Message);
             }
-            return result;
         }
 
         /// <summary>
         /// Obtiene una lista de roles aplicando filtros opcionales.
-        /// Los parámetros con valor <c>null</c> son ignorados en el filtro.
+        /// Los parámetros con valor <c>null</c> o <c>0</c> son ignorados en el filtro.
         /// </summary>
         /// <param name="pRol">
         /// Objeto <see cref="Rol"/> usado como filtro de búsqueda:
         /// <list type="bullet">
         ///   <item><description><c>Name</c>: filtra por coincidencia parcial en el nombre (null = sin filtro).</description></item>
+        ///   <item><description><c>StatusId</c>: filtra por estado (0 = sin filtro, devuelve todos).</description></item>
         /// </list>
         /// </param>
         /// <returns>
@@ -168,9 +166,10 @@ namespace SysGestionVentas.DAL
                 using (var dbContexto = new DbContexto())
                 {
                     result = await dbContexto.Rol
-                        .Include(r => r.RolPermission)
+                        .Include(r => r.Status)
                         .Where(r =>
-                            (pRol.Name == null || r.Name.Contains(pRol.Name))
+                            (pRol.Name == null || r.Name!.Contains(pRol.Name)) &&
+                            (pRol.StatusId == 0 || r.StatusId == pRol.StatusId)
                         )
                         .OrderBy(r => r.Name)
                         .ToListAsync();

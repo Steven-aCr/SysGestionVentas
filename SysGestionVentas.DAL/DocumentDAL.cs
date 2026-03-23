@@ -34,6 +34,8 @@ namespace SysGestionVentas.DAL
 
         /// <summary>
         /// Modifica los datos de un documento existente en la base de datos.
+        /// Los campos estructurales <c>DocNumber</c>, <c>DocTypeId</c> y <c>CreatedByUser</c>
+        /// no son modificables tras la emisión del documento.
         /// </summary>
         /// <param name="pDocument">
         /// Objeto <see cref="Document"/> con el <c>DocumentId</c> del registro a modificar
@@ -58,10 +60,10 @@ namespace SysGestionVentas.DAL
                     if (document == null)
                         throw new Exception($"No se encontró el documento con ID {pDocument.DocumentId}.");
 
-                    document.DocTypeId = pDocument.DocTypeId;
-                    document.DocNumber = pDocument.DocNumber;
                     document.IssueDate = pDocument.IssueDate;
                     document.PersonId = pDocument.PersonId;
+                    document.TotalAmount = pDocument.TotalAmount;
+                    document.StatusId = pDocument.StatusId;
 
                     dbContexto.Update(document);
                     result = await dbContexto.SaveChangesAsync();
@@ -81,7 +83,7 @@ namespace SysGestionVentas.DAL
         /// </summary>
         /// <param name="pDocument">
         /// Objeto <see cref="Document"/> con el <c>DocumentId</c> del registro
-        /// y el <c>StatusId</c> correspondiente al estado "inactivo/eliminado".
+        /// y el <c>StatusId</c> correspondiente al estado inactivo o anulado.
         /// </param>
         /// <returns>
         /// Número de filas afectadas. Retorna <c>1</c> si se cambió el estado correctamente, <c>0</c> si falló.
@@ -119,24 +121,26 @@ namespace SysGestionVentas.DAL
         }
 
         /// <summary>
-        /// Obtiene un documento específico por su identificador, incluyendo
-        /// sus relaciones con <see cref="DocumentType"/> y <see cref="Person"/>.
+        /// Obtiene un documento específico por su identificador, incluyendo sus relaciones
+        /// con <see cref="DocumentType"/>, <see cref="Person"/>, <see cref="Status"/>
+        /// y el <see cref="User"/> que lo creó.
         /// </summary>
         /// <param name="pDocument">Objeto <see cref="Document"/> con el <c>DocumentId</c> a buscar.</param>
         /// <returns>
         /// El objeto <see cref="Document"/> encontrado, o <c>null</c> si no existe.
         /// </returns>
         /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
-        public static async Task<Document> ObtenerPorIdAsync(Document pDocument)
+        public static async Task<Document?> ObtenerPorIdAsync(Document pDocument)
         {
-            var result = new Document();
             try
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    result = await dbContexto.Document
+                    return await dbContexto.Document
                         .Include(d => d.DocumentType)
                         .Include(d => d.Person)
+                        .Include(d => d.Status)
+                        .Include(d => d.CreatedBy)
                         .FirstOrDefaultAsync(d => d.DocumentId == pDocument.DocumentId);
                 }
             }
@@ -144,7 +148,6 @@ namespace SysGestionVentas.DAL
             {
                 throw new Exception(ex.Message);
             }
-            return result;
         }
 
         /// <summary>
@@ -154,14 +157,15 @@ namespace SysGestionVentas.DAL
         /// <param name="pDocument">
         /// Objeto <see cref="Document"/> usado como filtro de búsqueda:
         /// <list type="bullet">
-        ///   <item><description><c>DocNumber</c>: filtra por coincidencia parcial en el número de documento.</description></item>
+        ///   <item><description><c>DocNumber</c>: filtra por coincidencia parcial en el número de documento (null = sin filtro).</description></item>
         ///   <item><description><c>DocTypeId</c>: filtra por tipo de documento (0 = sin filtro).</description></item>
         ///   <item><description><c>PersonId</c>: filtra por persona asociada (0 = sin filtro).</description></item>
+        ///   <item><description><c>StatusId</c>: filtra por estado del documento (0 = sin filtro, devuelve todos).</description></item>
         /// </list>
         /// </param>
         /// <returns>
         /// Lista de objetos <see cref="Document"/> que cumplen los filtros indicados,
-        /// ordenados por fecha de emisión de forma ascendente.
+        /// ordenados por fecha de emisión de forma descendente.
         /// </returns>
         /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
         public static async Task<List<Document>> ObtenerTodosAsync(Document pDocument)
@@ -174,12 +178,15 @@ namespace SysGestionVentas.DAL
                     result = await dbContexto.Document
                         .Include(d => d.DocumentType)
                         .Include(d => d.Person)
+                        .Include(d => d.Status)
+                        .Include(d => d.CreatedBy)
                         .Where(d =>
-                            (pDocument.DocNumber == null || d.DocNumber.Contains(pDocument.DocNumber)) &&
+                            (pDocument.DocNumber == null || d.DocNumber!.Contains(pDocument.DocNumber)) &&
                             (pDocument.DocTypeId == 0 || d.DocTypeId == pDocument.DocTypeId) &&
-                            (pDocument.PersonId == 0 || d.PersonId == pDocument.PersonId)
+                            (pDocument.PersonId == 0 || d.PersonId == pDocument.PersonId) &&
+                            (pDocument.StatusId == 0 || d.StatusId == pDocument.StatusId)
                         )
-                        .OrderBy(d => d.IssueDate)
+                        .OrderByDescending(d => d.IssueDate)
                         .ToListAsync();
                 }
             }

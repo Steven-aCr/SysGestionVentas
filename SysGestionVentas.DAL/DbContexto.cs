@@ -26,6 +26,9 @@ namespace SysGestionVentas.DAL
         public DbSet<DocumentType> DocumentType { get; set; }
         public DbSet<Document> Document { get; set; }
         public DbSet<DocumentDetail> DocumentDetail { get; set; }
+        public DbSet<Department> Department { get; set; }
+        public DbSet<MovementType> MovementType { get; set; }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

@@ -20,7 +20,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    pPermission.CreateAt = DateTime.Now;
+                    pPermission.CreatedAt = DateTime.UtcNow;
                     dbContexto.Add(pPermission);
                     result = await dbContexto.SaveChangesAsync();
                 }
@@ -61,6 +61,7 @@ namespace SysGestionVentas.DAL
 
                     permission.Name = pPermission.Name;
                     permission.Description = pPermission.Description;
+                    permission.IsActive = pPermission.IsActive;
 
                     dbContexto.Update(permission);
                     result = await dbContexto.SaveChangesAsync();
@@ -75,15 +76,14 @@ namespace SysGestionVentas.DAL
         }
 
         /// <summary>
-        /// Realiza una eliminación lógica de un permiso, cambiando su estado en la base de datos.
+        /// Realiza una eliminación lógica de un permiso, desactivándolo en la base de datos.
         /// No elimina el registro físicamente.
         /// </summary>
         /// <param name="pPermission">
-        /// Objeto <see cref="Permission"/> con el <c>PermissionId</c> del registro
-        /// y el <c>StatusId</c> correspondiente al estado "inactivo/eliminado".
+        /// Objeto <see cref="Permission"/> con el <c>PermissionId</c> del registro a desactivar.
         /// </param>
         /// <returns>
-        /// Número de filas afectadas. Retorna <c>1</c> si se cambió el estado correctamente, <c>0</c> si falló.
+        /// Número de filas afectadas. Retorna <c>1</c> si se desactivó correctamente, <c>0</c> si falló.
         /// </returns>
         /// <exception cref="Exception">
         /// Se lanza si el permiso no existe o si ocurre un error durante la operación.
@@ -101,9 +101,9 @@ namespace SysGestionVentas.DAL
                     if (permission == null)
                         throw new Exception($"No se encontró el permiso con ID {pPermission.PermissionId}.");
 
-                    // Eliminación lógica: se cambia el estado del permiso
+                    // Eliminación lógica: se desactiva el permiso
                     // en lugar de eliminarlo físicamente de la base de datos.
-                    permission.StatusId = pPermission.StatusId;
+                    permission.IsActive = false;
 
                     dbContexto.Update(permission);
                     result = await dbContexto.SaveChangesAsync();
@@ -125,14 +125,13 @@ namespace SysGestionVentas.DAL
         /// El objeto <see cref="Permission"/> encontrado, o <c>null</c> si no existe.
         /// </returns>
         /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
-        public static async Task<Permission> ObtenerPorIdAsync(Permission pPermission)
+        public static async Task<Permission?> ObtenerPorIdAsync(Permission pPermission)
         {
-            var result = new Permission();
             try
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    result = await dbContexto.Permission
+                    return await dbContexto.Permission
                         .FirstOrDefaultAsync(p => p.PermissionId == pPermission.PermissionId);
                 }
             }
@@ -140,7 +139,6 @@ namespace SysGestionVentas.DAL
             {
                 throw new Exception(ex.Message);
             }
-            return result;
         }
 
         /// <summary>
@@ -151,14 +149,18 @@ namespace SysGestionVentas.DAL
         /// Objeto <see cref="Permission"/> usado como filtro de búsqueda:
         /// <list type="bullet">
         ///   <item><description><c>Name</c>: filtra por coincidencia parcial en el nombre (null = sin filtro).</description></item>
+        ///   <item><description><c>IsActive</c>: filtra por estado activo/inactivo (null = devuelve todos).</description></item>
         /// </list>
+        /// </param>
+        /// <param name="pIsActive">
+        /// Filtro de estado: <c>true</c> = solo activos, <c>false</c> = solo inactivos, <c>null</c> = todos.
         /// </param>
         /// <returns>
         /// Lista de objetos <see cref="Permission"/> que cumplen los filtros indicados,
         /// ordenados por nombre de forma ascendente.
         /// </returns>
         /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
-        public static async Task<List<Permission>> ObtenerTodosAsync(Permission pPermission)
+        public static async Task<List<Permission>> ObtenerTodosAsync(Permission pPermission, bool? pIsActive = null)
         {
             var result = new List<Permission>();
             try
@@ -167,7 +169,8 @@ namespace SysGestionVentas.DAL
                 {
                     result = await dbContexto.Permission
                         .Where(p =>
-                            (pPermission.Name == null || p.Name.Contains(pPermission.Name))
+                            (pPermission.Name == null || p.Name!.Contains(pPermission.Name)) &&
+                            (pIsActive == null || p.IsActive == pIsActive)
                         )
                         .OrderBy(p => p.Name)
                         .ToListAsync();

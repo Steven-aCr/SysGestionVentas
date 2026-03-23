@@ -6,7 +6,7 @@ namespace SysGestionVentas.DAL
     public class InventoryDAL
     {
         /// <summary>
-        /// Registra un nuevo inventario en la base de datos.
+        /// Registra un nuevo registro de inventario en la base de datos.
         /// </summary>
         /// <param name="pInventory">Objeto <see cref="Inventory"/> con los datos a guardar.</param>
         /// <returns>
@@ -20,7 +20,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    pInventory.CreatedAt = DateTime.Now;
+                    pInventory.CreatedAt = DateTime.UtcNow;
                     dbContexto.Add(pInventory);
                     result = await dbContexto.SaveChangesAsync();
                 }
@@ -34,7 +34,9 @@ namespace SysGestionVentas.DAL
         }
 
         /// <summary>
-        /// Modifica los datos de un inventario existente en la base de datos.
+        /// Modifica los datos de un registro de inventario existente en la base de datos.
+        /// No permite cambiar el producto asociado (<c>ProductId</c>) ya que es
+        /// un campo estructural definido en la creación del registro.
         /// </summary>
         /// <param name="pInventory">
         /// Objeto <see cref="Inventory"/> con el <c>InventoryId</c> del registro a modificar
@@ -63,7 +65,7 @@ namespace SysGestionVentas.DAL
                     inventory.SalePrice = pInventory.SalePrice;
                     inventory.MinimumStock = pInventory.MinimumStock;
                     inventory.CurrentStock = pInventory.CurrentStock;
-                    inventory.ProductId = pInventory.ProductId;
+                    inventory.StatusId = pInventory.StatusId;
 
                     dbContexto.Update(inventory);
                     result = await dbContexto.SaveChangesAsync();
@@ -78,12 +80,12 @@ namespace SysGestionVentas.DAL
         }
 
         /// <summary>
-        /// Realiza una eliminación lógica de un inventario, cambiando su estado en la base de datos.
-        /// No elimina el registro físicamente.
+        /// Realiza una eliminación lógica de un registro de inventario,
+        /// cambiando su estado en la base de datos. No elimina el registro físicamente.
         /// </summary>
         /// <param name="pInventory">
         /// Objeto <see cref="Inventory"/> con el <c>InventoryId</c> del registro
-        /// y el <c>StatusId</c> correspondiente al estado "inactivo/eliminado".
+        /// y el <c>StatusId</c> correspondiente al estado inactivo.
         /// </param>
         /// <returns>
         /// Número de filas afectadas. Retorna <c>1</c> si se cambió el estado correctamente, <c>0</c> si falló.
@@ -121,23 +123,23 @@ namespace SysGestionVentas.DAL
         }
 
         /// <summary>
-        /// Obtiene un inventario específico por su identificador, incluyendo
-        /// su relación con <see cref="ProductList"/>.
+        /// Obtiene un registro de inventario específico por su identificador, incluyendo
+        /// sus relaciones con <see cref="ProductList"/> y <see cref="Status"/>.
         /// </summary>
         /// <param name="pInventory">Objeto <see cref="Inventory"/> con el <c>InventoryId</c> a buscar.</param>
         /// <returns>
         /// El objeto <see cref="Inventory"/> encontrado, o <c>null</c> si no existe.
         /// </returns>
         /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
-        public static async Task<Inventory> ObtenerPorIdAsync(Inventory pInventory)
+        public static async Task<Inventory?> ObtenerPorIdAsync(Inventory pInventory)
         {
-            var result = new Inventory();
             try
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    result = await dbContexto.Inventory
-                        .Include(i => i.ProductList)
+                    return await dbContexto.Inventory
+                        .Include(i => i.Product)
+                        .Include(i => i.Status)
                         .FirstOrDefaultAsync(i => i.InventoryId == pInventory.InventoryId);
                 }
             }
@@ -145,22 +147,22 @@ namespace SysGestionVentas.DAL
             {
                 throw new Exception(ex.Message);
             }
-            return result;
         }
 
         /// <summary>
-        /// Obtiene una lista de inventarios aplicando filtros opcionales.
+        /// Obtiene una lista de registros de inventario aplicando filtros opcionales.
         /// Los parámetros con valor <c>0</c> son ignorados en el filtro.
         /// </summary>
         /// <param name="pInventory">
         /// Objeto <see cref="Inventory"/> usado como filtro de búsqueda:
         /// <list type="bullet">
         ///   <item><description><c>ProductId</c>: filtra por producto asociado (0 = sin filtro).</description></item>
+        ///   <item><description><c>StatusId</c>: filtra por estado (0 = sin filtro, devuelve todos).</description></item>
         /// </list>
         /// </param>
         /// <returns>
         /// Lista de objetos <see cref="Inventory"/> que cumplen los filtros indicados,
-        /// ordenados por producto de forma ascendente.
+        /// ordenados por nombre de producto de forma ascendente.
         /// </returns>
         /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
         public static async Task<List<Inventory>> ObtenerTodosAsync(Inventory pInventory)
@@ -171,11 +173,13 @@ namespace SysGestionVentas.DAL
                 using (var dbContexto = new DbContexto())
                 {
                     result = await dbContexto.Inventory
-                        .Include(i => i.ProductList)
+                        .Include(i => i.Product)
+                        .Include(i => i.Status)
                         .Where(i =>
-                            (pInventory.ProductId == 0 || i.ProductId == pInventory.ProductId)
+                            (pInventory.ProductId == 0 || i.ProductId == pInventory.ProductId) &&
+                            (pInventory.StatusId == 0 || i.StatusId == pInventory.StatusId)
                         )
-                        .OrderBy(i => i.ProductId)
+                        .OrderBy(i => i.Product!.Name)
                         .ToListAsync();
                 }
             }

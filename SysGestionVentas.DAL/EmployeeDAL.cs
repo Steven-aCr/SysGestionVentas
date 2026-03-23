@@ -61,6 +61,8 @@ namespace SysGestionVentas.DAL
                     employee.EmployeeCode = pEmployee.EmployeeCode;
                     employee.HireDate = pEmployee.HireDate;
                     employee.Salary = pEmployee.Salary;
+                    employee.DepartmentId = pEmployee.DepartmentId;
+                    employee.UserId = pEmployee.UserId;
                     employee.PersonId = pEmployee.PersonId;
                     employee.StatusId = pEmployee.StatusId;
 
@@ -82,7 +84,7 @@ namespace SysGestionVentas.DAL
         /// </summary>
         /// <param name="pEmployee">
         /// Objeto <see cref="Employee"/> con el <c>EmployeeId</c> del registro
-        /// y el <c>StatusId</c> correspondiente al estado "inactivo/eliminado".
+        /// y el <c>StatusId</c> correspondiente al estado inactivo.
         /// </param>
         /// <returns>
         /// Número de filas afectadas. Retorna <c>1</c> si se cambió el estado correctamente, <c>0</c> si falló.
@@ -103,8 +105,7 @@ namespace SysGestionVentas.DAL
                     if (employee == null)
                         throw new Exception($"No se encontró el empleado con ID {pEmployee.EmployeeId}.");
 
-                    // Eliminación lógica: se cambia el estado del empleado
-                    // en lugar de eliminarlo físicamente de la base de datos.
+                    // Eliminación lógica: se cambia el estado del empleado.
                     employee.StatusId = pEmployee.StatusId;
 
                     dbContexto.Update(employee);
@@ -121,23 +122,23 @@ namespace SysGestionVentas.DAL
 
         /// <summary>
         /// Obtiene un empleado específico por su identificador, incluyendo
-        /// sus relaciones con <see cref="Person"/> y <see cref="SysStatus"/>.
+        /// sus relaciones con <see cref="Person"/>, <see cref="Department"/> y <see cref="Status"/>.
         /// </summary>
         /// <param name="pEmployee">Objeto <see cref="Employee"/> con el <c>EmployeeId</c> a buscar.</param>
         /// <returns>
         /// El objeto <see cref="Employee"/> encontrado, o <c>null</c> si no existe.
         /// </returns>
         /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
-        public static async Task<Employee> ObtenerPorIdAsync(Employee pEmployee)
+        public static async Task<Employee?> ObtenerPorIdAsync(Employee pEmployee)
         {
-            var result = new Employee();
             try
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    result = await dbContexto.Employee
+                    return await dbContexto.Employee
                         .Include(e => e.Person)
-                        .Include(e => e.SysStatus)
+                        .Include(e => e.Department)
+                        .Include(e => e.Status)
                         .FirstOrDefaultAsync(e => e.EmployeeId == pEmployee.EmployeeId);
                 }
             }
@@ -145,7 +146,6 @@ namespace SysGestionVentas.DAL
             {
                 throw new Exception(ex.Message);
             }
-            return result;
         }
 
         /// <summary>
@@ -155,8 +155,9 @@ namespace SysGestionVentas.DAL
         /// <param name="pEmployee">
         /// Objeto <see cref="Employee"/> usado como filtro de búsqueda:
         /// <list type="bullet">
-        ///   <item><description><c>EmployeeCode</c>: filtra por coincidencia parcial en el código.</description></item>
-        ///   <item><description><c>StatusId</c>: filtra por estado (0 = sin filtro).</description></item>
+        ///   <item><description><c>EmployeeCode</c>: filtra por coincidencia parcial en el código (null = sin filtro).</description></item>
+        ///   <item><description><c>StatusId</c>: filtra por estado (0 = sin filtro, devuelve todos).</description></item>
+        ///   <item><description><c>DepartmentId</c>: filtra por departamento (null = sin filtro).</description></item>
         /// </list>
         /// </param>
         /// <returns>
@@ -173,9 +174,11 @@ namespace SysGestionVentas.DAL
                 {
                     result = await dbContexto.Employee
                         .Include(e => e.Person)
-                        .Include(e => e.SysStatus)
+                        .Include(e => e.Department)
+                        .Include(e => e.Status)
                         .Where(e =>
-                            (pEmployee.EmployeeCode == null || e.EmployeeCode.Contains(pEmployee.EmployeeCode)) &&
+                            (pEmployee.EmployeeCode == null || e.EmployeeCode!.Contains(pEmployee.EmployeeCode)) &&
+                            (pEmployee.DepartmentId == null || e.DepartmentId == pEmployee.DepartmentId) &&
                             (pEmployee.StatusId == 0 || e.StatusId == pEmployee.StatusId)
                         )
                         .OrderBy(e => e.EmployeeCode)
