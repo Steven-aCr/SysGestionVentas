@@ -11,6 +11,13 @@ namespace SysGestionVentas.DAL
 {
     public class DiscountDAL
     {
+        /// <summary>
+        /// Metodo para guardar información
+        /// </summary>
+        /// param name="pDisount"></param>
+        /// <return>Guarda los datos del descuento</return>
+        /// <exception cref="cref="Exception"></exception>
+
         public static async Task<int> GuardarAsync(Discount discount, DbContexto dbContexto)
         {
             dbContexto.Add(discount);
