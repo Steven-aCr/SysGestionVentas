@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SysGestionVentas.EN
 {
@@ -14,6 +15,10 @@ namespace SysGestionVentas.EN
         [StringLength(255, MinimumLength =3,
             ErrorMessage ="La descripción debe tener un máximo de 255 caracteres.")]
         public string? Description { get; set; }
-        public object StatusId { get; set; }
+
+        [Required]
+        [ForeignKey("Status")]
+        public int StatusId { get; set; }
+        public Status? Status { get; set; }
     }
 }

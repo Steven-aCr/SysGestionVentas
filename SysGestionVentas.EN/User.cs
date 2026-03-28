@@ -31,6 +31,14 @@ namespace SysGestionVentas.EN
         [Display(Name = "Fecha de Registro")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        // Campos para gestión de contraseñas temporales
+
+        [StringLength(255)]
+        public string? TempPasswordHash { get; set; }
+        public DateTime? TempPasswordExpiry { get; set; }
+
+        // Relaciones con otras entidades
+
         [Required(ErrorMessage = "El rol es obligatorio.")]
         [ForeignKey("Rol")]
         [Display(Name = "Rol")]
@@ -48,5 +56,6 @@ namespace SysGestionVentas.EN
         [Display(Name = "Estado")]
         public int StatusId { get; set; }
         public Status? Status { get; set; }
+
     }
 }
