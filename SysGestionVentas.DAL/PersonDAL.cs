@@ -1,10 +1,13 @@
 ﻿using SysGestionVentas.EN;
+using SysGestionVentas.EN.Pagination;
 using Microsoft.EntityFrameworkCore;
 
 namespace SysGestionVentas.DAL
 {
     public class PersonDAL
     {
+        #region "Métodos Privados"
+
         /// <summary>
         /// Verifica si ya existe una persona con el mismo DUI en la base de datos,
         /// excluyendo el propio registro en caso de modificación.
@@ -38,6 +41,60 @@ namespace SysGestionVentas.DAL
             return await pDBContexto.Person.AnyAsync(
                 p => p.PhoneNumber == pPerson.PhoneNumber && p.PersonId != pPerson.PersonId);
         }
+
+        /// <summary>
+        /// Aplica los filtros de búsqueda contenidos en <see cref="PagedQuery{Person}"/>
+        /// a una consulta <see cref="IQueryable{Person}"/> base.
+        /// No aplica paginación; esta responsabilidad recae en <see cref="BuscarAsync"/>,
+        /// lo que permite reutilizar este método para conteo sin Skip/Take.
+        /// </summary>
+        /// <param name="pQuery">Consulta base sin filtros aplicados.</param>
+        /// <param name="pPagedQuery">Parámetros de filtro, rango de fechas y paginación.</param>
+        /// <returns>
+        /// <see cref="IQueryable{Person}"/> con todos los filtros y el ordenamiento aplicados,
+        /// ordenado por apellido y luego por nombre de forma ascendente.
+        /// </returns>
+        private static IQueryable<Person> QuerySelect(
+            IQueryable<Person> pQuery,
+            PagedQuery<Person> pPagedQuery)
+        {
+            var f = pPagedQuery.Filter;
+
+            if (f.PersonId > 0)
+                pQuery = pQuery.Where(p => p.PersonId == f.PersonId);
+
+            if (!string.IsNullOrWhiteSpace(f.FirstName))
+                pQuery = pQuery.Where(p => p.FirstName!.Contains(f.FirstName));
+
+            if (!string.IsNullOrWhiteSpace(f.LastName))
+                pQuery = pQuery.Where(p => p.LastName!.Contains(f.LastName));
+
+            if (!string.IsNullOrWhiteSpace(f.Adress))
+                pQuery = pQuery.Where(p => p.Adress!.Contains(f.Adress));
+
+            if (!string.IsNullOrWhiteSpace(f.PhoneNumber))
+                pQuery = pQuery.Where(p => p.PhoneNumber!.Contains(f.PhoneNumber));
+
+            if (!string.IsNullOrWhiteSpace(f.Dui))
+                pQuery = pQuery.Where(p => p.Dui!.Contains(f.Dui));
+
+            if (f.StatusId > 0)
+                pQuery = pQuery.Where(p => p.StatusId == f.StatusId);
+
+            if (pPagedQuery.FromDate.HasValue)
+                pQuery = pQuery.Where(p => p.CreatedAt >= pPagedQuery.FromDate.Value);
+
+            if (pPagedQuery.ToDate.HasValue)
+                pQuery = pQuery.Where(p => p.CreatedAt <= pPagedQuery.ToDate.Value);
+
+            return pQuery
+                .OrderBy(p => p.LastName)
+                    .ThenBy(p => p.FirstName);
+        }
+
+        #endregion
+
+        #region "CRUD"
 
         /// <summary>
         /// Registra una nueva persona en la base de datos.
@@ -242,5 +299,72 @@ namespace SysGestionVentas.DAL
             }
             return result;
         }
+
+        #endregion
+
+        #region "Búsqueda Avanzada con Paginación"
+
+        /// <summary>
+        /// Realiza una búsqueda avanzada de personas con soporte para paginación
+        /// según los criterios especificados en <paramref name="pPagedQuery"/>.
+        /// Si <c>Top</c> es mayor a cero, devuelve únicamente los primeros <c>Top</c> registros
+        /// ignorando los parámetros de paginación.
+        /// </summary>
+        /// <param name="pPagedQuery">
+        /// Objeto <see cref="PagedQuery{Person}"/> que define los filtros, el tamaño de página,
+        /// el número de página y otros parámetros de búsqueda. No puede ser <c>null</c>.
+        /// </param>
+        /// <returns>
+        /// Objeto <see cref="PagedResult{Person}"/> con la lista de personas encontradas
+        /// e información de paginación (total de registros, página actual, tamaño de página).
+        /// </returns>
+        /// <exception cref="Exception">
+        /// Se lanza si ocurre un error durante la ejecución de la consulta o el acceso a la base de datos.
+        /// </exception>
+        public static async Task<PagedResult<Person>> BuscarAsync(PagedQuery<Person> pPagedQuery)
+        {
+            try
+            {
+                using (var dbContexto = new DbContexto())
+                {
+                    var baseQuery = dbContexto.Person
+                        .Include(p => p.Status)
+                        .AsQueryable();
+
+                    var filtered = QuerySelect(baseQuery, pPagedQuery);
+                    int total    = await filtered.CountAsync();
+
+                    List<Person> items;
+
+                    if (pPagedQuery.Top > 0)
+                    {
+                        items = await filtered
+                            .Take(pPagedQuery.Top)
+                            .ToListAsync();
+                    }
+                    else
+                    {
+                        items = await filtered
+                            .Skip(pPagedQuery.Skip)
+                            .Take(pPagedQuery.PageSize)
+                            .ToListAsync();
+                    }
+
+                    return new PagedResult<Person>
+                    {
+                        Items       = items,
+                        TotalCount  = total,
+                        CurrentPage = pPagedQuery.Page,
+                        PageSize    = pPagedQuery.PageSize
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        #endregion
     }
 }
