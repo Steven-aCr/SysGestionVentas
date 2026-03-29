@@ -1,10 +1,104 @@
 ﻿using SysGestionVentas.EN;
 using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.EN.Pagination;
 
 namespace SysGestionVentas.DAL
 {
     public class InventoryDAL
     {
+        /// <summary>
+        /// Aplica los filtros y el ordenamiento a la consulta base de inventario.
+        /// Los parámetros con valor <c>0</c> son ignorados en el filtro.
+        /// </summary>
+        /// <param name="pQuery">Consulta base sobre la entidad <see cref="Inventory"/>.</param>
+        /// <param name="pagedQuery">
+        /// Objeto <see cref="PagedQuery{Inventory}"/> que contiene el filtro con:
+        /// <list type="bullet">
+        ///   <item><description><c>InventoryId</c>: filtra por ID de inventario (0 = sin filtro).</description></item>
+        ///   <item><description><c>ProductId</c>: filtra por ID de producto asociado (0 = sin filtro).</description></item>
+        /// </list>
+        /// </param>
+        /// <returns>
+        /// <see cref="IQueryable{Inventory}"/> con los filtros aplicados,
+        /// ordenado por <c>InventoryId</c> de forma ascendente.
+        /// </returns>
+        private static IQueryable<Inventory> QuerySelect(IQueryable<Inventory> pQuery, PagedQuery<Inventory> pagedQuery)
+        {
+            var F = pagedQuery.Filter;
+
+            if (F.InventoryId > 0)
+                pQuery = pQuery.Where(i => i.InventoryId == F.InventoryId);
+
+            if (F.ProductId > 0)
+                pQuery = pQuery.Where(i => i.ProductId == F.ProductId);
+
+            return pQuery.OrderBy(i => i.InventoryId);
+        }
+
+        /// <summary>
+        /// Obtiene una lista paginada de registros de inventario aplicando los filtros
+        /// definidos en <paramref name="pagedQuery"/>.
+        /// </summary>
+        /// <param name="pagedQuery">
+        /// Objeto <see cref="PagedQuery{Inventory}"/> con los parámetros de filtro y paginación:
+        /// <list type="bullet">
+        ///   <item><description><c>Filter</c>: criterios de búsqueda opcionales.</description></item>
+        ///   <item><description><c>Top</c>: si es mayor a 0, limita directamente los resultados sin paginar.</description></item>
+        ///   <item><description><c>Skip</c> / <c>PageSize</c>: para paginación estándar.</description></item>
+        /// </list>
+        /// </param>
+        /// <returns>
+        /// Objeto <see cref="PagedResult{Inventory}"/> con los items encontrados,
+        /// el total de registros, la página actual y el tamaño de página.
+        /// </returns>
+        /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
+        public static async Task<PagedResult<Inventory>> BuscarAsync(PagedQuery<Inventory> pagedQuery)
+        {
+            try
+            {
+                using (var dbContexto = new DbContexto())
+                {
+                    var baseQuery = dbContexto.Inventory
+                        .Include(i => i.Product)
+                        .AsQueryable();
+
+                    var filtered = QuerySelect(baseQuery, pagedQuery);
+
+                    int total = await filtered.CountAsync();
+
+                    List<Inventory> items;
+
+                    if (pagedQuery.Top > 0)
+                    {
+                        // Modo Top: retorna solo los primeros N registros sin paginación estándar.
+                        items = await filtered
+                            .Take(pagedQuery.Top)
+                            .ToListAsync();
+                    }
+                    else
+                    {
+                        // Modo paginado: aplica salto y tamaño de página.
+                        items = await filtered
+                            .Skip(pagedQuery.Skip)
+                            .Take(pagedQuery.PageSize)
+                            .ToListAsync();
+                    }
+
+                    return new PagedResult<Inventory>
+                    {
+                        Items = items,
+                        TotalCount = total,
+                        CurrentPage = pagedQuery.Page,
+                        PageSize = pagedQuery.PageSize
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
         /// <summary>
         /// Registra un nuevo registro de inventario en la base de datos.
         /// </summary>
@@ -124,7 +218,7 @@ namespace SysGestionVentas.DAL
 
         /// <summary>
         /// Obtiene un registro de inventario específico por su identificador, incluyendo
-        /// sus relaciones con <see cref="ProductList"/> y <see cref="Status"/>.
+        /// sus relaciones con <see cref="Product"/> y <see cref="Status"/>.
         /// </summary>
         /// <param name="pInventory">Objeto <see cref="Inventory"/> con el <c>InventoryId</c> a buscar.</param>
         /// <returns>

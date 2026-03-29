@@ -1,10 +1,68 @@
 ﻿using SysGestionVentas.EN;
+using SysGestionVentas.EN.Pagination;
 using Microsoft.EntityFrameworkCore;
+using System.Net.WebSockets;
 
 namespace SysGestionVentas.DAL
 {
     public class ClientDAL
     {
+
+        private static IQueryable<Client> QuerySelect(IQueryable<Client> pQuery, PagedQuery<Client> pagedQuery)
+        {
+            var F = pagedQuery.Filter;
+
+            if (F.ClientId > 0)
+                pQuery = pQuery.Where(c => c.ClientId == F.ClientId);
+            if (F.PersonId > 0)
+                pQuery = pQuery.Where(c => c.PersonId == F.PersonId);
+            return pQuery.OrderBy(c => c.ClientId);
+        }
+
+        public static async Task<PagedResult<Client>> BuscarAsync(PagedQuery<Client> pagedQuery)
+        {
+            try
+            {
+                using (var dbContexto = new DbContexto())
+                {
+                    var baseQuery = dbContexto.Client
+                        .Include(c => c.Person)
+                        .AsQueryable();
+                    var Filtered = QuerySelect(baseQuery, pagedQuery);
+                    int Total = await Filtered.CountAsync();
+                    List<Client> items;
+                    if (pagedQuery.Top < 0)
+                    {
+                        items = await Filtered
+                            .Take(pagedQuery.Top)
+                            .ToListAsync();
+                    }
+                    else
+                    {
+                        items = await Filtered
+                            .Skip(pagedQuery.Skip)
+                            .Take(pagedQuery.PageSize)
+                            .ToListAsync();
+                    }
+                    return new PagedResult<Client>
+                    {
+                        Items = items,
+                        TotalCount = Total,
+                        CurrentPage = pagedQuery.Page,
+                        PageSize = pagedQuery.PageSize
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
+
+        }
+
+
+
         /// <summary>
         /// Registra un nuevo cliente en la base de datos.
         /// </summary>
@@ -31,6 +89,7 @@ namespace SysGestionVentas.DAL
             }
             return result;
         }
+
 
         /// <summary>
         /// Modifica los datos de un cliente existente en la base de datos.

@@ -1,10 +1,67 @@
 ﻿using SysGestionVentas.EN;
 using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.EN.Pagination;
 
 namespace SysGestionVentas.DAL
 {
     public class SupplierDAL
     {
+        public static IQueryable<Supplier> QuerySelect(IQueryable<Supplier> pQuery, PagedQuery<Supplier> pagedQuery)
+        {
+            var F = pagedQuery.Filter;
+
+            if (F.SupplierId > 0)
+                pQuery = pQuery . Where(c=> c.SupplierId == F.SupplierId);
+            if (F.PersonId > 0)
+                pQuery = pQuery.Where(c =>  c.PersonId == F.PersonId);
+            return pQuery.OrderBy(c => c.SupplierId);
+        }
+
+        public static async Task<PagedResult<Supplier>> BuscarAsync(PagedQuery<Supplier> pagedQuery)
+        {
+            try
+            {
+
+
+                using (var dbContexto = new DbContexto())
+                {
+                    var baseQuery = dbContexto.Supplier
+                        .Include(c => c.SupplierId)
+                        .AsQueryable();
+                    var Filtered = QuerySelect(baseQuery, pagedQuery);
+                    int Total = await Filtered.CountAsync();
+                    List<Supplier> items;
+                    if (pagedQuery.Top < 0)
+                    {
+                        items = await Filtered
+                           .Take(pagedQuery.Top)
+                           .ToListAsync();
+                    }
+                    else
+                    {
+                        items = await Filtered
+                            .Skip(pagedQuery.Skip)
+                            .Take(pagedQuery.PageSize)
+                            .ToListAsync();
+
+                    }
+                    return new PagedResult<Supplier>
+                    {
+                        Items = items,
+                        TotalCount = Total,
+                        CurrentPage = pagedQuery.Page,
+                        PageSize = pagedQuery.PageSize,
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
+
+        }
+
         /// <summary>
         /// Verifica si ya existe un proveedor con el mismo NIT en la base de datos,
         /// excluyendo el propio registro en caso de modificación.
