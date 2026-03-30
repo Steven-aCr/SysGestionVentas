@@ -37,5 +37,6 @@ namespace SysGestionVentas.EN
         [ForeignKey("Inventory")]
         public int InventoryId { get; set; }
         public Inventory? Inventory { get; set; }
+        public DateTime MovementDate { get; set; }
     }
 }

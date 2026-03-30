@@ -8,7 +8,7 @@ namespace SysGestionVentas.DAL
     public class InventoryMovementDAL
     {
         #region "CRUD"
-              
+
         /// <summary>
         /// Registra un nuevo movimiento de inventario en la base de datos
         /// creando su propio contexto de base de datos internamente.
@@ -163,60 +163,82 @@ namespace SysGestionVentas.DAL
 
         #endregion
 
-/// <summary>
-/// Obtiene una lista de movimientos de inventario filtrada por fechas y con paginación.
-/// </summary>
-/// <param name="pagedQuery">Objeto PagedQuery que contiene los filtros de fecha, página y el filtro de InventoryMovement.</param>
-/// <returns>Lista paginada de Movimientos de Inventario.</returns>
-public static async Task<List<InventoryMovement>> ObtenerPaginadoYFiltradoAsync(PagedQuery<InventoryMovement> pagedQuery)
-{
-    var result = new List<InventoryMovement>();
-    try
-    {
-        using (var dbContexto = new DbContexto())
+        #region "Search"
+
+        /// Método privado para QuerySelect:
+        private static IQueryable<InventoryMovement> QuerySelect(
+            IQueryable<InventoryMovement> pQuery,
+            PagedQuery<InventoryMovement> pPagedQuery)
         {
-            // Empezamos la consulta incluyendo las relaciones para que devuelva el Producto, Tipo y Estado
-            var query = dbContexto.InventoryMovement
-                .Include(i => i.Product)
-                .Include(i => i.MovementType)
-                .Include(i => i.Status)
-                .AsQueryable();
+            var f = pPagedQuery.Filter;
 
-            // 1. Aplicar los filtros normales si vienen en pagedQuery.Filter
-            if (pagedQuery.Filter != null)
-            {
-                if (pagedQuery.Filter.ProductId > 0)
-                    query = query.Where(i => i.ProductId == pagedQuery.Filter.ProductId);
+            if (f.InventoryId > 0)
+                pQuery = pQuery.Where(im => im.InventoryId == f.InventoryId);
 
-                if (pagedQuery.Filter.MovementTypeId > 0)
-                    query = query.Where(i => i.MovementTypeId == pagedQuery.Filter.MovementTypeId);
+            if (f.MovementTypeId > 0)
+                pQuery = pQuery.Where(im => im.MovementTypeId == f.MovementTypeId);
 
-                if (pagedQuery.Filter.StatusId > 0)
-                    query = query.Where(i => i.StatusId == pagedQuery.Filter.StatusId);
-            }
+            if (f.CreatedByUser > 0)
+                pQuery = pQuery.Where(im => im.CreatedByUser == f.CreatedByUser);
 
-            // 2. Aplicar el FILTRO DE FECHAS (Usando tu propiedad MovementDate)
-            if (pagedQuery.FromDate.HasValue)
-                query = query.Where(i => i.MovementDate >= pagedQuery.FromDate.Value);
+            if (pPagedQuery.FromDate.HasValue)
+                pQuery = pQuery.Where(im => im.MovementDate >= pPagedQuery.FromDate.Value);
 
-            if (pagedQuery.ToDate.HasValue)
-                query = query.Where(i => i.MovementDate <= pagedQuery.ToDate.Value);
+            if (pPagedQuery.ToDate.HasValue)
+                pQuery = pQuery.Where(im => im.MovementDate <= pPagedQuery.ToDate.Value);
 
-            // 3. Aplicar Paginación (para no saturar la memoria)
-            int skip = (pagedQuery.Page - 1) * pagedQuery.PageSize;
-
-            // Ordenamos por fecha del movimiento de la más reciente a la más antigua
-            result = await query.OrderByDescending(i => i.MovementDate)
-                                .Skip(skip)
-                                .Take(pagedQuery.PageSize)
-                                .ToListAsync();
+            return pQuery.OrderByDescending(im => im.MovementDate);
         }
-    }
-    catch (Exception ex)
-    {
-        throw new Exception(ex.Message);
-    }
-    return result;
-}
+
+        /// Método público para búsqueda con filtros y paginación:
+        public static async Task<PagedResult<InventoryMovement>> BuscarAsync(
+            PagedQuery<InventoryMovement> pPagedQuery)
+        {
+            try
+            {
+                using (var dbContexto = new DbContexto())
+                {
+                    var baseQuery = dbContexto.InventoryMovement
+                        .Include(im => im.MovementType)
+                        .Include(im => im.Inventory)
+                            .ThenInclude(i => i!.Product)
+                        .Include(im => im.CreatedBy)
+                        .AsQueryable();
+
+                    var filtered = QuerySelect(baseQuery, pPagedQuery);
+
+                    int total = await filtered.CountAsync();
+
+                    List<InventoryMovement> items;
+                    if (pPagedQuery.Top > 0)
+                    {
+                        items = await filtered
+                            .Take(pPagedQuery.Top)
+                            .ToListAsync();
+                    }
+                    else
+                    {
+                        items = await filtered
+                            .Skip(pPagedQuery.Skip)
+                            .Take(pPagedQuery.PageSize)
+                            .ToListAsync();
+                    }
+
+                    return new PagedResult<InventoryMovement>
+                    {
+                        Items = items,
+                        TotalCount = total,
+                        CurrentPage = pPagedQuery.Page,
+                        PageSize = pPagedQuery.PageSize
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        #endregion
     }
 }

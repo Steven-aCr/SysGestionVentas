@@ -1,11 +1,45 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SysGestionVentas.EN;
-using SysGestionVentas.EN.Pagination; 
+using SysGestionVentas.EN.Pagination;
 
 namespace SysGestionVentas.DAL
 {
     public class DocumentDAL
     {
+        #region "Métodos Privados"
+
+        /// Método privado para QuerySelect:
+        private static IQueryable<Document> QuerySelect(
+            IQueryable<Document> pQuery,
+            PagedQuery<Document> pPagedQuery)
+        {
+            var f = pPagedQuery.Filter;
+
+            if (!string.IsNullOrEmpty(f.DocNumber))
+                pQuery = pQuery.Where(d => d.DocNumber!.Contains(f.DocNumber));
+
+            if (f.DocTypeId > 0)
+                pQuery = pQuery.Where(d => d.DocTypeId == f.DocTypeId);
+
+            if (f.PersonId > 0)
+                pQuery = pQuery.Where(d => d.PersonId == f.PersonId);
+
+            if (f.StatusId > 0)
+                pQuery = pQuery.Where(d => d.StatusId == f.StatusId);
+
+            if (pPagedQuery.FromDate.HasValue)
+                pQuery = pQuery.Where(d => d.IssueDate >= pPagedQuery.FromDate.Value);
+
+            if (pPagedQuery.ToDate.HasValue)
+                pQuery = pQuery.Where(d => d.IssueDate <= pPagedQuery.ToDate.Value);
+
+            return pQuery.OrderByDescending(d => d.IssueDate);
+        }
+
+        #endregion
+
+        #region "CRUD"
+
         /// <summary>
         /// Registra un nuevo documento en la base de datos.
         /// </summary>
@@ -198,63 +232,59 @@ namespace SysGestionVentas.DAL
             return result;
         }
 
-/// <summary>
-/// Obtiene una lista de documentos filtrada por fechas y con paginación.
-/// </summary>
-/// <param name="pagedQuery">Objeto PagedQuery que contiene los filtros de fecha, página y el filtro de Document.</param>
-/// <returns>Lista paginada de Documentos.</returns>
-public static async Task<List<Document>> ObtenerPaginadoYFiltradoAsync(PagedQuery<Document> pagedQuery)
-{
-    var result = new List<Document>();
-    try
-    {
-        using (var dbContexto = new DbContexto())
+        #endregion
+
+        #region "Search"
+
+        /// Método público para búsqueda con filtros y paginación:
+        public static async Task<PagedResult<Document>> BuscarAsync(
+            PagedQuery<Document> pPagedQuery)
         {
-            // Empezamos la consulta incluyendo las relaciones (igual que en tu ObtenerTodosAsync)
-            var query = dbContexto.Document
-                .Include(d => d.DocumentType)
-                .Include(d => d.Person)
-                .Include(d => d.Status)
-                .Include(d => d.CreatedBy)
-                .AsQueryable();
-
-            // 1. Aplicar los filtros normales si vienen en pagedQuery.Filter
-            if (pagedQuery.Filter != null)
+            try
             {
-                if (!string.IsNullOrEmpty(pagedQuery.Filter.DocNumber))
-                    query = query.Where(d => d.DocNumber!.Contains(pagedQuery.Filter.DocNumber));
+                using (var dbContexto = new DbContexto())
+                {
+                    var baseQuery = dbContexto.Document
+                        .Include(d => d.DocumentType)
+                        .Include(d => d.Person)
+                        .Include(d => d.Status)
+                        .Include(d => d.CreatedBy)
+                        .AsQueryable();
 
-                if (pagedQuery.Filter.DocTypeId > 0)
-                    query = query.Where(d => d.DocTypeId == pagedQuery.Filter.DocTypeId);
+                    var filtered = QuerySelect(baseQuery, pPagedQuery);
 
-                if (pagedQuery.Filter.PersonId > 0)
-                    query = query.Where(d => d.PersonId == pagedQuery.Filter.PersonId);
+                    int total = await filtered.CountAsync();
 
-                if (pagedQuery.Filter.StatusId > 0)
-                    query = query.Where(d => d.StatusId == pagedQuery.Filter.StatusId);
+                    List<Document> items;
+                    if (pPagedQuery.Top > 0)
+                    {
+                        items = await filtered
+                            .Take(pPagedQuery.Top)
+                            .ToListAsync();
+                    }
+                    else
+                    {
+                        items = await filtered
+                            .Skip(pPagedQuery.Skip)
+                            .Take(pPagedQuery.PageSize)
+                            .ToListAsync();
+                    }
+
+                    return new PagedResult<Document>
+                    {
+                        Items = items,
+                        TotalCount = total,
+                        CurrentPage = pPagedQuery.Page,
+                        PageSize = pPagedQuery.PageSize
+                    };
+                }
             }
-
-            // 2. Aplicar el FILTRO DE FECHAS (Lo que te están pidiendo)
-            if (pagedQuery.FromDate.HasValue)
-                query = query.Where(d => d.IssueDate >= pagedQuery.FromDate.Value);
-
-            if (pagedQuery.ToDate.HasValue)
-                query = query.Where(d => d.IssueDate <= pagedQuery.ToDate.Value);
-
-            // 3. Aplicar Paginación (para no saturar la memoria)
-            int skip = (pagedQuery.Page - 1) * pagedQuery.PageSize;
-
-            result = await query.OrderByDescending(d => d.IssueDate)
-                                .Skip(skip)
-                                .Take(pagedQuery.PageSize)
-                                .ToListAsync();
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
-    }
-    catch (Exception ex)
-    {
-        throw new Exception(ex.Message);
-    }
-    return result;
-}
+
+        #endregion
     }
 }
