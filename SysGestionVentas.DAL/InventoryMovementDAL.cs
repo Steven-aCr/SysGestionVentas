@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
+using SysGestionVentas.EN.Pagination;
 
 namespace SysGestionVentas.DAL
 {
@@ -160,5 +162,61 @@ namespace SysGestionVentas.DAL
         }
 
         #endregion
+
+/// <summary>
+/// Obtiene una lista de movimientos de inventario filtrada por fechas y con paginación.
+/// </summary>
+/// <param name="pagedQuery">Objeto PagedQuery que contiene los filtros de fecha, página y el filtro de InventoryMovement.</param>
+/// <returns>Lista paginada de Movimientos de Inventario.</returns>
+public static async Task<List<InventoryMovement>> ObtenerPaginadoYFiltradoAsync(PagedQuery<InventoryMovement> pagedQuery)
+{
+    var result = new List<InventoryMovement>();
+    try
+    {
+        using (var dbContexto = new DbContexto())
+        {
+            // Empezamos la consulta incluyendo las relaciones para que devuelva el Producto, Tipo y Estado
+            var query = dbContexto.InventoryMovement
+                .Include(i => i.Product)
+                .Include(i => i.MovementType)
+                .Include(i => i.Status)
+                .AsQueryable();
+
+            // 1. Aplicar los filtros normales si vienen en pagedQuery.Filter
+            if (pagedQuery.Filter != null)
+            {
+                if (pagedQuery.Filter.ProductId > 0)
+                    query = query.Where(i => i.ProductId == pagedQuery.Filter.ProductId);
+
+                if (pagedQuery.Filter.MovementTypeId > 0)
+                    query = query.Where(i => i.MovementTypeId == pagedQuery.Filter.MovementTypeId);
+
+                if (pagedQuery.Filter.StatusId > 0)
+                    query = query.Where(i => i.StatusId == pagedQuery.Filter.StatusId);
+            }
+
+            // 2. Aplicar el FILTRO DE FECHAS (Usando tu propiedad MovementDate)
+            if (pagedQuery.FromDate.HasValue)
+                query = query.Where(i => i.MovementDate >= pagedQuery.FromDate.Value);
+
+            if (pagedQuery.ToDate.HasValue)
+                query = query.Where(i => i.MovementDate <= pagedQuery.ToDate.Value);
+
+            // 3. Aplicar Paginación (para no saturar la memoria)
+            int skip = (pagedQuery.Page - 1) * pagedQuery.PageSize;
+
+            // Ordenamos por fecha del movimiento de la más reciente a la más antigua
+            result = await query.OrderByDescending(i => i.MovementDate)
+                                .Skip(skip)
+                                .Take(pagedQuery.PageSize)
+                                .ToListAsync();
+        }
+    }
+    catch (Exception ex)
+    {
+        throw new Exception(ex.Message);
+    }
+    return result;
+}
     }
 }

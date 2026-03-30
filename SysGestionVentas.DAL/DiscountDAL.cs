@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
+using SysGestionVentas.EN.Pagination;
 
 namespace SysGestionVentas.DAL
 {
@@ -283,5 +285,57 @@ namespace SysGestionVentas.DAL
         }
 
         #endregion
+
+/// <summary>
+/// Obtiene una lista de descuentos filtrada por fechas y con paginación.
+/// </summary>
+/// <param name="pagedQuery">Objeto PagedQuery que contiene los filtros de fecha, página y el filtro de Discount.</param>
+/// <returns>Lista paginada de Descuentos.</returns>
+public static async Task<List<Discount>> ObtenerPaginadoYFiltradoAsync(PagedQuery<Discount> pagedQuery)
+{
+    var result = new List<Discount>();
+    try
+    {
+        using (var dbContexto = new DbContexto())
+        {
+            // Empezamos la consulta
+            var query = dbContexto.Discount.AsQueryable();
+
+            // 1. Aplicar los filtros normales si vienen en pagedQuery.Filter
+            if (pagedQuery.Filter != null)
+            {
+                // IMPORTANTE: Si tu entidad Discount tiene un campo "Name" u otro campo de texto, descomenta esto y ajústalo:
+                // if (!string.IsNullOrEmpty(pagedQuery.Filter.Name))
+                //     query = query.Where(d => d.Name.Contains(pagedQuery.Filter.Name));
+
+                // Si tienes un campo de estado (StatusId), descomenta esto:
+                // if (pagedQuery.Filter.StatusId > 0)
+                //     query = query.Where(d => d.StatusId == pagedQuery.Filter.StatusId);
+            }
+
+            // 2. Aplicar el FILTRO DE FECHAS
+            // IMPORTANTE: Verifica que tu clase Discount tenga el campo "StartDate". Si se llama "CreationDate", cámbialo aquí.
+            if (pagedQuery.FromDate.HasValue)
+                query = query.Where(d => d.StartDate >= pagedQuery.FromDate.Value);
+
+            if (pagedQuery.ToDate.HasValue)
+                query = query.Where(d => d.EndDate <= pagedQuery.ToDate.Value);
+
+            // 3. Aplicar Paginación (para no saturar la memoria)
+            int skip = (pagedQuery.Page - 1) * pagedQuery.PageSize;
+
+            // Ordenamos por Id o por Fecha. (Cambia "DiscountId" si tu llave primaria se llama solo "Id")
+            result = await query.OrderByDescending(d => d.DiscountId)
+                                .Skip(skip)
+                                .Take(pagedQuery.PageSize)
+                                .ToListAsync();
+        }
+    }
+    catch (Exception ex)
+    {
+        throw new Exception(ex.Message);
+    }
+    return result;
+}
     }
 }
