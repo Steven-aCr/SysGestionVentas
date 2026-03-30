@@ -1,66 +1,12 @@
 ﻿using SysGestionVentas.EN;
-using Microsoft.EntityFrameworkCore;
 using SysGestionVentas.EN.Pagination;
+using Microsoft.EntityFrameworkCore;
 
 namespace SysGestionVentas.DAL
 {
     public class SupplierDAL
     {
-        public static IQueryable<Supplier> QuerySelect(IQueryable<Supplier> pQuery, PagedQuery<Supplier> pagedQuery)
-        {
-            var F = pagedQuery.Filter;
-
-            if (F.SupplierId > 0)
-                pQuery = pQuery . Where(c=> c.SupplierId == F.SupplierId);
-            if (F.PersonId > 0)
-                pQuery = pQuery.Where(c =>  c.PersonId == F.PersonId);
-            return pQuery.OrderBy(c => c.SupplierId);
-        }
-
-        public static async Task<PagedResult<Supplier>> BuscarAsync(PagedQuery<Supplier> pagedQuery)
-        {
-            try
-            {
-
-
-                using (var dbContexto = new DbContexto())
-                {
-                    var baseQuery = dbContexto.Supplier
-                        .Include(c => c.SupplierId)
-                        .AsQueryable();
-                    var Filtered = QuerySelect(baseQuery, pagedQuery);
-                    int Total = await Filtered.CountAsync();
-                    List<Supplier> items;
-                    if (pagedQuery.Top < 0)
-                    {
-                        items = await Filtered
-                           .Take(pagedQuery.Top)
-                           .ToListAsync();
-                    }
-                    else
-                    {
-                        items = await Filtered
-                            .Skip(pagedQuery.Skip)
-                            .Take(pagedQuery.PageSize)
-                            .ToListAsync();
-
-                    }
-                    return new PagedResult<Supplier>
-                    {
-                        Items = items,
-                        TotalCount = Total,
-                        CurrentPage = pagedQuery.Page,
-                        PageSize = pagedQuery.PageSize,
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-
-
-        }
+        #region "Métodos Privados"
 
         /// <summary>
         /// Verifica si ya existe un proveedor con el mismo NIT en la base de datos,
@@ -87,6 +33,49 @@ namespace SysGestionVentas.DAL
             return await pDBContexto.Supplier.AnyAsync(
                 s => s.Nrc == pSupplier.Nrc && s.SupplierId != pSupplier.SupplierId);
         }
+
+        /// <summary>
+        /// Aplica los filtros de búsqueda contenidos en <see cref="PagedQuery{Supplier}"/>
+        /// a una consulta <see cref="IQueryable{Supplier}"/> base.
+        /// No aplica paginación; esta responsabilidad recae en <see cref="BuscarAsync"/>,
+        /// lo que permite reutilizar este método para conteo sin Skip/Take.
+        /// </summary>
+        /// <param name="pQuery">Consulta base sin filtros aplicados.</param>
+        /// <param name="pPagedQuery">Parámetros de filtro, rango de fechas y paginación.</param>
+        /// <returns>
+        /// <see cref="IQueryable{Supplier}"/> con todos los filtros y el ordenamiento aplicados,
+        /// ordenado por nombre de empresa de forma ascendente.
+        /// </returns>
+        private static IQueryable<Supplier> QuerySelect(
+            IQueryable<Supplier> pQuery,
+            PagedQuery<Supplier> pPagedQuery)
+        {
+            var f = pPagedQuery.Filter;
+
+            if (f.SupplierId > 0)
+                pQuery = pQuery.Where(s => s.SupplierId == f.SupplierId);
+
+            if (f.PersonId > 0)
+                pQuery = pQuery.Where(s => s.PersonId == f.PersonId);
+
+            if (!string.IsNullOrWhiteSpace(f.CompanyName))
+                pQuery = pQuery.Where(s => s.CompanyName!.Contains(f.CompanyName));
+
+            if (!string.IsNullOrWhiteSpace(f.Nit))
+                pQuery = pQuery.Where(s => s.Nit!.Contains(f.Nit));
+
+            if (!string.IsNullOrWhiteSpace(f.Nrc))
+                pQuery = pQuery.Where(s => s.Nrc!.Contains(f.Nrc));
+
+            if (f.StatusId > 0)
+                pQuery = pQuery.Where(s => s.StatusId == f.StatusId);
+
+            return pQuery.OrderBy(s => s.CompanyName);
+        }
+
+        #endregion
+
+        #region "CRUD"
 
         /// <summary>
         /// Registra un nuevo proveedor en la base de datos.
@@ -222,7 +211,8 @@ namespace SysGestionVentas.DAL
 
         /// <summary>
         /// Obtiene un proveedor específico por su identificador, incluyendo
-        /// sus relaciones con <see cref="Person"/> y <see cref="Status"/>.
+        /// sus relaciones con <see cref="Person"/>, el <see cref="Status"/> de la persona
+        /// y el <see cref="Status"/> propio del proveedor.
         /// </summary>
         /// <param name="pSupplier">Objeto <see cref="Supplier"/> con el <c>SupplierId</c> a buscar.</param>
         /// <returns>
@@ -291,5 +281,74 @@ namespace SysGestionVentas.DAL
             }
             return result;
         }
+
+        #endregion
+
+        #region "Búsqueda Avanzada con Paginación"
+
+        /// <summary>
+        /// Realiza una búsqueda avanzada de proveedores con soporte para paginación
+        /// según los criterios especificados en <paramref name="pPagedQuery"/>.
+        /// Si <c>Top</c> es mayor a cero, devuelve únicamente los primeros <c>Top</c> registros
+        /// ignorando los parámetros de paginación.
+        /// </summary>
+        /// <param name="pPagedQuery">
+        /// Objeto <see cref="PagedQuery{Supplier}"/> que define los filtros, el tamaño de página,
+        /// el número de página y otros parámetros de búsqueda. No puede ser <c>null</c>.
+        /// </param>
+        /// <returns>
+        /// Objeto <see cref="PagedResult{Supplier}"/> con la lista de proveedores encontrados
+        /// e información de paginación (total de registros, página actual, tamaño de página).
+        /// </returns>
+        /// <exception cref="Exception">
+        /// Se lanza si ocurre un error durante la ejecución de la consulta o el acceso a la base de datos.
+        /// </exception>
+        public static async Task<PagedResult<Supplier>> BuscarAsync(PagedQuery<Supplier> pPagedQuery)
+        {
+            try
+            {
+                using (var dbContexto = new DbContexto())
+                {
+                    var baseQuery = dbContexto.Supplier
+                        .Include(s => s.Person)
+                            .ThenInclude(p => p!.Status)
+                        .Include(s => s.Status)
+                        .AsQueryable();
+
+                    var filtered = QuerySelect(baseQuery, pPagedQuery);
+                    int total = await filtered.CountAsync();
+
+                    List<Supplier> items;
+
+                    if (pPagedQuery.Top > 0)
+                    {
+                        items = await filtered
+                            .Take(pPagedQuery.Top)
+                            .ToListAsync();
+                    }
+                    else
+                    {
+                        items = await filtered
+                            .Skip(pPagedQuery.Skip)
+                            .Take(pPagedQuery.PageSize)
+                            .ToListAsync();
+                    }
+
+                    return new PagedResult<Supplier>
+                    {
+                        Items = items,
+                        TotalCount = total,
+                        CurrentPage = pPagedQuery.Page,
+                        PageSize = pPagedQuery.PageSize
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        #endregion
     }
 }

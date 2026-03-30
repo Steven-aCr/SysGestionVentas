@@ -451,7 +451,7 @@ namespace SysGestionVentas.DAL
                         .Include(u => u.Rol)
                         .Include(u => u.Person)
                         .Include(u => u.Status)
-                        .FirstOrDefaultAsync(u => u.Email == pEmail && u.Status.Name != "Activo");
+                        .FirstOrDefaultAsync(u => u.Email == pEmail && u.Status.Name == "Activo");
                     if (user == null)
                         throw new Exception("No se encontró un usuario con ese correo electrónico.");
                     string hash = EncriptarSHA256(pPassword);

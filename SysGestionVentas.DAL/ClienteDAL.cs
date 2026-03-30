@@ -1,67 +1,44 @@
 ﻿using SysGestionVentas.EN;
 using SysGestionVentas.EN.Pagination;
 using Microsoft.EntityFrameworkCore;
-using System.Net.WebSockets;
 
 namespace SysGestionVentas.DAL
 {
     public class ClientDAL
     {
+        #region "Métodos Privados"
 
-        private static IQueryable<Client> QuerySelect(IQueryable<Client> pQuery, PagedQuery<Client> pagedQuery)
+        /// <summary>
+        /// Aplica los filtros de búsqueda contenidos en <see cref="PagedQuery{Client}"/>
+        /// a una consulta <see cref="IQueryable{Client}"/> base.
+        /// No aplica paginación; esta responsabilidad recae en <see cref="BuscarAsync"/>,
+        /// lo que permite reutilizar este método para conteo sin Skip/Take.
+        /// </summary>
+        /// <param name="pQuery">Consulta base sin filtros aplicados.</param>
+        /// <param name="pPagedQuery">Parámetros de filtro, rango de fechas y paginación.</param>
+        /// <returns>
+        /// <see cref="IQueryable{Client}"/> con todos los filtros y el ordenamiento aplicados,
+        /// ordenado por apellido de la persona asociada de forma ascendente.
+        /// </returns>
+        private static IQueryable<Client> QuerySelect(
+            IQueryable<Client> pQuery,
+            PagedQuery<Client> pPagedQuery)
         {
-            var F = pagedQuery.Filter;
+            var f = pPagedQuery.Filter;
 
-            if (F.ClientId > 0)
-                pQuery = pQuery.Where(c => c.ClientId == F.ClientId);
-            if (F.PersonId > 0)
-                pQuery = pQuery.Where(c => c.PersonId == F.PersonId);
-            return pQuery.OrderBy(c => c.ClientId);
+            if (f.ClientId > 0)
+                pQuery = pQuery.Where(c => c.ClientId == f.ClientId);
+
+            if (f.PersonId > 0)
+                pQuery = pQuery.Where(c => c.PersonId == f.PersonId);
+
+            return pQuery.OrderBy(c => c.Person!.LastName)
+                             .ThenBy(c => c.Person!.FirstName);
         }
 
-        public static async Task<PagedResult<Client>> BuscarAsync(PagedQuery<Client> pagedQuery)
-        {
-            try
-            {
-                using (var dbContexto = new DbContexto())
-                {
-                    var baseQuery = dbContexto.Client
-                        .Include(c => c.Person)
-                        .AsQueryable();
-                    var Filtered = QuerySelect(baseQuery, pagedQuery);
-                    int Total = await Filtered.CountAsync();
-                    List<Client> items;
-                    if (pagedQuery.Top < 0)
-                    {
-                        items = await Filtered
-                            .Take(pagedQuery.Top)
-                            .ToListAsync();
-                    }
-                    else
-                    {
-                        items = await Filtered
-                            .Skip(pagedQuery.Skip)
-                            .Take(pagedQuery.PageSize)
-                            .ToListAsync();
-                    }
-                    return new PagedResult<Client>
-                    {
-                        Items = items,
-                        TotalCount = Total,
-                        CurrentPage = pagedQuery.Page,
-                        PageSize = pagedQuery.PageSize
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+        #endregion
 
-
-        }
-
-
+        #region "CRUD"
 
         /// <summary>
         /// Registra un nuevo cliente en la base de datos.
@@ -89,7 +66,6 @@ namespace SysGestionVentas.DAL
             }
             return result;
         }
-
 
         /// <summary>
         /// Modifica los datos de un cliente existente en la base de datos.
@@ -239,6 +215,7 @@ namespace SysGestionVentas.DAL
                             (pClient.Person!.StatusId == 0 || c.Person!.StatusId == pClient.Person.StatusId)
                         )
                         .OrderBy(c => c.Person!.LastName)
+                            .ThenBy(c => c.Person!.FirstName)
                         .ToListAsync();
                 }
             }
@@ -248,5 +225,73 @@ namespace SysGestionVentas.DAL
             }
             return result;
         }
+
+        #endregion
+
+        #region "Búsqueda Avanzada con Paginación"
+
+        /// <summary>
+        /// Realiza una búsqueda avanzada de clientes con soporte para paginación
+        /// según los criterios especificados en <paramref name="pPagedQuery"/>.
+        /// Si <c>Top</c> es mayor a cero, devuelve únicamente los primeros <c>Top</c> registros
+        /// ignorando los parámetros de paginación.
+        /// </summary>
+        /// <param name="pPagedQuery">
+        /// Objeto <see cref="PagedQuery{Client}"/> que define los filtros, el tamaño de página,
+        /// el número de página y otros parámetros de búsqueda. No puede ser <c>null</c>.
+        /// </param>
+        /// <returns>
+        /// Objeto <see cref="PagedResult{Client}"/> con la lista de clientes encontrados
+        /// e información de paginación (total de registros, página actual, tamaño de página).
+        /// </returns>
+        /// <exception cref="Exception">
+        /// Se lanza si ocurre un error durante la ejecución de la consulta o el acceso a la base de datos.
+        /// </exception>
+        public static async Task<PagedResult<Client>> BuscarAsync(PagedQuery<Client> pPagedQuery)
+        {
+            try
+            {
+                using (var dbContexto = new DbContexto())
+                {
+                    var baseQuery = dbContexto.Client
+                        .Include(c => c.Person)
+                            .ThenInclude(p => p!.Status)
+                        .AsQueryable();
+
+                    var filtered = QuerySelect(baseQuery, pPagedQuery);
+                    int total = await filtered.CountAsync();
+
+                    List<Client> items;
+
+                    if (pPagedQuery.Top > 0)
+                    {
+                        items = await filtered
+                            .Take(pPagedQuery.Top)
+                            .ToListAsync();
+                    }
+                    else
+                    {
+                        items = await filtered
+                            .Skip(pPagedQuery.Skip)
+                            .Take(pPagedQuery.PageSize)
+                            .ToListAsync();
+                    }
+
+                    return new PagedResult<Client>
+                    {
+                        Items = items,
+                        TotalCount = total,
+                        CurrentPage = pPagedQuery.Page,
+                        PageSize = pPagedQuery.PageSize
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        #endregion
     }
 }
