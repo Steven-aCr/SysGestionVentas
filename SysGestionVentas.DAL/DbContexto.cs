@@ -1,11 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using SysGestionVentas.EN;
 
 namespace SysGestionVentas.DAL
 {
     public class DbContexto : DbContext
     {
-        #region "Contexto principal de base de datos"
+        #region "DbSets"
 
         public DbSet<Status> Status { get; set; }
         public DbSet<StatusType> StatusType { get; set; }
@@ -31,17 +32,17 @@ namespace SysGestionVentas.DAL
 
         #endregion
 
-        #region "Soporte para pruebas unitarias"
+        #region "TestOptions (solo para pruebas unitarias)"
 
         /// <summary>
-        /// Opciones de contexto inyectadas desde pruebas unitarias.
-        /// Cuando este campo no es <c>null</c>, el constructor sin parámetros
-        /// lo utiliza en lugar de la cadena de conexión a SQL Server,
-        /// permitiendo que el DAL opere sobre la BD InMemory del test
-        /// sin modificar ningún método de negocio.
+        /// Opciones de contexto inyectadas desde pruebas unitarias (xUnit).
+        /// Cuando esta propiedad es distinta de <c>null</c>, <see cref="OnConfiguring"/>
+        /// copia sus extensiones al builder actual, permitiendo que todos los
+        /// <c>new DbContexto()</c> internos del DAL operen sobre la misma BD
+        /// InMemory del test sin requerir referencia al paquete InMemory en el DAL.
         /// <para>
-        /// <b>Solo debe asignarse desde la capa de pruebas.</b>
-        /// En producción permanece <c>null</c> y no tiene ningún efecto.
+        /// <b>Importante:</b> debe limpiarse a <c>null</c> en el <c>Dispose</c>
+        /// del test para no contaminar otras clases de prueba.
         /// </para>
         /// </summary>
         public static DbContextOptions<DbContexto>? TestOptions { get; set; }
@@ -51,34 +52,23 @@ namespace SysGestionVentas.DAL
         #region "Constructores"
 
         /// <summary>
-        /// Constructor utilizado por el DAL en producción mediante <c>new DbContexto()</c>.
-        /// Si <see cref="TestOptions"/> fue configurado desde las pruebas unitarias,
-        /// lo usa directamente. De lo contrario, <see cref="OnConfiguring"/> aplica
-        /// la cadena de conexión a SQL Server.
+        /// Constructor sin parámetros utilizado por el DAL en producción
+        /// mediante <c>new DbContexto()</c>. Delega la configuración de la
+        /// cadena de conexión a <see cref="OnConfiguring"/>.
         /// </summary>
-        public DbContexto() : base(GetOptions()) { }
+        public DbContexto() { }
 
         /// <summary>
-        /// Constructor con opciones externas. Utilizado opcionalmente desde pruebas
-        /// para crear instancias adicionales del contexto (seed, verificación).
+        /// Constructor con opciones externas. Utilizado desde pruebas unitarias
+        /// para inyectar una base de datos InMemory u otro proveedor de prueba,
+        /// evitando que <see cref="OnConfiguring"/> sobreescriba la configuración.
         /// </summary>
         /// <param name="options">Opciones de configuración provistas externamente.</param>
         public DbContexto(DbContextOptions<DbContexto> options) : base(options) { }
 
-        /// <summary>
-        /// Retorna las opciones a usar en el constructor sin parámetros.
-        /// Prioriza <see cref="TestOptions"/> si está configurado,
-        /// caso contrario retorna opciones vacías para que <see cref="OnConfiguring"/>
-        /// aplique la cadena SQL Server.
-        /// </summary>
-        private static DbContextOptions<DbContexto> GetOptions()
-        {
-            return TestOptions
-                ?? new DbContextOptionsBuilder<DbContexto>().Options;
-        }
         #endregion
 
-        #region "Configuración de la cadena de conexión"
+        #region "Configuración del modelo y conexión"
 
         /// <summary>
         /// Configura el modelo de datos aplicando todas las clases
@@ -92,24 +82,44 @@ namespace SysGestionVentas.DAL
         }
 
         /// <summary>
-        /// Configura la cadena de conexión a SQL Server para producción.
-        /// Solo actúa si el contexto no fue configurado previamente,
-        /// lo que ocurre cuando <see cref="TestOptions"/> es <c>null</c>.
+        /// Configura la fuente de datos del contexto siguiendo esta prioridad:
+        /// <list type="number">
+        ///   <item>
+        ///     Si el contexto ya fue configurado externamente (constructor con opciones),
+        ///     no realiza ninguna acción.
+        ///   </item>
+        ///   <item>
+        ///     Si <see cref="TestOptions"/> está definido (entorno de pruebas unitarias),
+        ///     copia sus extensiones al builder actual mediante la interfaz de infraestructura
+        ///     de EF Core, sin requerir referencia al proveedor InMemory en este ensamblado.
+        ///   </item>
+        ///   <item>
+        ///     En caso contrario, aplica la cadena de conexión a SQL Server de producción.
+        ///   </item>
+        /// </list>
         /// </summary>
         /// <param name="optionsBuilder">Constructor de opciones del contexto.</param>
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
+            if (optionsBuilder.IsConfigured)
+                return;
+
+            if (TestOptions != null)
             {
-                optionsBuilder.UseSqlServer(
-                    "Data Source=BDGestionVentas.mssql.somee.com;" +
-                    "Initial Catalog=BDGestionVentas;" +
-                    "Connect Timeout=30;Encrypt=False;" +
-                    "Trust Server Certificate=False;" +
-                    "Application Intent=ReadWrite;" +
-                    "Multi Subnet Failover=False;" +
-                    "Command Timeout=30");
+                var infrastructure = (IDbContextOptionsBuilderInfrastructure)optionsBuilder;
+                foreach (var extension in TestOptions.Extensions)
+                    infrastructure.AddOrUpdateExtension(extension);
+
+                return;
             }
+
+            optionsBuilder.UseSqlServer(
+                "Data Source=BDGestionVentas.mssql.somee.com; Initial Catalog=BDGestionVentas;" +
+                "User ID=DevCore_SQLLogin_1; Password=u7z7prei6q;" +
+                "Connect Timeout=30;Encrypt=False;" +
+                "Trust Server Certificate=False;" +
+                "Application Intent=ReadWrite; Multi Subnet Failover=False;" +
+                "Command Timeout=30");
         }
 
         #endregion
