@@ -1,0 +1,73 @@
+﻿@model SysGestionVentas.EN.DocumentDetail
+
+@{
+    ViewData["Title"] = "Eliminar Detalle";
+    ViewData["BreadcrumbParent"] = "Detalle de Documentos";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Eliminar Línea de Detalle</h1>
+        <p class="page-header__subtitle">Esta operación eliminará físicamente la línea del documento.</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-6 col-md-8">
+        <div class="alert-custom alert-danger-custom mb-4" style="border-radius:var(--radius-lg);align-items:flex-start;">
+            <span class="material-symbols-outlined" style="flex-shrink:0;margin-top:1px;">warning</span>
+            <div>
+                <strong>Eliminación física.</strong> Esta línea de detalle será eliminada permanentemente del documento N° <strong>@(Model.Document?.DocNumber ?? $"#{Model.DocumentId}")</strong>.
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
+                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:20px;">description</span>
+                <span style="font-size:.95rem;font-weight:700;color:var(--clr-text);">Datos de la Línea</span>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Documento</span>
+                    <code style="background:var(--clr-surface-alt);padding:2px 8px;border-radius:var(--radius-sm);">@(Model.Document?.DocNumber ?? $"#{Model.DocumentId}")</code>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Producto</span>
+                    <span style="font-weight:700;">@(Model.Product?.Name ?? Model.Product?.Barcode ?? $"#{Model.ProductId}")</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Cantidad</span>
+                    <span>@Model.Quantity</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Precio Unitario</span>
+                    <span>$@Model.UnitPrice.ToString("F2")</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Total Línea</span>
+                    <span style="font-weight:800;color:var(--clr-danger);">$@Model.TotalAmount.ToString("F2")</span>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="DocDetailId" />
+            <div class="d-flex gap-3">
+                <button type="submit" class="btn btn-primary" style="background:var(--clr-danger);border-color:var(--clr-danger);">
+                    <span class="material-symbols-outlined">delete</span>
+                    Sí, eliminar línea
+                </button>
+                <a asp-action="Index" class="btn btn-light">
+                    <span class="material-symbols-outlined">close</span>
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>

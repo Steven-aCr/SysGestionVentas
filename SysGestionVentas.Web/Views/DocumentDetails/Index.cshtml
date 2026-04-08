@@ -1,0 +1,151 @@
+﻿@model IEnumerable<SysGestionVentas.EN.DocumentDetail>
+
+@{
+    ViewData["Title"] = "Detalle de Documentos";
+    ViewData["BreadcrumbParent"] = "Ventas";
+}
+
+<div class="page-content">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">Detalle de Documentos</h1>
+            <p class="page-header__subtitle">Productos incluidos en cada documento</p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <span class="material-symbols-outlined">add</span>
+                Nuevo Detalle
+            </a>
+        </div>
+    </div>
+
+    <!-- Card -->
+    <div class="table-card">
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+            <div class="search-box">
+                <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                <input type="text"
+                       class="table-search__input"
+                       data-table="detailTable"
+                       data-count="filteredCount"
+                       placeholder="Buscar por documento o producto..." />
+            </div>
+
+            <span style="font-size:.8rem; color:var(--clr-text-muted);" id="recordCount">
+                @Model.Count() registro(s)
+            </span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table" id="detailTable">
+                <thead>
+                    <tr>
+                        <th>Documento</th>
+                        <th>Producto</th>
+                        <th>Cant.</th>
+                        <th>Precio</th>
+                        <th>Desc.</th>
+                        <th>Subtotal</th>
+                        <th>IVA</th>
+                        <th>Total</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="9">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">receipt_long</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">
+                                        No hay detalles registrados
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var doc = item.Document?.DocNumber ?? "—";
+                            var producto = item.Product?.Barcode ?? "—";
+
+                            <tr>
+                                <td>
+                                    <strong>@doc</strong>
+                                </td>
+
+                                <td>@producto</td>
+
+                                <td>
+                                    <strong>@item.Quantity</strong>
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    $@item.UnitPrice.ToString("0.00")
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    $@item.DiscountAmount.ToString("0.00")
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    $@item.Subtotal.ToString("0.00")
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    @item.TaxPercentage%
+                                </td>
+
+                                <td>
+                                    <strong>$@item.TotalAmount.ToString("0.00")</strong>
+                                </td>
+
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@item.DocDetailId"
+                                               class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+
+                                        <a asp-action="Edit" asp-route-id="@item.DocDetailId"
+                                               class="btn btn-icon" title="Editar">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </a>
+
+                                        <a asp-action="Delete" asp-route-id="@item.DocDetailId"
+                                               class="btn btn-icon btn-danger-outline" title="Eliminar">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="table-footer">
+            <span id="filteredCount">
+                Mostrando @Model.Count() detalle(s)
+            </span>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/table-search.js" asp-append-version="true"></script>
+}

@@ -223,6 +223,30 @@ namespace SysGestionVentas.DAL
             return result;
         }
 
+        public static async Task<List<Status>> ObtenerPorTiposAsync(
+            List<int> pStatusType, bool? pIsActive = null)
+        {
+            var result = new List<Status>();
+            try
+            {
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.Status
+                        .Include(s => s.StatusType)
+                        .Where(s =>
+                            (pStatusType.Contains(s.StatusTypeId)) &&
+                            (pIsActive == null || s.IsActive == pIsActive))
+                        .OrderBy(s => s.StatusType!.Name)
+                            .ThenBy(s => s.Name)
+                            .ToListAsync();
+                }
+            }
+            catch(Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            return result;
+        }
         #endregion
     }
 }

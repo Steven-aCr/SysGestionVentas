@@ -167,12 +167,12 @@ namespace SysGestionVentas.DAL
                     if (person == null)
                         throw new Exception($"No se encontró la persona con ID {pPerson.PersonId}.");
 
-                    person.FirstName   = pPerson.FirstName;
-                    person.LastName    = pPerson.LastName;
-                    person.Adress      = pPerson.Adress;
+                    person.FirstName = pPerson.FirstName;
+                    person.LastName = pPerson.LastName;
+                    person.Adress = pPerson.Adress;
                     person.PhoneNumber = pPerson.PhoneNumber;
-                    person.Dui         = pPerson.Dui;
-                    person.StatusId    = pPerson.StatusId;
+                    person.Dui = pPerson.Dui;
+                    person.StatusId = pPerson.StatusId;
 
                     dbContexto.Update(person);
                     result = await dbContexto.SaveChangesAsync();
@@ -284,9 +284,10 @@ namespace SysGestionVentas.DAL
                         .Include(p => p.Status)
                         .Where(p =>
                             (pPerson.FirstName == null || p.FirstName!.Contains(pPerson.FirstName)) &&
-                            (pPerson.LastName  == null || p.LastName!.Contains(pPerson.LastName))   &&
-                            (pPerson.Dui       == null || p.Dui!.Contains(pPerson.Dui))             &&
-                            (pPerson.StatusId  == 0    || p.StatusId == pPerson.StatusId)
+                            (pPerson.LastName == null || p.LastName!.Contains(pPerson.LastName)) &&
+                            (pPerson.PhoneNumber == null || p.PhoneNumber!.Contains(pPerson.PhoneNumber)) &&
+                            (pPerson.Dui == null || p.Dui!.Contains(pPerson.Dui)) &&
+                            (pPerson.StatusId == 0 || p.StatusId == pPerson.StatusId)
                         )
                         .OrderBy(p => p.LastName)
                             .ThenBy(p => p.FirstName)
@@ -332,7 +333,7 @@ namespace SysGestionVentas.DAL
                         .AsQueryable();
 
                     var filtered = QuerySelect(baseQuery, pPagedQuery);
-                    int total    = await filtered.CountAsync();
+                    int total = await filtered.CountAsync();
 
                     List<Person> items;
 
@@ -352,10 +353,10 @@ namespace SysGestionVentas.DAL
 
                     return new PagedResult<Person>
                     {
-                        Items       = items,
-                        TotalCount  = total,
+                        Items = items,
+                        TotalCount = total,
                         CurrentPage = pPagedQuery.Page,
-                        PageSize    = pPagedQuery.PageSize
+                        PageSize = pPagedQuery.PageSize
                     };
                 }
             }
@@ -366,5 +367,61 @@ namespace SysGestionVentas.DAL
         }
 
         #endregion
+
+        /// <summary>
+        /// Registra una nueva persona utilizando un contexto de base de datos externo,
+        /// permitiendo que la operación participe en una transacción coordinada con otras entidades.
+        /// Valida unicidad de <c>Dui</c> y <c>PhoneNumber</c> antes de guardar.
+        /// No llama a <c>SaveChangesAsync</c>; esa responsabilidad recae en el llamador.
+        /// </summary>
+        /// <param name="pPerson">Objeto <see cref="Person"/> con los datos a guardar.</param>
+        /// <param name="pDbContexto">Contexto de base de datos activo proporcionado externamente.</param>
+        /// <exception cref="Exception">
+        /// Se lanza si el DUI o teléfono ya existen, o si ocurre un error durante la operación.
+        /// </exception>
+        public static async Task GuardarEnTransaccionAsync(Person pPerson, DbContexto dbContexto)
+        {
+            if (await ExisteDui(pPerson, dbContexto))
+                throw new Exception("El DUI ya está registrado.");
+            if (await ExistePhone(pPerson, dbContexto))
+                throw new Exception("El número de teléfono ya está registrado.");
+
+            pPerson.CreatedAt = DateTime.UtcNow;
+            dbContexto.Person.Add(pPerson);
+        }
+
+        /// <summary>
+        /// Modifica los datos personales de una <see cref="Person"/> dentro de una
+        /// transacción activa. No llama a <c>SaveChangesAsync</c>; esa responsabilidad
+        /// recae en la capa que coordina la transacción.
+        /// </summary>
+        /// <param name="pPerson">Objeto <see cref="Person"/> con los nuevos valores.</param>
+        /// <param name="pDbContexto">Contexto de base de datos activo con transacción abierta.</param>
+        /// <exception cref="Exception">
+        /// Se lanza si la persona no existe, si hay duplicados de DUI o teléfono,
+        /// o si ocurre un error durante la operación.
+        /// </exception>
+        public static async Task ModificarEnTransaccionAsync(Person pPerson, DbContexto pDbContexto)
+        {
+            if (await ExisteDui(pPerson, pDbContexto))
+                throw new Exception("El DUI ya está registrado.");
+
+            if (await ExistePhone(pPerson, pDbContexto))
+                throw new Exception("El número de teléfono ya está registrado.");
+
+            var person = await pDbContexto.Person.FirstOrDefaultAsync(
+                p => p.PersonId == pPerson.PersonId);
+
+            if (person == null)
+                throw new Exception($"No se encontró la persona con ID {pPerson.PersonId}.");
+
+            person.FirstName = pPerson.FirstName;
+            person.LastName = pPerson.LastName;
+            person.Adress = pPerson.Adress;
+            person.PhoneNumber = pPerson.PhoneNumber;
+            person.Dui = pPerson.Dui;
+
+            pDbContexto.Update(person);
+        }
     }
 }

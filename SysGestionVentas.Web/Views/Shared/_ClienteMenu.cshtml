@@ -1,0 +1,106 @@
+﻿@* =================================================================
+   _ClienteMenu.cshtml
+   Sidebar de navegación para usuarios con rol "Cliente".
+   Usa las clases del sistema de diseño (layout.css / site.css).
+   ================================================================= *@
+
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    var fullName = User.FindFirst("FullName")?.Value
+                   ?? User.Identity?.Name
+                   ?? "Cliente";
+
+    var rolName = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Cliente";
+
+    // Iniciales del avatar
+    var initials = string.Concat(
+        fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Take(2).Select(w => w[0].ToString().ToUpper()));
+
+    // Helper para marcar ítem activo
+    bool IsActive(string controller, string action = "")
+        => currentController.Equals(controller, StringComparison.OrdinalIgnoreCase)
+           && (string.IsNullOrEmpty(action) || currentAction.Equals(action, StringComparison.OrdinalIgnoreCase));
+}
+
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="Menú portal cliente">
+
+    @* ── Brand ── *@
+    <a class="sidebar__brand" asp-controller="ClientePortal" asp-action="Portal">
+        <div class="sidebar__brand-icon">
+            <span class="material-symbols-outlined">storefront</span>
+        </div>
+        <span class="sidebar__brand-name">SysGestionVentas</span>
+    </a>
+
+    @* ── Navegación ── *@
+    <nav class="sidebar__nav">
+
+        <div class="sidebar__section-label">Mi Portal</div>
+
+        <a class="sidebar__item @(IsActive("ClientePortal", "Portal") ? "is-active" : "")"
+               asp-controller="ClientePortal"
+               asp-action="Portal">
+            <span class="sidebar__item-icon material-symbols-outlined">home</span>
+            <span class="sidebar__item-label">Inicio</span>
+        </a>
+
+        <a class="sidebar__item @(IsActive("ClientePortal", "MisOrdenes") ? "is-active" : "")"
+               asp-controller="ClientePortal"
+               asp-action="MisOrdenes">
+            <span class="sidebar__item-icon material-symbols-outlined">receipt_long</span>
+            <span class="sidebar__item-label">Mis Órdenes</span>
+        </a>
+
+        <a class="sidebar__item @(IsActive("ClientePortal", "Catalogo") ? "is-active" : "")"
+               asp-controller="ClientePortal"
+               asp-action="Catalogo">
+            <span class="sidebar__item-icon material-symbols-outlined">grid_view</span>
+            <span class="sidebar__item-label">Catálogo</span>
+        </a>
+
+        <div class="sidebar__section-label">Mi Cuenta</div>
+
+        <a class="sidebar__item @(IsActive("ClientePortal", "Perfi") ? "is-active" : "")"
+               asp-controller="ClientePortal"
+               asp-action="Perfil">
+            <span class="sidebar__item-icon material-symbols-outlined">manage_accounts</span>
+            <span class="sidebar__item-label">Mi Perfil</span>
+        </a>
+
+    </nav>
+
+    @* ── Footer: usuario + logout ── *@
+    <div class="sidebar__footer">
+
+        <a class="sidebar__user"
+               asp-controller="ClientePortal"
+               asp-action="Perfil"
+               title="Ver mi perfil">
+            <div class="sidebar__user-avatar">@initials</div>
+            <div class="sidebar__user-info">
+                <div class="sidebar__user-name">@fullName</div>
+            </div>
+        </a>
+
+        @* Logout *@
+        <form asp-controller="Auth"
+              asp-action="Logout"
+              method="post"
+              class="mt-1"
+              data-confirm="¿Deseas cerrar sesión?">
+            @Html.AntiForgeryToken()
+            <button type="submit"
+                    class="sidebar__item w-100"
+                    style="color:rgba(255,255,255,.4);"
+                    title="Cerrar sesión">
+                <span class="sidebar__item-icon material-symbols-outlined">logout</span>
+                <span class="sidebar__item-label">Cerrar sesión</span>
+            </button>
+        </form>
+
+    </div>
+
+</aside>

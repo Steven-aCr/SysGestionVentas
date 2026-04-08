@@ -1,0 +1,328 @@
+﻿@model SysGestionVentas.EN.ViewModels.EditProfileModel
+
+@{
+    ViewData["Title"] = "Mi Perfil";
+    ViewData["BreadcrumbParent"] = "Cuenta";
+    ViewData["BreadcrumbCurrent"] = "Mi Perfil";
+
+    var fullName = Model.FirstName + " " + Model.LastName;
+    var initials = string.Concat(
+        fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Take(2).Select(w => w[0].ToString().ToUpper()));
+}
+
+<div class="page-content">
+
+    <div class="page-header">
+        <div class="page-header__info">
+            <h1 class="page-header__title">Mi Perfil</h1>
+            <p class="page-header__subtitle mb-0">Administra tu información personal y contraseña de acceso</p>
+        </div>
+        <div class="page-header__actions">
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger">
+                    <span class="material-symbols-outlined">logout</span>
+                    Cerrar sesión
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4" style="max-width:900px;">
+
+        @* ── Columna izquierda: avatar + info rápida ── *@
+        <div class="col-md-3">
+            <div class="card text-center p-4">
+                <div class="avatar avatar--xl mx-auto mb-3" style="width:72px;height:72px;font-size:1.5rem;">
+                    @initials
+                </div>
+                <div class="fw-600 text-truncate" style="color:var(--sgv-gray-800);">@fullName</div>
+                <div class="text-muted-sm mt-1 text-truncate">@Model.Email</div>
+
+                <hr />
+
+                <div class="d-grid gap-2">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary btn-sm">
+                        <span class="material-symbols-outlined" style="font-size:16px">home</span>
+                        Inicio
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        @* ── Columna derecha: formulario ── *@
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header d-flex align-items-center gap-2">
+                    <span class="material-symbols-outlined text-teal" style="font-size:20px">manage_accounts</span>
+                    <span>Editar información</span>
+                </div>
+                <div class="card-body p-4">
+
+                    <form asp-action="Profile" id="profileForm" autocomplete="off" novalidate>
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" asp-for="UserId" />
+                        <input type="hidden" asp-for="PersonId" />
+
+                        @* Resumen de errores *@
+                        <div asp-validation-summary="ModelOnly"
+                             class="alert alert-danger d-flex align-items-center gap-2 mb-4"
+                             id="modelErrors">
+                            <span class="material-symbols-outlined flex-shrink-0">error</span>
+                            <div></div>
+                        </div>
+
+                        @* ══════════════════════════════
+                           SECCIÓN 1 — DATOS PERSONALES
+                           ══════════════════════════════ *@
+                        <div class="form-section mb-4">
+                            <div class="form-section__header">
+                                <span class="material-symbols-outlined form-section__icon">person</span>
+                                <h6 class="form-section__title mb-0">Datos Personales</h6>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+
+                                <div class="col-md-6">
+                                    <label asp-for="FirstName" class="form-label">Nombre <span class="text-danger">*</span></label>
+                                    <input asp-for="FirstName" class="form-control" placeholder="Ej. Juan" />
+                                    <span asp-validation-for="FirstName" class="field-validation-error"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="LastName" class="form-label">Apellido <span class="text-danger">*</span></label>
+                                    <input asp-for="LastName" class="form-control" placeholder="Ej. Pérez" />
+                                    <span asp-validation-for="LastName" class="field-validation-error"></span>
+                                </div>
+
+                                <div class="col-12">
+                                    <label asp-for="Adress" class="form-label">Dirección <span class="text-danger">*</span></label>
+                                    <div class="input-icon-group input-icon-group--left">
+                                        <span class="input-icon input-icon--left material-symbols-outlined">location_on</span>
+                                        <input asp-for="Adress" class="form-control" placeholder="Dirección de residencia" />
+                                    </div>
+                                    <span asp-validation-for="Adress" class="field-validation-error"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="PhoneNumber" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                                    <div class="input-icon-group input-icon-group--left">
+                                        <span class="input-icon input-icon--left material-symbols-outlined">phone</span>
+                                        <input asp-for="PhoneNumber" class="form-control" placeholder="Ej. 7000-0000" />
+                                    </div>
+                                    <span asp-validation-for="PhoneNumber" class="field-validation-error"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="Dui" class="form-label">DUI</label>
+                                    <input asp-for="Dui" class="form-control" placeholder="12345678-9" />
+                                    <span asp-validation-for="Dui" class="field-validation-error"></span>
+                                    <div class="form-text">Formato: 12345678-9 (opcional)</div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        @* ══════════════════════════════
+                           SECCIÓN 2 — DATOS DE ACCESO
+                           ══════════════════════════════ *@
+                        <div class="form-section mb-4">
+                            <div class="form-section__header">
+                                <span class="material-symbols-outlined form-section__icon">email</span>
+                                <h6 class="form-section__title mb-0">Datos de Acceso</h6>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-12">
+                                    <label asp-for="Email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
+                                    <div class="input-icon-group input-icon-group--left">
+                                        <span class="input-icon input-icon--left material-symbols-outlined">email</span>
+                                        <input asp-for="Email" class="form-control" placeholder="correo@empresa.com" />
+                                    </div>
+                                    <span asp-validation-for="Email" class="field-validation-error"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* ══════════════════════════════
+                           SECCIÓN 3 — CAMBIO CONTRASEÑA
+                           ══════════════════════════════ *@
+                        <div class="form-section mb-4">
+                            <div class="form-section__header">
+                                <span class="material-symbols-outlined form-section__icon">lock</span>
+                                <h6 class="form-section__title mb-0">Cambiar Contraseña</h6>
+                            </div>
+
+                            <div class="info-box mb-3">
+                                <span class="material-symbols-outlined">info</span>
+                                <p class="info-box__text mb-0">
+                                    Completa esta sección solo si deseas cambiar tu contraseña.
+                                    Si la dejas vacía, tu contraseña actual se conservará sin cambios.
+                                </p>
+                            </div>
+
+                            <div class="row g-3">
+
+                                <div class="col-12">
+                                    <label asp-for="CurrentPassword" class="form-label">Contraseña actual</label>
+                                    <div class="input-icon-group input-icon-group--right">
+                                        <input asp-for="CurrentPassword"
+                                               id="CurrentPassword"
+                                               type="password"
+                                               class="form-control"
+                                               placeholder="Ingresa tu contraseña actual"
+                                               autocomplete="current-password" />
+                                        <button type="button"
+                                                class="input-icon input-icon--right input-icon--btn"
+                                                data-password-toggle="CurrentPassword"
+                                                tabindex="-1"
+                                                aria-label="Mostrar contraseña actual">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </button>
+                                    </div>
+                                    <span asp-validation-for="CurrentPassword" class="field-validation-error"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="NewPassword" class="form-label">Nueva contraseña</label>
+                                    <div class="input-icon-group input-icon-group--right">
+                                        <input asp-for="NewPassword"
+                                               id="NewPassword"
+                                               type="password"
+                                               class="form-control"
+                                               placeholder="Mínimo 8 caracteres"
+                                               autocomplete="new-password" />
+                                        <button type="button"
+                                                class="input-icon input-icon--right input-icon--btn"
+                                                data-password-toggle="NewPassword"
+                                                tabindex="-1"
+                                                aria-label="Mostrar nueva contraseña">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </button>
+                                    </div>
+                                    <span asp-validation-for="NewPassword" class="field-validation-error"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label asp-for="ConfirmNewPassword" class="form-label">Confirmar nueva contraseña</label>
+                                    <div class="input-icon-group input-icon-group--right">
+                                        <input asp-for="ConfirmNewPassword"
+                                               id="ConfirmNewPassword"
+                                               type="password"
+                                               class="form-control"
+                                               placeholder="Repite la nueva contraseña"
+                                               autocomplete="new-password" />
+                                        <button type="button"
+                                                class="input-icon input-icon--right input-icon--btn"
+                                                data-password-toggle="ConfirmNewPassword"
+                                                tabindex="-1"
+                                                aria-label="Mostrar confirmación">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </button>
+                                    </div>
+                                    <span asp-validation-for="ConfirmNewPassword" class="field-validation-error"></span>
+                                    <div id="confirmNewMatchFeedback" class="invalid-feedback"></div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        @* ACCIONES *@
+                        <div class="form-actions form-actions--between">
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary" id="profileSubmitBtn">
+                                <span class="material-symbols-outlined">save</span>
+                                Guardar Cambios
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        (function () {
+            'use strict';
+
+            /* ── Toggle visibilidad de contraseñas ─── */
+            document.querySelectorAll('[data-password-toggle]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var inputId = btn.dataset.passwordToggle;
+                    var input   = document.getElementById(inputId);
+                    if (!input) return;
+
+                    var isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+
+                    var icon = btn.querySelector('.material-symbols-outlined');
+                    if (icon) icon.textContent = isPassword ? 'visibility_off' : 'visibility';
+                });
+            });
+
+            /* ── Validar coincidencia de nueva contraseña ─── */
+            var newPassInput    = document.getElementById('NewPassword');
+            var confirmNewInput = document.getElementById('ConfirmNewPassword');
+            var confirmFeedback = document.getElementById('confirmNewMatchFeedback');
+
+            function validateNewPasswordMatch() {
+                if (!newPassInput || !confirmNewInput) return true;
+                if (!confirmNewInput.value) return true; // vacío = no se está cambiando
+
+                var match = newPassInput.value === confirmNewInput.value;
+
+                if (match) {
+                    confirmNewInput.classList.remove('is-invalid');
+                    confirmNewInput.classList.add('is-valid');
+                    if (confirmFeedback) { confirmFeedback.textContent = ''; }
+                } else {
+                    confirmNewInput.classList.add('is-invalid');
+                    confirmNewInput.classList.remove('is-valid');
+                    if (confirmFeedback) {
+                        confirmFeedback.textContent = 'Las contraseñas no coinciden.';
+                        confirmFeedback.style.display = 'block';
+                    }
+                }
+                return match;
+            }
+
+            if (confirmNewInput) confirmNewInput.addEventListener('input', validateNewPasswordMatch);
+            if (newPassInput)    newPassInput.addEventListener('input', validateNewPasswordMatch);
+
+            /* ── Bloquear submit si contraseñas no coinciden ─── */
+            var form      = document.getElementById('profileForm');
+            var submitBtn = document.getElementById('profileSubmitBtn');
+
+            if (form) {
+                form.addEventListener('submit', function (e) {
+
+                    // Solo validar coincidencia si el usuario está cambiando contraseña
+                    if (newPassInput && newPassInput.value.trim()) {
+                        if (!validateNewPasswordMatch()) {
+                            e.preventDefault();
+                            return;
+                        }
+                    }
+
+                    // Loading state
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML =
+                            '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Guardando…';
+                    }
+                });
+            }
+
+        }());
+    </script>
+}

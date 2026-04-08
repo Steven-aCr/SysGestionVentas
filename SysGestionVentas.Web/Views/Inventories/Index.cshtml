@@ -1,0 +1,154 @@
+﻿@model IEnumerable<SysGestionVentas.EN.Inventory>
+
+@{
+    ViewData["Title"] = "Inventario";
+    ViewData["BreadcrumbParent"] = "Inventario";
+}
+
+<div class="page-content">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">Inventario</h1>
+            <p class="page-header__subtitle">Control de productos y existencias</p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <span class="material-symbols-outlined">add</span>
+                Nuevo Registro
+            </a>
+        </div>
+    </div>
+
+    <!-- Card -->
+    <div class="table-card">
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+            <div class="search-box">
+                <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                <input type="text"
+                       class="table-search__input"
+                       data-table="inventoryTable"
+                       data-count="filteredCount"
+                       placeholder="Buscar por producto o código..." />
+            </div>
+
+            <span style="font-size:.8rem; color:var(--clr-text-muted);" id="recordCount">
+                @Model.Count() registro(s)
+            </span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table" id="inventoryTable">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Compra</th>
+                        <th>Venta</th>
+                        <th>Stock</th>
+                        <th>Mínimo</th>
+                        <th>Estado</th>
+                        <th>Creado</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">inventory_2</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">
+                                        No hay registros de inventario
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var producto = item.Product?.Barcode ?? "—";
+                            var estado = item.Status?.Name ?? "—";
+                            var bajoStock = item.CurrentStock <= item.MinimumStock;
+
+                            <tr>
+                                <td>
+                                    <strong>@producto</strong>
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    $@item.PurchasePrice.ToString("0.00")
+                                </td>
+
+                                <td>
+                                    <strong>$@item.SalePrice.ToString("0.00")</strong>
+                                </td>
+
+                                <td>
+                                    <span class="badge @(bajoStock ? "badge-danger" : "badge-neutral")">
+                                        @item.CurrentStock
+                                    </span>
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    @item.MinimumStock
+                                </td>
+
+                                <td>
+                                    <div class="status">
+                                        <span class="status-dot @(estado == "Activo" ? "status-dot--active" : "status-dot--inactive")"></span>
+                                        <span>@estado</span>
+                                    </div>
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    @item.CreatedAt.ToString("dd/MM/yyyy")
+                                </td>
+
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@item.InventoryId"
+                                               class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+
+                                        <a asp-action="Edit" asp-route-id="@item.InventoryId"
+                                               class="btn btn-icon" title="Editar">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </a>
+
+                                        <a asp-action="Delete" asp-route-id="@item.InventoryId"
+                                               class="btn btn-icon btn-danger-outline" title="Eliminar">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="table-footer">
+            <span id="filteredCount">
+                Mostrando @Model.Count() registro(s)
+            </span>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/table-search.js" asp-append-version="true"></script>
+}

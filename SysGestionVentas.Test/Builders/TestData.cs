@@ -1,4 +1,5 @@
 ﻿using SysGestionVentas.EN;
+using SysGestionVentas.EN.ViewModels;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -90,7 +91,6 @@ namespace SysGestionVentas.Test.Builders
                 RolId = ROL_ADMIN_ID,
                 PersonId = personId,
                 StatusId = STATUS_ACTIVO_ID,
-                MustChangePassword = false,
                 CreatedAt = DateTime.UtcNow,
             };
         public static User CrearUsuarioSuspendido() => new()
@@ -102,7 +102,6 @@ namespace SysGestionVentas.Test.Builders
             RolId = ROL_VENDEDOR_ID,
             PersonId = PERSON_ID,
             StatusId = STATUS_SUSPENDIDO_ID,
-            MustChangePassword = false,
             CreatedAt = DateTime.UtcNow,
         };
 
@@ -117,7 +116,6 @@ namespace SysGestionVentas.Test.Builders
             StatusId = STATUS_ACTIVO_ID,
             TempPasswordHash = Sha256(tempPassword),
             TempPasswordExpiry = DateTime.UtcNow.AddHours(1),
-            MustChangePassword = true,
             CreatedAt = DateTime.UtcNow,
         };
 
@@ -132,7 +130,6 @@ namespace SysGestionVentas.Test.Builders
             StatusId = STATUS_ACTIVO_ID,
             TempPasswordHash = Sha256("TempExpirada"),
             TempPasswordExpiry = DateTime.UtcNow.AddHours(-2),
-            MustChangePassword = true,
             CreatedAt = DateTime.UtcNow,
         };
 
@@ -149,5 +146,22 @@ namespace SysGestionVentas.Test.Builders
                 StatusId = STATUS_ACTIVO_ID,
                 CreatedAt = DateTime.UtcNow,
             };
+
+        public static CreateUserModel CrearModeloUsuarioNuevo(
+        string userName = "nuevo.usuario",
+        string email = "nuevo@test.com") => new()
+        {
+            FirstName = "Nuevo",
+            LastName = "Usuario",
+            Adress = "Dirección de prueba 456",
+            PhoneNumber = "7999-9999",
+            Dui = "12345678-9",
+            UserName = userName,
+            Email = email,
+            Password = PASSWORD_PLANO,
+            ConfirmPassword = PASSWORD_PLANO,
+            RolId = ROL_VENDEDOR_ID,
+            StatusId = STATUS_ACTIVO_ID
+        };
     }
 }

@@ -1,0 +1,145 @@
+﻿@model IEnumerable<SysGestionVentas.EN.InventoryMovement>
+
+@{
+    ViewData["Title"] = "Movimientos de Inventario";
+    ViewData["BreadcrumbParent"] = "Inventario";
+}
+
+<div class="page-content">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">Movimientos de Inventario</h1>
+            <p class="page-header__subtitle">Control de entradas y salidas de productos</p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <span class="material-symbols-outlined">add</span>
+                Nuevo Movimiento
+            </a>
+        </div>
+    </div>
+
+    <!-- Card -->
+    <div class="table-card">
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+            <div class="search-box">
+                <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                <input type="text"
+                       class="table-search__input"
+                       data-table="movementTable"
+                       data-count="filteredCount"
+                       placeholder="Buscar por tipo, usuario o nota..." />
+            </div>
+
+            <span style="font-size:.8rem; color:var(--clr-text-muted);" id="recordCount">
+                @Model.Count() registro(s)
+            </span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table" id="movementTable">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
+                        <th>Costo</th>
+                        <th>Inventario</th>
+                        <th>Usuario</th>
+                        <th>Fecha</th>
+                        <th>Movimiento</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">inventory_2</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">
+                                        No hay movimientos registrados
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var tipo = item.MovementType?.Name ?? "—";
+                            var usuario = item.CreatedBy?.Email ?? "—";
+                            var inventario = item.Inventory?.InventoryId.ToString() ?? "—";
+
+                            <tr>
+                                <td>
+                                    <span class="badge badge-neutral">@tipo</span>
+                                </td>
+
+                                <td>
+                                    <strong>@item.Quantity</strong>
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    $@item.UnitCost.ToString("0.00")
+                                </td>
+
+                                <td>@inventario</td>
+
+                                <td style="color:var(--clr-text-muted);">@usuario</td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    @item.CreatedAt.ToString("dd/MM/yyyy")
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    @item.MovementDate.ToString("dd/MM/yyyy")
+                                </td>
+
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@item.InventoryMovementId"
+                                               class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+
+                                        <a asp-action="Edit" asp-route-id="@item.InventoryMovementId"
+                                               class="btn btn-icon" title="Editar">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </a>
+
+                                        <a asp-action="Delete" asp-route-id="@item.InventoryMovementId"
+                                               class="btn btn-icon btn-danger-outline" title="Eliminar">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="table-footer">
+            <span id="filteredCount">
+                Mostrando @Model.Count() movimiento(s)
+            </span>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/table-search.js" asp-append-version="true"></script>
+}

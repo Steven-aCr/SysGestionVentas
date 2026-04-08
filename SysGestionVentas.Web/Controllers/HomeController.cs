@@ -1,9 +1,13 @@
-using System.Diagnostics;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SysGestionVentas.Web.Models;
+using System.Diagnostics;
 
 namespace SysGestionVentas.Web.Controllers
 {
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;

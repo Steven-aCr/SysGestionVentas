@@ -1,0 +1,184 @@
+﻿@model SysGestionVentas.EN.DocumentDetail
+
+@{
+    ViewData["Title"] = "Editar Detalle";
+    ViewData["BreadcrumbParent"] = "Detalle de Documentos";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Editar Detalle</h1>
+        <p class="page-header__subtitle">Línea #@Model.DocDetailId — Documento #@Model.DocumentId</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
+                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:20px;">edit</span>
+                <span style="font-size:.95rem;font-weight:700;color:var(--clr-text);">Actualizar Línea</span>
+                <span class="badge badge-neutral ms-auto">ID #@Model.DocDetailId</span>
+            </div>
+            <div style="padding:24px;">
+                <form asp-action="Edit" class="needs-validation" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="alert-custom alert-danger-custom mb-4" role="alert"></div>
+                    <input type="hidden" asp-for="DocDetailId" />
+
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <span class="material-symbols-outlined">link</span>
+                            Documento y Producto
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Documento</label>
+                                <select asp-for="DocumentId" asp-items="ViewBag.DocumentId" class="form-select" disabled style="background:var(--clr-surface-alt);cursor:not-allowed;"></select>
+                                <input type="hidden" asp-for="DocumentId" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Producto</label>
+                                <select asp-for="ProductId" asp-items="ViewBag.ProductId" class="form-select" disabled style="background:var(--clr-surface-alt);cursor:not-allowed;"></select>
+                                <input type="hidden" asp-for="ProductId" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <span class="material-symbols-outlined">shopping_cart</span>
+                            Cantidad y Precio
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="Quantity" class="form-label">Cantidad <span style="color:var(--clr-danger)">*</span></label>
+                                <input asp-for="Quantity" class="form-control" type="number" min="1" data-type="integer" required />
+                                <span asp-validation-for="Quantity" class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="UnitPrice" class="form-label">Precio Unitario <span style="color:var(--clr-danger)">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);font-weight:600;color:var(--clr-text-muted);">$</span>
+                                    <input asp-for="UnitPrice" class="form-control" type="number" step="0.01" min="0.01" data-type="currency" required />
+                                </div>
+                                <span asp-validation-for="UnitPrice" class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="DiscountAmount" class="form-label">Descuento ($)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);font-weight:600;color:var(--clr-text-muted);">$</span>
+                                    <input asp-for="DiscountAmount" class="form-control" type="number" step="0.01" min="0" data-type="currency" />
+                                </div>
+                                <span asp-validation-for="DiscountAmount" class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <span class="material-symbols-outlined">calculate</span>
+                            Impuestos y Totales
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label asp-for="Subtotal" class="form-label">Subtotal <span style="color:var(--clr-danger)">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);font-weight:600;color:var(--clr-text-muted);">$</span>
+                                    <input asp-for="Subtotal" class="form-control" type="number" step="0.01" min="0" data-type="currency" required />
+                                </div>
+                                <span asp-validation-for="Subtotal" class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="TaxPercentage" class="form-label">IVA (%)</label>
+                                <div class="input-group">
+                                    <input asp-for="TaxPercentage" class="form-control" type="number" step="0.01" min="0" max="100" />
+                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);color:var(--clr-text-muted);">%</span>
+                                </div>
+                                <span asp-validation-for="TaxPercentage" class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="TaxAmount" class="form-label">Monto IVA</label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);font-weight:600;color:var(--clr-text-muted);">$</span>
+                                    <input asp-for="TaxAmount" class="form-control" type="number" step="0.01" min="0" data-type="currency" />
+                                </div>
+                                <span asp-validation-for="TaxAmount" class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="TotalAmount" class="form-label">Total Línea <span style="color:var(--clr-danger)">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);font-weight:700;color:var(--clr-primary);">$</span>
+                                    <input asp-for="TotalAmount" class="form-control" type="number" step="0.01" min="0" data-type="currency" required />
+                                </div>
+                                <span asp-validation-for="TotalAmount" class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Notes" class="form-label">Notas</label>
+                                <input asp-for="Notes" class="form-control" placeholder="Observaciones opcionales…" />
+                                <span asp-validation-for="Notes" class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr style="border-color:var(--clr-border);margin:24px 0;" />
+
+                    <div class="d-flex gap-3 flex-wrap">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-symbols-outlined">save</span>
+                            Guardar Cambios
+                        </button>
+                        <a asp-action="Index" class="btn btn-light">
+                            <span class="material-symbols-outlined">close</span>
+                            Cancelar
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model.DocDetailId" class="btn btn-danger-outline ms-auto" style="font-size:.84rem;">
+                            <span class="material-symbols-outlined">delete</span>
+                            Eliminar línea
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div style="position:sticky;top:calc(var(--topbar-h) + 16px);">
+            <div class="card">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
+                    <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:18px;">analytics</span>
+                    <span style="font-size:.88rem;font-weight:700;color:var(--clr-text);">Valores Actuales</span>
+                </div>
+                <div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--clr-border);font-size:.84rem;">
+                        <span style="color:var(--clr-text-muted);font-weight:600;">Cantidad</span>
+                        <span style="font-weight:700;">@Model.Quantity</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--clr-border);font-size:.84rem;">
+                        <span style="color:var(--clr-text-muted);font-weight:600;">Precio Unitario</span>
+                        <span style="font-weight:700;">$@Model.UnitPrice.ToString("F2")</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-bottom:1px solid var(--clr-border);font-size:.84rem;">
+                        <span style="color:var(--clr-text-muted);font-weight:600;">Descuento</span>
+                        <span>$@Model.DiscountAmount.ToString("F2")</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;font-size:.84rem;">
+                        <span style="color:var(--clr-text-muted);font-weight:600;">Total línea</span>
+                        <span style="font-weight:800;color:var(--clr-primary);">$@Model.TotalAmount.ToString("F2")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,284 @@
+﻿@model List<SysGestionVentas.EN.Document>
+
+@{
+    ViewData["Title"] = "Mi Portal";
+    ViewData["BreadcrumbParent"] = "Portal";
+    ViewData["BreadcrumbCurrent"] = "Inicio";
+
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "Cliente";
+    var initials = string.Concat(
+        fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Take(2).Select(w => w[0].ToString().ToUpper()));
+
+    // Calcular métricas para las stat cards
+    var totalOrdenes = Model.Count;
+    var pendientes = Model.Count(d => d.Status?.Name == "Pendiente" || d.Status?.Name == "Emitido");
+    var pagadas = Model.Count(d => d.Status?.Name == "Pagado");
+    var montoTotal = Model.Sum(d => d.TotalAmount);
+    var ordenesRecientes = Model.OrderByDescending(d => d.IssueDate).Take(5).ToList();
+}
+
+<div class="page-content">
+
+    @* ── Bienvenida ── *@
+    <div class="page-header">
+        <div class="page-header__info">
+            <h1 class="page-header__title">
+                ¡Bienvenido, @fullName.Split(' ').First()!
+            </h1>
+            <p class="page-header__subtitle mb-0">
+                Aquí puedes revisar tus órdenes, consultar el catálogo y administrar tu cuenta.
+            </p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Catalogo" class="btn btn-primary">
+                <span class="material-symbols-outlined">grid_view</span>
+                Ver Catálogo
+            </a>
+        </div>
+    </div>
+
+    @* ── Stat Cards ── *@
+    <div class="row g-4 mb-4">
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-card__icon" style="background:var(--sgv-teal-50);">
+                    <span class="material-symbols-outlined" style="color:var(--sgv-teal-600);font-variation-settings:'FILL' 1,'wght' 400;">receipt_long</span>
+                </div>
+                <div class="stat-card__label">Total de Órdenes</div>
+                <div class="stat-card__value">@totalOrdenes</div>
+                <div class="stat-card__change stat-card__change--up">
+                    <span class="material-symbols-outlined">shopping_bag</span>
+                    Historial completo
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-card__icon" style="background:var(--sgv-warning-bg);">
+                    <span class="material-symbols-outlined" style="color:var(--sgv-warning);font-variation-settings:'FILL' 1,'wght' 400;">pending_actions</span>
+                </div>
+                <div class="stat-card__label">Pendientes de Pago</div>
+                <div class="stat-card__value">@pendientes</div>
+                @if (pendientes > 0)
+                {
+                    <div class="stat-card__change" style="color:var(--sgv-warning);">
+                        <span class="material-symbols-outlined">warning</span>
+                        Requieren atención
+                    </div>
+                }
+                else
+                {
+                    <div class="stat-card__change stat-card__change--up">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        Todo al día
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-card__icon" style="background:var(--sgv-success-bg);">
+                    <span class="material-symbols-outlined" style="color:var(--sgv-success);font-variation-settings:'FILL' 1,'wght' 400;">task_alt</span>
+                </div>
+                <div class="stat-card__label">Órdenes Pagadas</div>
+                <div class="stat-card__value">@pagadas</div>
+                <div class="stat-card__change stat-card__change--up">
+                    <span class="material-symbols-outlined">trending_up</span>
+                    Completadas
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-card__icon" style="background:var(--sgv-info-bg);">
+                    <span class="material-symbols-outlined" style="color:var(--sgv-info);font-variation-settings:'FILL' 1,'wght' 400;">payments</span>
+                </div>
+                <div class="stat-card__label">Total Facturado</div>
+                <div class="stat-card__value" style="font-size:1.4rem;">
+                    @montoTotal.ToString("C2", new System.Globalization.CultureInfo("en-US"))
+                </div>
+                <div class="stat-card__change stat-card__change--up">
+                    <span class="material-symbols-outlined">account_balance_wallet</span>
+                    Acumulado
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    @* ── Órdenes Recientes ── *@
+    <div class="table-wrapper mb-4">
+
+        <div class="table-toolbar">
+            <div class="table-toolbar__left">
+                <span class="material-symbols-outlined text-teal">history</span>
+                <span class="fw-600" style="color:var(--sgv-gray-800);">Órdenes Recientes</span>
+            </div>
+            <div class="table-toolbar__right">
+                <a asp-action="MisOrdenes" class="btn btn-secondary btn-sm">
+                    Ver todas
+                    <span class="material-symbols-outlined" style="font-size:15px">arrow_forward</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table data-table">
+                <thead>
+                    <tr>
+                        <th>N° Documento</th>
+                        <th>Tipo</th>
+                        <th>Fecha</th>
+                        <th class="col-right">Monto</th>
+                        <th class="col-center">Estado</th>
+                        <th class="col-right">Detalle</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!ordenesRecientes.Any())
+                    {
+                        <tr>
+                            <td colspan="6">
+                                <div class="table-empty">
+                                    <span class="material-symbols-outlined">receipt_long</span>
+                                    <div class="table-empty__title">Aún no tienes órdenes</div>
+                                    <p class="table-empty__text">
+                                        Cuando realices una compra, tus órdenes aparecerán aquí.
+                                    </p>
+                                    <a asp-action="Catalogo" class="btn btn-primary btn-sm mt-2">
+                                        <span class="material-symbols-outlined">grid_view</span>
+                                        Explorar catálogo
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var doc in ordenesRecientes)
+                        {
+                            var statusName = doc.Status?.Name ?? "—";
+                            var statusClass = statusName switch
+                            {
+                                "Pagado" => "status-badge--active",
+                                "Emitido" => "status-badge--info",
+                                "Pendiente" => "status-badge--warning",
+                                "Anulado" => "status-badge--danger",
+                                _ => "status-badge--inactive"
+                            };
+
+                            <tr>
+                                <td>
+                                    <span class="cell-mono fw-600 text-teal">
+                                        @doc.DocNumber
+                                    </span>
+                                </td>
+                                <td>@(doc.DocumentType?.Name ?? "—")</td>
+                                <td>@doc.IssueDate.ToString("dd/MM/yyyy")</td>
+                                <td class="col-right cell-mono">
+                                    @doc.TotalAmount.ToString("C2", new System.Globalization.CultureInfo("en-US"))
+                                </td>
+                                <td class="col-center">
+                                    <span class="status-badge @statusClass">
+                                        <span class="status-dot"></span>
+                                        @statusName
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="cell-actions" style="opacity:1;">
+                                        <a asp-action="DetalleOrden"
+                                               asp-route-id="@doc.DocumentId"
+                                               class="action-btn"
+                                               title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (ordenesRecientes.Any())
+        {
+            <div class="table-footer">
+                <span class="table-footer__count">
+                    Mostrando las últimas <strong>@ordenesRecientes.Count</strong> de <strong>@totalOrdenes</strong> órdenes
+                </span>
+                <a asp-action="MisOrdenes" class="btn btn-secondary btn-sm">
+                    Ver historial completo
+                </a>
+            </div>
+        }
+
+    </div>
+
+    @* ── Accesos rápidos ── *@
+    <div class="row g-4">
+
+        <div class="col-md-4">
+            <a asp-action="MisOrdenes" class="card text-decoration-none p-4 d-flex flex-row align-items-center gap-3 hover-card">
+                <div class="stat-card__icon flex-shrink-0" style="background:var(--sgv-teal-50);width:48px;height:48px;">
+                    <span class="material-symbols-outlined" style="color:var(--sgv-teal-600);font-size:24px;font-variation-settings:'FILL' 1,'wght' 400;">list_alt</span>
+                </div>
+                <div>
+                    <div class="fw-600" style="color:var(--sgv-gray-800);">Mis Órdenes</div>
+                    <div class="text-muted-sm">Historial completo de compras</div>
+                </div>
+                <span class="material-symbols-outlined ms-auto" style="color:var(--sgv-gray-300);">chevron_right</span>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a asp-action="Catalogo" class="card text-decoration-none p-4 d-flex flex-row align-items-center gap-3 hover-card">
+                <div class="stat-card__icon flex-shrink-0" style="background:#ede9fe;width:48px;height:48px;">
+                    <span class="material-symbols-outlined" style="color:#6d28d9;font-size:24px;font-variation-settings:'FILL' 1,'wght' 400;">storefront</span>
+                </div>
+                <div>
+                    <div class="fw-600" style="color:var(--sgv-gray-800);">Catálogo</div>
+                    <div class="text-muted-sm">Explora los productos disponibles</div>
+                </div>
+                <span class="material-symbols-outlined ms-auto" style="color:var(--sgv-gray-300);">chevron_right</span>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a asp-action="Perfil" class="card text-decoration-none p-4 d-flex flex-row align-items-center gap-3 hover-card">
+                <div class="stat-card__icon flex-shrink-0" style="background:var(--sgv-info-bg);width:48px;height:48px;">
+                    <span class="material-symbols-outlined" style="color:var(--sgv-info);font-size:24px;font-variation-settings:'FILL' 1,'wght' 400;">manage_accounts</span>
+                </div>
+                <div>
+                    <div class="fw-600" style="color:var(--sgv-gray-800);">Mi Perfil</div>
+                    <div class="text-muted-sm">Datos personales y contraseña</div>
+                </div>
+                <span class="material-symbols-outlined ms-auto" style="color:var(--sgv-gray-300);">chevron_right</span>
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        /* Hover suave en las cards de acceso rápido */
+        document.querySelectorAll('.hover-card').forEach(function (card) {
+            card.addEventListener('mouseenter', function () {
+                card.style.boxShadow = 'var(--sgv-shadow-md)';
+                card.style.transform = 'translateY(-2px)';
+                card.style.transition = 'box-shadow .18s ease, transform .18s ease';
+            });
+            card.addEventListener('mouseleave', function () {
+                card.style.boxShadow = '';
+                card.style.transform = '';
+            });
+        });
+    </script>
+}

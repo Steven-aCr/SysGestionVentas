@@ -77,6 +77,8 @@ namespace SysGestionVentas.DAL
         /// <param name="modelBuilder">Constructor del modelo. No puede ser nulo.</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<User>().ToTable("Users");
+
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(DbContexto).Assembly);
         }

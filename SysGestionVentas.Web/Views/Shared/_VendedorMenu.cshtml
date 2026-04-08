@@ -1,0 +1,102 @@
+﻿@* =========================
+   _VendedorMenu.cshtml
+========================= *@
+
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    var fullName = User.FindFirst("FullName")?.Value
+                   ?? User.Identity?.Name
+                   ?? "Vendedor";
+}
+
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="Menú de vendedor">
+
+    <div class="sidebar__brand-wrapper">
+        <a asp-controller="Ventas"
+               asp-action="Dashboard"
+               class="sidebar__brand">
+
+            <div class="sidebar__brand-icon">
+                <span class="material-symbols-outlined">storefront</span>
+            </div>
+
+            <div class="sidebar__brand-content">
+                <div class="sidebar__brand-name">SysGestionVentas</div>
+                <div class="sidebar__brand-subtitle">Área de Ventas</div>
+            </div>
+        </a>
+    </div>
+
+    <nav class="sidebar__nav">
+
+        <div class="sidebar__section-label">Ventas</div>
+
+        <a asp-controller="Ventas"
+               asp-action="Dashboard"
+               class="sidebar__item @(currentAction == "Dashboard" ? "sidebar__item--active" : "")">
+            <span class="material-symbols-outlined sidebar__item-icon">dashboard</span>
+            <span class="sidebar__item-text">Dashboard</span>
+        </a>
+
+        <a asp-controller="Ventas"
+               asp-action="Documentos"
+               class="sidebar__item @(currentAction == "Documentos" ? "sidebar__item--active" : "")">
+            <span class="material-symbols-outlined sidebar__item-icon">receipt_long</span>
+            <span class="sidebar__item-text">Documentos</span>
+        </a>
+
+        <a asp-controller="Ventas"
+               asp-action="Productos"
+               class="sidebar__item @(currentAction == "Productos" ? "sidebar__item--active" : "")">
+            <span class="material-symbols-outlined sidebar__item-icon">inventory_2</span>
+            <span class="sidebar__item-text">Catálogo</span>
+        </a>
+
+        <div class="sidebar__section-label">Mi Cuenta</div>
+
+        <a asp-controller="Account"
+               asp-action="Profile"
+               class="sidebar__item @(currentController == "Account" ? "sidebar__item--active" : "")">
+            <span class="material-symbols-outlined sidebar__item-icon">person</span>
+            <span class="sidebar__item-text">Mi Perfil</span>
+        </a>
+
+    </nav>
+
+    <div class="sidebar__footer">
+
+        <a asp-controller="Account"
+               asp-action="Profile"
+               class="sidebar__profile-link @(currentController == "Account" ? "sidebar__profile-link--active" : "")">
+
+            <div class="sidebar__user-avatar">
+                @(fullName.Substring(0, 1).ToUpper())
+            </div>
+
+            <div class="sidebar__user-info">
+                <div class="sidebar__user-name">@fullName</div>
+                <div class="sidebar__user-role">Vendedor</div>
+            </div>
+
+            <span class="material-symbols-outlined sidebar__profile-icon">
+                manage_accounts
+            </span>
+        </a>
+
+        <form asp-controller="Auth"
+              asp-action="Logout"
+              method="post"
+              class="sidebar__logout-form">
+            @Html.AntiForgeryToken()
+
+            <button type="submit" class="sidebar__logout-btn">
+                <span class="material-symbols-outlined">logout</span>
+                <span>Cerrar sesión</span>
+            </button>
+        </form>
+
+    </div>
+
+</aside>

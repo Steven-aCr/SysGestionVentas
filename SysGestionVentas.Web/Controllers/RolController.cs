@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +8,8 @@ using SysGestionVentas.EN;
 
 namespace SysGestionVentas.Web.Controllers
 {
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+    [Authorize(Roles = "Administrador")]
     public class RolController : Controller
     {
         private readonly DbContexto _context;
@@ -159,6 +159,13 @@ namespace SysGestionVentas.Web.Controllers
         private bool RolExists(int id)
         {
             return _context.Rol.Any(e => e.RolId == id);
+        }
+
+        private async Task CargarListasAsync()
+        { 
+        ViewBag.StatusList = new SelectList(
+            await StatusDAL.ObtenerPorTiposAsync(new List<int> {1 }, pIsActive:true),
+            "StatusId", "Name");
         }
     }
 }

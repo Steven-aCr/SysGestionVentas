@@ -1,6 +1,8 @@
-﻿using SysGestionVentas.DAL;
+﻿using Microsoft.Identity.Client;
+using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
 using SysGestionVentas.EN.Pagination;
+using SysGestionVentas.EN.ViewModels;
 using System.ComponentModel.DataAnnotations;
 
 namespace SysGestionVentas.BL
@@ -34,6 +36,89 @@ namespace SysGestionVentas.BL
         #region "CRUD"
 
         /// <summary>
+        /// Crea de forma atómica una <see cref="Person"/> y su <see cref="User"/> asociado
+        /// en una única transacción de base de datos.
+        /// Si cualquiera de las dos operaciones falla, se revierte la transacción completa
+        /// garantizando la integridad de los datos.
+        /// </summary>
+        /// <param name="pViewModel">
+        /// ViewModel con los datos combinados de <see cref="Person"/> y <see cref="User"/>
+        /// capturados desde el formulario de registro.
+        /// </param>
+        /// <returns>
+        /// Número de filas afectadas. Retorna <c>2</c> si ambos registros
+        /// se guardaron correctamente.
+        /// </returns>
+        /// <exception cref="ValidationException">
+        /// Se lanza si los datos del ViewModel no pasan las validaciones de negocio.
+        /// </exception>
+        /// <exception cref="Exception">
+        /// Se lanza si ocurre un error durante la transacción o si hay duplicados
+        /// de DUI, teléfono, nombre de usuario o correo electrónico.
+        /// </exception>
+        public static async Task<int> CrearConPersonaAsync(CreateUserModel pModel)
+        {
+            // Validaciones de negocio previas
+            if (string.IsNullOrWhiteSpace(pModel.UserName))
+                throw new Exception("El nombre de usuario es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(pModel.Email))
+                throw new Exception("El correo electrónico es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(pModel.Password))
+                throw new Exception("La contraseña es obligatoria.");
+
+            if (pModel.Password.Length < 8)
+                throw new Exception("La contraseña debe tener al menos 8 caracteres.");
+
+            int result = 0;
+
+            using (var dbContexto = new DbContexto())
+            using (var transaction = await dbContexto.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    // Datos para construir y registrar la nueva Persona 
+                    var person = new Person
+                    {
+                        FirstName = pModel.FirstName,
+                        LastName = pModel.LastName,
+                        Adress = pModel.Adress,
+                        PhoneNumber = pModel.PhoneNumber,
+                        Dui = pModel.Dui,
+                        StatusId = pModel.StatusId
+                    };
+
+                    await PersonDAL.GuardarEnTransaccionAsync(person, dbContexto);
+                    await dbContexto.SaveChangesAsync(); // genera el PersonId
+
+                    // Datos para construir y registrar el nuevo Usuario, relacionándolo con la Persona creada
+                    var user = new User
+                    {
+                        UserName = pModel.UserName,
+                        Email = pModel.Email,
+                        PasswordHash = pModel.Password, // se encripta dentro del DAL
+                        RolId = pModel.RolId,
+                        StatusId = pModel.StatusId,
+                        PersonId = person.PersonId  // relaciona el usuario con la persona recién creada
+                    };
+
+                    await UserDAL.GuardarEnTransaccionAsync(user, dbContexto);
+                    result = await dbContexto.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    throw new Exception(ex.Message);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Valida y registra un nuevo usuario en el sistema.
         /// Aplica las validaciones de estructura definidas en la entidad antes de persistir.
         /// La contraseña es encriptada en la capa DAL antes de almacenarse.
@@ -51,7 +136,7 @@ namespace SysGestionVentas.BL
         public static async Task<int> GuardarAsync(User pUser)
         {
             ValidarEntidad(pUser);
-            return await UsersDAL.GuardarAsync(pUser);
+            return await UserDAL.GuardarAsync(pUser);
         }
 
         /// <summary>
@@ -71,7 +156,7 @@ namespace SysGestionVentas.BL
         public static async Task<int> ModificarAsync(User pUser)
         {
             ValidarEntidad(pUser);
-            return await UsersDAL.ModificarAsync(pUser);
+            return await UserDAL.ModificarAsync(pUser);
         }
 
         /// <summary>
@@ -94,7 +179,7 @@ namespace SysGestionVentas.BL
             if (pUser.StatusId <= 0)
                 throw new Exception("Debe especificar un estado válido para la eliminación lógica.");
 
-            return await UsersDAL.EliminarAsync(pUser);
+            return await UserDAL.EliminarAsync(pUser);
         }
 
         /// <summary>
@@ -111,7 +196,7 @@ namespace SysGestionVentas.BL
             if (pUser.UserId <= 0)
                 throw new Exception("El ID de usuario no es válido.");
 
-            return await UsersDAL.ObtenerPorIdAsync(pUser);
+            return await UserDAL.ObtenerPorIdAsync(pUser);
         }
 
         /// <summary>
@@ -133,7 +218,7 @@ namespace SysGestionVentas.BL
         /// <exception cref="Exception">Se lanza si ocurre un error en base de datos.</exception>
         public static async Task<List<User>> ObtenerTodosAsync(User pUser)
         {
-            return await UsersDAL.ObtenerTodosAsync(pUser);
+            return await UserDAL.ObtenerTodosAsync(pUser);
         }
 
         #endregion
@@ -165,7 +250,7 @@ namespace SysGestionVentas.BL
             if (pPagedQuery.PageSize <= 0)
                 throw new Exception("El tamaño de página debe ser mayor a 0.");
 
-            return await UsersDAL.BuscarAsync(pPagedQuery);
+            return await UserDAL.BuscarAsync(pPagedQuery);
         }
 
         #endregion
@@ -194,7 +279,7 @@ namespace SysGestionVentas.BL
             if (string.IsNullOrWhiteSpace(pPassword))
                 throw new Exception("La contraseña es obligatoria.");
 
-            return await UsersDAL.LogingAsync(pEmail, pPassword);
+            return await UserDAL.LogingAsync(pEmail, pPassword);
         }
 
         /// <summary>
@@ -221,7 +306,7 @@ namespace SysGestionVentas.BL
             if (pNewPassword.Length < 8)
                 throw new Exception("La contraseña debe tener al menos 8 caracteres.");
 
-            return await UsersDAL.ChangePasswordAsync(pUserId, pNewPassword);
+            return await UserDAL.ChangePasswordAsync(pUserId, pNewPassword);
         }
 
         /// <summary>
@@ -243,9 +328,75 @@ namespace SysGestionVentas.BL
             if (pUserId <= 0)
                 throw new Exception("El ID de usuario no es válido.");
 
-            return await UsersDAL.GenerarTempAsync(pUserId);
+            return await UserDAL.GenerarTempAsync(pUserId);
         }
+        #endregion
 
+        #region "Métodos Específicos de Negocio"
+        /// <summary>
+        /// Actualiza de forma atómica los datos personales y de acceso del usuario autenticado.
+        /// Si se proporcionan campos de contraseña, valida la actual antes de aplicar el cambio.
+        /// <see cref="Person"/> y <see cref="User"/> se actualizan en una sola transacción.
+        /// </summary>
+        /// <param name="pModel">
+        /// ViewModel con los datos del perfil. Si <c>NewPassword</c> está vacío,
+        /// la contraseña actual se conserva sin modificaciones.
+        /// </param>
+        /// <returns>Número de filas afectadas.</returns>
+        /// <exception cref="Exception">
+        /// Se lanza si la contraseña actual es incorrecta, si hay duplicados de DUI,
+        /// teléfono o correo, o si ocurre un error en base de datos.
+        /// </exception>
+        public static async Task<int> ActualizarPerfilAsync(EditProfileModel pModel)
+        {
+            int result = 0;
+
+            using var dbContexto = new DbContexto();
+            using var transaction = await dbContexto.Database.BeginTransactionAsync();
+
+            try
+            {
+                // 1 — Actualizar datos personales
+                var person = new Person
+                {
+                    PersonId = pModel.PersonId,
+                    FirstName = pModel.FirstName,
+                    LastName = pModel.LastName,
+                    Adress = pModel.Adress,
+                    PhoneNumber = pModel.PhoneNumber,
+                    Dui = pModel.Dui
+                };
+                await PersonDAL.ModificarEnTransaccionAsync(person, dbContexto);
+
+                // 2 — Actualizar datos de acceso del usuario
+                var user = await UserDAL.ObtenerEnTransaccionAsync(pModel.UserId, dbContexto);
+                if (user == null)
+                    throw new Exception("No se encontró el usuario.");
+
+                user.Email = pModel.Email;
+
+                // 3 — Cambio de contraseña opcional
+                if (!string.IsNullOrWhiteSpace(pModel.NewPassword))
+                {
+                    await UserDAL.ValidarContrasenaActualAsync(
+                        pModel.UserId, pModel.CurrentPassword!, dbContexto);
+
+                    user.PasswordHash = UserDAL.EncriptarSHA256Publico(pModel.NewPassword);
+                }
+
+                UserDAL.ModificarEnTransaccion(user, dbContexto);
+                result = await dbContexto.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw new Exception(ex.Message);
+            }
+
+            return result;
+        }
         #endregion
     }
 }

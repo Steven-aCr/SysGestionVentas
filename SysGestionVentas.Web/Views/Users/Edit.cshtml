@@ -1,79 +1,152 @@
 ﻿@model SysGestionVentas.EN.User
 
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = "Editar Usuario";
+    ViewData["BreadcrumbParent"] = "Usuarios";
 }
 
-<h1>Edit</h1>
+<div class="page-header">
+    <div class="page-header__info">
+        <h1 class="page-header__title">Editar Usuario</h1>
+        <p class="page-header__subtitle">Modifica los datos de acceso y configuración del usuario</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn--secondary">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver al listado
+        </a>
+    </div>
+</div>
 
-<h4>User</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+<div class="card" style="max-width:640px">
+    <div class="card__body">
+
+        <form asp-action="Edit" id="editUserForm" novalidate data-validate-unique>
+
+            <div asp-validation-summary="ModelOnly"
+                 class="alert alert--danger"
+                 style="display:none"
+                 data-valmsg-summary="true">
+                <span class="material-symbols-outlined">error</span>
+                <div class="alert__content"></div>
+            </div>
+
+            @* ── Campos de auditoría: no modificables ── *@
             <input type="hidden" asp-for="UserId" />
-            <div class="form-group">
-                <label asp-for="UserName" class="control-label"></label>
-                <input asp-for="UserName" class="form-control" />
-                <span asp-validation-for="UserName" class="text-danger"></span>
+            <input type="hidden" asp-for="CreatedAt" />
+            <input type="hidden" asp-for="PersonId" />
+            @*
+                PasswordHash se conserva oculto para que el model binding
+                no lo pierda en el POST. El DAL nunca lo actualiza
+                desde ModificarAsync, pero el binder lo requiere
+                para que la entidad sea válida.
+            *@
+            <input type="hidden" asp-for="PasswordHash" />
+
+            @* ── Sección: Datos de Acceso ── *@
+            <div class="form-section">
+                <div class="form-section__header">
+                    <span class="material-symbols-outlined form-section__icon">manage_accounts</span>
+                    <span class="form-section__title">Datos de Acceso</span>
+                </div>
+
+                <div class="form-grid form-grid--2col">
+
+                    <div class="form-group">
+                        <label asp-for="UserName" class="form-label form-label--required"></label>
+                        <div class="input-group input-group--left-icon">
+                            <span class="input-group__icon input-group__icon--left material-symbols-outlined">alternate_email</span>
+                            @*
+                                data-unique-exclude : UserId actual para que el endpoint
+                                no marque el propio registro como duplicado.
+                            *@
+                            <input asp-for="UserName"
+                                   class="form-control"
+                                   autocomplete="off"
+                                   data-unique-field="UserName"
+                                   data-unique-url="/Users/CheckUnique"
+                                   data-unique-msg="userNameUniqueMsg"
+                                   data-unique-exclude="@Model.UserId" />
+                        </div>
+                        <span asp-validation-for="UserName" class="form-error"></span>
+                        <span id="userNameUniqueMsg"
+                              class="form-error"
+                              style="display:none"
+                              data-unique-error="Este nombre de usuario ya está en uso."></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Email" class="form-label form-label--required"></label>
+                        <div class="input-group input-group--left-icon">
+                            <span class="input-group__icon input-group__icon--left material-symbols-outlined">email</span>
+                            <input asp-for="Email" class="form-control" />
+                        </div>
+                        <span asp-validation-for="Email" class="form-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="RolId" class="form-label form-label--required"></label>
+                        <select asp-for="RolId" class="form-control" asp-items="ViewBag.Roles">
+                            <option value="">— Seleccione un rol —</option>
+                        </select>
+                        <span asp-validation-for="RolId" class="form-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="StatusId" class="form-label form-label--required"></label>
+                        <select asp-for="StatusId" class="form-control" asp-items="ViewBag.Statuses">
+                            <option value="">— Seleccione un estado —</option>
+                        </select>
+                        <span asp-validation-for="StatusId" class="form-error"></span>
+                    </div>
+
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="Email" class="control-label"></label>
-                <input asp-for="Email" class="form-control" />
-                <span asp-validation-for="Email" class="text-danger"></span>
+
+            @* ── Sección: Contraseña Temporal (solo lectura informativa) ── *@
+            <div class="form-section">
+                <div class="form-section__header">
+                    <span class="material-symbols-outlined form-section__icon">key</span>
+                    <span class="form-section__title">Contraseña Temporal</span>
+                </div>
+
+                @if (Model.TempPasswordExpiry.HasValue)
+                {
+                    <div class="alert alert--warning" style="margin-bottom: var(--space-4)">
+                        <span class="material-symbols-outlined">schedule</span>
+                        <div class="alert__content">
+                            <p class="alert__text">
+                                Existe una contraseña temporal activa válida hasta:
+                                <strong>@Model.TempPasswordExpiry.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong>
+                            </p>
+                        </div>
+                    </div>
+                }
+
+                <div class="info-box">
+                    <span class="material-symbols-outlined">info</span>
+                    <p class="info-box__text">
+                        Para generar una contraseña temporal de acceso de emergencia,
+                        usa la opción <strong>Generar Acceso Temporal</strong> desde el detalle del usuario.
+                        La contraseña temporal tiene vigencia de <strong>1 hora</strong> y es de un solo uso.
+                    </p>
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="PasswordHash" class="control-label"></label>
-                <input asp-for="PasswordHash" class="form-control" />
-                <span asp-validation-for="PasswordHash" class="text-danger"></span>
+
+            <div class="form-actions form-actions--between">
+                <a asp-action="Index" class="btn btn--ghost">Cancelar</a>
+                <button type="submit" class="btn btn--primary">
+                    <span class="material-symbols-outlined">save</span>
+                    Guardar Cambios
+                </button>
             </div>
-            <div class="form-group">
-                <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" />
-                <span asp-validation-for="CreatedAt" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="TempPasswordHash" class="control-label"></label>
-                <input asp-for="TempPasswordHash" class="form-control" />
-                <span asp-validation-for="TempPasswordHash" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="TempPasswordExpiry" class="control-label"></label>
-                <input asp-for="TempPasswordExpiry" class="form-control" />
-                <span asp-validation-for="TempPasswordExpiry" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="MustChangePassword" /> @Html.DisplayNameFor(model => model.MustChangePassword)
-                </label>
-            </div>
-            <div class="form-group">
-                <label asp-for="RolId" class="control-label"></label>
-                <select asp-for="RolId" class="form-control" asp-items="ViewBag.RolId"></select>
-                <span asp-validation-for="RolId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="PersonId" class="control-label"></label>
-                <select asp-for="PersonId" class="form-control" asp-items="ViewBag.PersonId"></select>
-                <span asp-validation-for="PersonId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="StatusId" class="control-label"></label>
-                <select asp-for="StatusId" class="form-control" asp-items="ViewBag.StatusId"></select>
-                <span asp-validation-for="StatusId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
+
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
