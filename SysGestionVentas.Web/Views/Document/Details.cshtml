@@ -1,0 +1,26 @@
+﻿@model SysGestionVentas.EN.Document
+@{
+    ViewData["Title"] = "Detalles del Documento";
+}
+<h1>Detalles del Documento</h1>
+<div>
+    <h4>Document</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.DocumentType)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.DocumentType.Name)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.DocNumber)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.DocNumber)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.IssueDate)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.IssueDate)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Person)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Person.FirstName)</dd>
+    </dl>
+</div>
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.DocumentId">Editar</a> |
+    <a asp-action="Index">Volver al listado</a>
+</div>
