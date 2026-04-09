@@ -239,6 +239,21 @@ namespace SysGestionVentas.DAL
             }
         }
 
+        public static async Task<int> GuardarAsync(InventoryMovement pInventoryMovement)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static async Task<int> ModificarAsync(InventoryMovement pInventoryMovement)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static async Task<int> EliminarAsync(InventoryMovement pInventoryMovement)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion
     }
 }

@@ -47,5 +47,6 @@ namespace SysGestionVentas.EN
 
         [StringLength(255)]
         public string? Notes { get; set; }
+        public object ProductList { get; set; }
     }
 }
