@@ -2,7 +2,6 @@
 
 @{
     ViewData["Title"] = "Desactivar Rol";
-    ViewData["BreadcrumbParent"] = "Roles";
 }
 
 <div class="page-header">
@@ -33,7 +32,7 @@
             <div>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
                     <span style="font-weight:600;color:var(--clr-text-muted);">Nombre</span>
-                    <span style="font-weight:700;">@Model.Name</span>
+                    <strong>@Model.Name</strong>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
                     <span style="font-weight:600;color:var(--clr-text-muted);">Descripción</span>
@@ -41,7 +40,10 @@
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;font-size:.86rem;">
                     <span style="font-weight:600;color:var(--clr-text-muted);">Estado actual</span>
-                    <span class="badge badge-vendedor"><span class="status-dot status-dot--active"></span>&nbsp;@(Model.Status?.Name ?? "Activo")</span>
+                    <div class="status">
+                        <span class="status-dot status-dot--active"></span>
+                        <span>@(Model.Status?.Name ?? "Activo")</span>
+                    </div>
                 </div>
             </div>
         </div>

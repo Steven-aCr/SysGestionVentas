@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.BL;
 using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
+using SysGestionVentas.EN.Pagination;
+using System.Security.Claims;
 
 namespace SysGestionVentas.Web.Controllers
 {
@@ -12,172 +14,165 @@ namespace SysGestionVentas.Web.Controllers
     [Authorize(Roles = "Administrador")]
     public class InventoryMovementsController : Controller
     {
-        private readonly DbContexto _context;
-
-        public InventoryMovementsController(DbContexto context)
-        {
-            _context = context;
-        }
-
         // GET: InventoryMovements
-        public async Task<IActionResult> Index()
+        /// <summary>
+        /// Muestra la lista paginada de movimientos de inventario con soporte de filtros.
+        /// </summary>
+        /// <param name="page">Número de página actual (por defecto: 1).</param>
+        /// <param name="inventoryId">Filtro opcional por inventario.</param>
+        /// <param name="movementTypeId">Filtro opcional por tipo de movimiento.</param>
+        public async Task<IActionResult> Index(int page = 1, int inventoryId = 0, int movementTypeId = 0)
         {
-            var dbContexto = _context.InventoryMovement.Include(i => i.CreatedBy).Include(i => i.Inventory).Include(i => i.MovementType);
-            return View(await dbContexto.ToListAsync());
+            try
+            {
+                var query = new PagedQuery<InventoryMovement>
+                {
+                    Filter = new InventoryMovement
+                    {
+                        InventoryId = inventoryId,
+                        MovementTypeId = movementTypeId
+                    },
+                    Page = page,
+                    PageSize = 20
+                };
+
+                var resultado = await InventoryMovementBL.BuscarAsync(query);
+
+                await CargarFiltrosAsync(inventoryId, movementTypeId);
+
+                return View(resultado);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+
+                return View(new PagedResult<InventoryMovement>
+                {
+                    Items = new List<InventoryMovement>()
+                });
+            }
         }
 
         // GET: InventoryMovements/Details/5
+        /// <summary>
+        /// Muestra el detalle de un movimiento de inventario específico.
+        /// </summary>
+        /// <param name="id">Identificador del movimiento a consultar.</param>
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var inventoryMovement = await _context.InventoryMovement
-                .Include(i => i.CreatedBy)
-                .Include(i => i.Inventory)
-                .Include(i => i.MovementType)
-                .FirstOrDefaultAsync(m => m.InventoryMovementId == id);
-            if (inventoryMovement == null)
+            try
             {
-                return NotFound();
-            }
+                var movement = await InventoryMovementBL.ObtenerPorIdAsync(
+                    new InventoryMovement { InventoryMovementId = id.Value });
 
-            return View(inventoryMovement);
+                if (movement == null) return NotFound();
+                return View(movement);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         // GET: InventoryMovements/Create
-        public IActionResult Create()
+        /// <summary>
+        /// Muestra el formulario para registrar un nuevo movimiento de inventario.
+        /// El campo <c>CreatedByUser</c> se toma automáticamente del usuario autenticado.
+        /// </summary>
+        public async Task<IActionResult> Create()
         {
-            ViewData["CreatedByUser"] = new SelectList(_context.User, "UserId", "Email");
-            ViewData["InventoryId"] = new SelectList(_context.Inventory, "InventoryId", "InventoryId");
-            ViewData["MovementTypeId"] = new SelectList(_context.MovementType, "MovementTypeId", "Name");
-            return View();
+            await CargarListasAsync();
+            return View(new InventoryMovement());
         }
 
         // POST: InventoryMovements/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        /// <summary>
+        /// Procesa el registro de un nuevo movimiento de inventario.
+        /// Actualiza el stock del inventario asociado de forma atómica.
+        /// El tipo de movimiento determina si el stock incrementa, decrementa o se ajusta.
+        /// </summary>
+        /// <param name="pMovement">Entidad <see cref="InventoryMovement"/> con los datos del formulario.</param>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("InventoryMovementId,MovementTypeId,Quantity,UnitCost,Notes,CreatedAt,CreatedByUser,InventoryId,MovementDate")] InventoryMovement inventoryMovement)
+        public async Task<IActionResult> Create(
+            [Bind("MovementTypeId,Quantity,UnitCost,Notes,InventoryId")]
+            InventoryMovement pMovement)
         {
-            if (ModelState.IsValid)
+            // Asignar el usuario autenticado como creador del movimiento
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out int userId) || userId <= 0)
             {
-                _context.Add(inventoryMovement);
-                await _context.SaveChangesAsync();
+                ModelState.AddModelError(string.Empty, "No se pudo identificar al usuario autenticado.");
+                await CargarListasAsync();
+                return View(pMovement);
+            }
+
+            pMovement.CreatedByUser = userId;
+
+            if (!ModelState.IsValid)
+            {
+                await CargarListasAsync();
+                return View(pMovement);
+            }
+
+            try
+            {
+                await InventoryMovementBL.RegistrarMovimientoAsync(pMovement);
+                TempData["Success"] = "Movimiento registrado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CreatedByUser"] = new SelectList(_context.User, "UserId", "Email", inventoryMovement.CreatedByUser);
-            ViewData["InventoryId"] = new SelectList(_context.Inventory, "InventoryId", "InventoryId", inventoryMovement.InventoryId);
-            ViewData["MovementTypeId"] = new SelectList(_context.MovementType, "MovementTypeId", "Name", inventoryMovement.MovementTypeId);
-            return View(inventoryMovement);
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                await CargarListasAsync();
+                return View(pMovement);
+            }
         }
 
-        // GET: InventoryMovements/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        // ── Métodos Privados ─────────────────────────────────────────────────────
 
-            var inventoryMovement = await _context.InventoryMovement.FindAsync(id);
-            if (inventoryMovement == null)
-            {
-                return NotFound();
-            }
-            ViewData["CreatedByUser"] = new SelectList(_context.User, "UserId", "Email", inventoryMovement.CreatedByUser);
-            ViewData["InventoryId"] = new SelectList(_context.Inventory, "InventoryId", "InventoryId", inventoryMovement.InventoryId);
-            ViewData["MovementTypeId"] = new SelectList(_context.MovementType, "MovementTypeId", "Name", inventoryMovement.MovementTypeId);
-            return View(inventoryMovement);
-        }
-
-        // POST: InventoryMovements/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("InventoryMovementId,MovementTypeId,Quantity,UnitCost,Notes,CreatedAt,CreatedByUser,InventoryId,MovementDate")] InventoryMovement inventoryMovement)
-        {
-            if (id != inventoryMovement.InventoryMovementId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(inventoryMovement);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!InventoryMovementExists(inventoryMovement.InventoryMovementId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CreatedByUser"] = new SelectList(_context.User, "UserId", "Email", inventoryMovement.CreatedByUser);
-            ViewData["InventoryId"] = new SelectList(_context.Inventory, "InventoryId", "InventoryId", inventoryMovement.InventoryId);
-            ViewData["MovementTypeId"] = new SelectList(_context.MovementType, "MovementTypeId", "Name", inventoryMovement.MovementTypeId);
-            return View(inventoryMovement);
-        }
-
-        // GET: InventoryMovements/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var inventoryMovement = await _context.InventoryMovement
-                .Include(i => i.CreatedBy)
-                .Include(i => i.Inventory)
-                .Include(i => i.MovementType)
-                .FirstOrDefaultAsync(m => m.InventoryMovementId == id);
-            if (inventoryMovement == null)
-            {
-                return NotFound();
-            }
-
-            return View(inventoryMovement);
-        }
-
-        // POST: InventoryMovements/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var inventoryMovement = await _context.InventoryMovement.FindAsync(id);
-            if (inventoryMovement != null)
-            {
-                _context.InventoryMovement.Remove(inventoryMovement);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool InventoryMovementExists(int id)
-        {
-            return _context.InventoryMovement.Any(e => e.InventoryMovementId == id);
-        }
-
+        /// <summary>
+        /// Carga las listas de inventarios y tipos de movimiento
+        /// necesarias para los controles desplegables de la vista Create.
+        /// </summary>
         private async Task CargarListasAsync()
         {
-            ViewBag.StatusList = new SelectList(
-                await StatusDAL.ObtenerPorTiposAsync(new List<int> { 1 }, pIsActive: true),
-                "StatusId", "Name");
+            var inventories = await InventoryDAL.ObtenerTodosAsync(new Inventory { StatusId = 1 });
+            ViewBag.InventoryList = new SelectList(
+                inventories.Select(i => new
+                {
+                    i.InventoryId,
+                    Nombre = i.Product != null ? i.Product.Name : $"Inventario #{i.InventoryId}"
+                }),
+                "InventoryId", "Nombre");
+
+            ViewBag.MovementTypeList = new SelectList(
+                await MovementTypeDAL.ObtenerTodosAsync(new MovementType(), pIsActive: true),
+                "MovementTypeId", "Name");
+        }
+
+        /// <summary>
+        /// Carga los filtros desplegables para la vista Index manteniendo las selecciones actuales.
+        /// </summary>
+        /// <param name="inventoryId">ID de inventario actualmente filtrado.</param>
+        /// <param name="movementTypeId">ID de tipo de movimiento actualmente filtrado.</param>
+        private async Task CargarFiltrosAsync(int inventoryId, int movementTypeId)
+        {
+            var inventories = await InventoryDAL.ObtenerTodosAsync(new Inventory());
+            ViewBag.InventoryList = new SelectList(
+                inventories.Select(i => new
+                {
+                    i.InventoryId,
+                    Nombre = i.Product != null ? i.Product.Name : $"Inventario #{i.InventoryId}"
+                }),
+                "InventoryId", "Nombre", inventoryId);
+
+            ViewBag.MovementTypeList = new SelectList(
+                await MovementTypeDAL.ObtenerTodosAsync(new MovementType()),
+                "MovementTypeId", "Name", movementTypeId);
         }
     }
 }

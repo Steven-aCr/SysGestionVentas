@@ -1,4 +1,4 @@
-﻿@model IEnumerable<SysGestionVentas.EN.DocumentDetail>
+﻿@model SysGestionVentas.EN.Pagination.PagedResult<SysGestionVentas.EN.DocumentDetail>
 
 @{
     ViewData["Title"] = "Detalle de Documentos";
@@ -35,8 +35,8 @@
                        placeholder="Buscar por documento o producto..." />
             </div>
 
-            <span style="font-size:.8rem; color:var(--clr-text-muted);" id="recordCount">
-                @Model.Count() registro(s)
+            <span id="recordCount">
+                @Model.TotalCount registro(s)
             </span>
         </div>
 
@@ -57,7 +57,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (!Model.Any())
+                    @if (!Model.Items.Any())
                     {
                         <tr>
                             <td colspan="9">
@@ -75,7 +75,7 @@
                     }
                     else
                     {
-                        @foreach (var item in Model)
+                        @foreach (var item in Model.Items)
                         {
                             var doc = item.Document?.DocNumber ?? "—";
                             var producto = item.Product?.Barcode ?? "—";
@@ -138,8 +138,8 @@
 
         <!-- Footer -->
         <div class="table-footer">
-            <span id="filteredCount">
-                Mostrando @Model.Count() detalle(s)
+            <span id="recordCount">
+                @Model.TotalCount registro(s)
             </span>
         </div>
 

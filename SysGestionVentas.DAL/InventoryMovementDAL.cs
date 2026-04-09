@@ -182,12 +182,12 @@ namespace SysGestionVentas.DAL
                 pQuery = pQuery.Where(im => im.CreatedByUser == f.CreatedByUser);
 
             if (pPagedQuery.FromDate.HasValue)
-                pQuery = pQuery.Where(im => im.MovementDate >= pPagedQuery.FromDate.Value);
+                pQuery = pQuery.Where(im => im.CreatedAt >= pPagedQuery.FromDate.Value);
 
             if (pPagedQuery.ToDate.HasValue)
-                pQuery = pQuery.Where(im => im.MovementDate <= pPagedQuery.ToDate.Value);
+                pQuery = pQuery.Where(im => im.CreatedAt <= pPagedQuery.ToDate.Value);
 
-            return pQuery.OrderByDescending(im => im.MovementDate);
+            return pQuery.OrderByDescending(im => im.CreatedAt);
         }
 
         /// Método público para búsqueda con filtros y paginación:

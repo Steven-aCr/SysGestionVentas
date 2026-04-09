@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SysGestionVentas.BL;
 using SysGestionVentas.DAL;
@@ -7,22 +9,27 @@ using SysGestionVentas.EN.ViewModels;
 
 namespace SysGestionVentas.Web.Controllers
 {
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+    [Authorize(Roles = "Administrador")]
     public class UsersController : Controller
     {
         // GET: Users
         /// <summary>
-        /// Muestra la lista de usuarios filtrada por pestaña activa y término de búsqueda.
+        /// Muestra la lista de usuarios del sistema aplicando el filtro de tab seleccionado.
         /// Calcula los conteos por categoría para las insignias de las pestañas.
         /// </summary>
-        /// <param name="tab">Pestaña activa: "all", "Vendedor", "Cliente", "inactive".</param>
-        /// <param name="search">Término de búsqueda parcial por nombre de usuario.</param>
-        public async Task<IActionResult> Index(string tab = "all", string search = "")
+        /// <param name="tab">
+        /// Identificador del tab de filtro. Valores admitidos:
+        /// <c>all</c> (por defecto), <c>Vendedor</c>, <c>Cliente</c>, <c>inactive</c>.
+        /// </param>
+        /// <param name="search">Texto libre para filtrar por nombre, correo, persona o rol.</param>
+        public async Task<IActionResult> Index(string tab = "all", string? search = null)
         {
             try
             {
-                var todos = await UserDAL.ObtenerTodosAsync(new User());
+                var todos = await UserBL.ObtenerTodosAsync(new User());
 
-                // Aplicar búsqueda sobre la colección completa
+                // Aplicar búsqueda en memoria sobre las propiedades de navegación
                 if (!string.IsNullOrWhiteSpace(search))
                 {
                     var q = search.ToLower();
@@ -35,7 +42,7 @@ namespace SysGestionVentas.Web.Controllers
                     ).ToList();
                 }
 
-                // Conteos para las insignias de pestañas (sobre la lista ya filtrada por búsqueda)
+                // Conteos para las insignias de pestañas
                 ViewData["CountAll"] = todos.Count;
                 ViewData["CountActive"] = todos.Count(u => u.Status?.Name == "Activo");
                 ViewData["CountInactive"] = todos.Count(u => u.Status?.Name != "Activo");
@@ -46,8 +53,7 @@ namespace SysGestionVentas.Web.Controllers
                 // Filtrar por pestaña activa
                 var resultado = tab switch
                 {
-                    "Vendedor" => todos.Where(u =>
-                        u.Rol?.Name is "Administrador" or "Vendedor" or "Gerente").ToList(),
+                    "Vendedor" => todos.Where(u => u.Rol?.Name is "Administrador" or "Vendedor" or "Gerente").ToList(),
                     "Cliente" => todos.Where(u => u.Rol?.Name == "Cliente").ToList(),
                     "inactive" => todos.Where(u => u.Status?.Name != "Activo").ToList(),
                     _ => todos
@@ -55,7 +61,6 @@ namespace SysGestionVentas.Web.Controllers
 
                 ViewData["ActiveTab"] = tab;
                 ViewData["Search"] = search;
-
                 return View(resultado);
             }
             catch (Exception ex)
@@ -69,15 +74,15 @@ namespace SysGestionVentas.Web.Controllers
         /// <summary>
         /// Muestra el detalle de un usuario específico.
         /// </summary>
+        /// <param name="id">Identificador del usuario a consultar.</param>
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-                return NotFound();
+            if (id == null) return NotFound();
+
             try
             {
-                var user = await UserDAL.ObtenerPorIdAsync(new User { UserId = id.Value });
-                if (user == null)
-                    return NotFound();
+                var user = await UserBL.ObtenerPorIdAsync(new User { UserId = id.Value });
+                if (user == null) return NotFound();
                 return View(user);
             }
             catch (Exception ex)
@@ -89,8 +94,8 @@ namespace SysGestionVentas.Web.Controllers
 
         // GET: Users/Create
         /// <summary>
-        /// Muestra el formulario unificado para crear una nueva persona y usuario en una sola operación.
-        /// Carga las listas de roles y estados activos necesarios para los combos del formulario.
+        /// Muestra el formulario unificado para crear una nueva persona y usuario
+        /// en una sola operación.
         /// </summary>
         public async Task<IActionResult> Create()
         {
@@ -122,7 +127,7 @@ namespace SysGestionVentas.Web.Controllers
             }
             catch (Exception ex)
             {
-                TempData["Error"] = ex.Message;
+                ModelState.AddModelError(string.Empty, ex.Message);
                 await CargarListasAsync();
                 return View(pModel);
             }
@@ -132,15 +137,15 @@ namespace SysGestionVentas.Web.Controllers
         /// <summary>
         /// Muestra el formulario para editar un usuario existente.
         /// </summary>
+        /// <param name="id">Identificador del usuario a editar.</param>
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-                return NotFound();
+            if (id == null) return NotFound();
+
             try
             {
-                var user = await UserDAL.ObtenerPorIdAsync(new User { UserId = id.Value });
-                if (user == null)
-                    return NotFound();
+                var user = await UserBL.ObtenerPorIdAsync(new User { UserId = id.Value });
+                if (user == null) return NotFound();
 
                 await CargarListasAsync();
                 return View(user);
@@ -155,7 +160,7 @@ namespace SysGestionVentas.Web.Controllers
         // POST: Users/Edit/5
         /// <summary>
         /// Procesa la modificación de los datos de acceso de un usuario existente.
-        /// La contraseña no es modificable desde esta acción.
+        /// La contraseña no es modificable desde esta acción; usar la acción de cambio de contraseña.
         /// </summary>
         /// <param name="id">Identificador del usuario proveniente de la ruta.</param>
         /// <param name="pUser">Entidad <see cref="User"/> con los nuevos valores del formulario.</param>
@@ -163,8 +168,7 @@ namespace SysGestionVentas.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, User pUser)
         {
-            if (id != pUser.UserId)
-                return NotFound();
+            if (id != pUser.UserId) return NotFound();
 
             if (!ModelState.IsValid)
             {
@@ -174,7 +178,7 @@ namespace SysGestionVentas.Web.Controllers
 
             try
             {
-                await UserDAL.ModificarAsync(pUser);
+                await UserBL.ModificarAsync(pUser);
                 TempData["Success"] = "Usuario modificado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
@@ -190,15 +194,15 @@ namespace SysGestionVentas.Web.Controllers
         /// <summary>
         /// Muestra la confirmación para desactivar un usuario (eliminación lógica).
         /// </summary>
+        /// <param name="id">Identificador del usuario a desactivar.</param>
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-                return NotFound();
+            if (id == null) return NotFound();
+
             try
             {
-                var user = await UserDAL.ObtenerPorIdAsync(new User { UserId = id.Value });
-                if (user == null)
-                    return NotFound();
+                var user = await UserBL.ObtenerPorIdAsync(new User { UserId = id.Value });
+                if (user == null) return NotFound();
                 return View(user);
             }
             catch (Exception ex)
@@ -210,16 +214,17 @@ namespace SysGestionVentas.Web.Controllers
 
         // POST: Users/Delete/5
         /// <summary>
-        /// Ejecuta la eliminación lógica del usuario cambiando su estado a inactivo.
-        /// StatusId = 2 corresponde al estado "Inactivo" según el seed data del script SQL.
+        /// Ejecuta la eliminación lógica del usuario cambiando su estado a "Inactivo" (StatusId = 2).
+        /// No elimina el registro físicamente de la base de datos.
         /// </summary>
+        /// <param name="id">Identificador del usuario a desactivar.</param>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             try
             {
-                await UserDAL.EliminarAsync(new User { UserId = id, StatusId = 2 });
+                await UserBL.EliminarAsync(new User { UserId = id, StatusId = 2 });
                 TempData["Success"] = "Usuario desactivado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
@@ -237,12 +242,11 @@ namespace SysGestionVentas.Web.Controllers
         /// </summary>
         /// <param name="field">
         /// Nombre del campo a verificar. Valores admitidos:
-        /// <c>UserName</c>, <c>Email</c>, <c>PhoneNumber</c>, <c>Dui</c>.
+        /// <c>UserName</c>, <c>PhoneNumber</c>, <c>Dui</c>.
         /// </param>
         /// <param name="value">Valor a comprobar.</param>
         /// <param name="excludeId">
         /// Identificador del registro a excluir de la verificación.
-        /// Debe enviarse desde la vista Edit para no marcar el propio registro como duplicado.
         /// En la vista Create siempre será 0.
         /// </param>
         /// <returns>
@@ -262,24 +266,19 @@ namespace SysGestionVentas.Web.Controllers
                 switch (field)
                 {
                     case "UserName":
-                        var byUserName = await UserDAL.ObtenerTodosAsync(
+                        var byUserName = await UserBL.ObtenerTodosAsync(
                             new User { UserName = value.Trim() });
                         taken = byUserName.Any(u => u.UserId != excludeId);
                         break;
 
-                    case "Email":
-                        taken = await UserDAL.ExisteEmail(
-                            new User { Email = value.Trim(), UserId = excludeId }, new DbContexto());
-                        break;
-
                     case "PhoneNumber":
-                        var byPhone = await PersonDAL.ObtenerTodosAsync(
+                        var byPhone = await PersonBL.ObtenerTodosAsync(
                             new Person { PhoneNumber = value.Trim() });
                         taken = byPhone.Any(p => p.PersonId != excludeId);
                         break;
 
                     case "Dui":
-                        var byDui = await PersonDAL.ObtenerTodosAsync(
+                        var byDui = await PersonBL.ObtenerTodosAsync(
                             new Person { Dui = value.Trim() });
                         taken = byDui.Any(p => p.PersonId != excludeId);
                         break;
@@ -306,7 +305,8 @@ namespace SysGestionVentas.Web.Controllers
         private async Task CargarListasAsync()
         {
             ViewBag.Roles = new SelectList(
-                await RolDAL.ObtenerTodosAsync(new Rol { StatusId = 1 }), "RolId", "Name");
+                await RolDAL.ObtenerTodosAsync(new Rol { StatusId = 1 }),
+                "RolId", "Name");
 
             ViewBag.Statuses = new SelectList(
                 await StatusDAL.ObtenerPorTiposAsync(new List<int> { 1, 2 }, pIsActive: true),

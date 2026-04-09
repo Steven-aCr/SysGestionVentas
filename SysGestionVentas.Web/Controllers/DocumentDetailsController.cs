@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.BL;
 using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
 
@@ -12,166 +12,271 @@ namespace SysGestionVentas.Web.Controllers
     [Authorize(Roles = "Administrador,Vendedor")]
     public class DocumentDetailsController : Controller
     {
-        private readonly DbContexto _context;
-
-        public DocumentDetailsController(DbContexto context)
+        // GET: DocumentDetails/ByDocument/5
+        /// <summary>
+        /// Muestra todas las líneas de detalle de un documento específico.
+        /// </summary>
+        /// <param name="documentId">Identificador del documento padre.</param>
+        public async Task<IActionResult> ByDocument(int? documentId)
         {
-            _context = context;
-        }
+            if (documentId == null) return NotFound();
 
-        // GET: DocumentDetails
-        public async Task<IActionResult> Index()
-        {
-            var dbContexto = _context.DocumentDetail.Include(d => d.Document).Include(d => d.Product);
-            return View(await dbContexto.ToListAsync());
+            try
+            {
+                var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = documentId.Value });
+                if (document == null) return NotFound();
+
+                var detalles = await DocumentDetailBL.ObtenerPorDocumentoAsync(documentId.Value);
+                ViewBag.Document = document;
+                return View(detalles);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Index", "Documents");
+            }
         }
 
         // GET: DocumentDetails/Details/5
+        /// <summary>
+        /// Muestra el detalle de una línea de documento específica.
+        /// </summary>
+        /// <param name="id">Identificador del detalle a consultar.</param>
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var documentDetail = await _context.DocumentDetail
-                .Include(d => d.Document)
-                .Include(d => d.Product)
-                .FirstOrDefaultAsync(m => m.DocDetailId == id);
-            if (documentDetail == null)
+            try
             {
-                return NotFound();
+                var detail = await DocumentDetailBL.ObtenerPorIdAsync(new DocumentDetail { DocDetailId = id.Value });
+                if (detail == null) return NotFound();
+                return View(detail);
             }
-
-            return View(documentDetail);
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Index", "Documents");
+            }
         }
 
-        // GET: DocumentDetails/Create
-        public IActionResult Create()
+        // GET: DocumentDetails/Create?documentId=5
+        /// <summary>
+        /// Muestra el formulario para agregar una línea de detalle a un documento.
+        /// Solo disponible si el documento está en estado editable.
+        /// </summary>
+        /// <param name="documentId">Identificador del documento al que se añadirá el detalle.</param>
+        public async Task<IActionResult> Create(int? documentId)
         {
-            ViewData["DocumentId"] = new SelectList(_context.Document, "DocumentId", "DocNumber");
-            ViewData["ProductId"] = new SelectList(_context.ProductList, "ProductId", "Barcode");
-            return View();
+            if (documentId == null) return NotFound();
+
+            try
+            {
+                var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = documentId.Value });
+                if (document == null) return NotFound();
+
+                ViewBag.Document = document;
+                await CargarListasAsync(documentId.Value);
+
+                return View(new DocumentDetail
+                {
+                    DocumentId = documentId.Value,
+                    TaxPercentage = 13
+                });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Index", "Documents");
+            }
         }
 
         // POST: DocumentDetails/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        /// <summary>
+        /// Procesa el registro de una nueva línea de detalle en el documento indicado.
+        /// Calcula automáticamente subtotal, impuesto y total de línea mediante la capa BL.
+        /// </summary>
+        /// <param name="pDetail">Entidad <see cref="DocumentDetail"/> con los datos del formulario.</param>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("DocDetailId,DocumentId,ProductId,Quantity,UnitPrice,DiscountAmount,Subtotal,TaxPercentage,TaxAmount,TotalAmount,Notes")] DocumentDetail documentDetail)
+        public async Task<IActionResult> Create(
+            [Bind("DocumentId,ProductId,Quantity,UnitPrice,DiscountAmount,TaxPercentage,Notes")]
+            DocumentDetail pDetail)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _context.Add(documentDetail);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = pDetail.DocumentId });
+                ViewBag.Document = document;
+                await CargarListasAsync(pDetail.DocumentId);
+                return View(pDetail);
             }
-            ViewData["DocumentId"] = new SelectList(_context.Document, "DocumentId", "DocNumber", documentDetail.DocumentId);
-            ViewData["ProductId"] = new SelectList(_context.ProductList, "ProductId", "Barcode", documentDetail.ProductId);
-            return View(documentDetail);
+
+            try
+            {
+                await DocumentDetailBL.GuardarAsync(pDetail);
+
+                // Recalcular el total del documento padre
+                await ActualizarTotalDocumentoAsync(pDetail.DocumentId);
+
+                TempData["Success"] = "Línea de detalle agregada correctamente.";
+                return RedirectToAction("Details", "Documents", new { id = pDetail.DocumentId });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = pDetail.DocumentId });
+                ViewBag.Document = document;
+                await CargarListasAsync(pDetail.DocumentId);
+                return View(pDetail);
+            }
         }
 
         // GET: DocumentDetails/Edit/5
+        /// <summary>
+        /// Muestra el formulario para editar una línea de detalle existente.
+        /// </summary>
+        /// <param name="id">Identificador del detalle a editar.</param>
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var documentDetail = await _context.DocumentDetail.FindAsync(id);
-            if (documentDetail == null)
+            try
             {
-                return NotFound();
+                var detail = await DocumentDetailBL.ObtenerPorIdAsync(new DocumentDetail { DocDetailId = id.Value });
+                if (detail == null) return NotFound();
+
+                var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = detail.DocumentId });
+                ViewBag.Document = document;
+                await CargarListasAsync(detail.DocumentId);
+                return View(detail);
             }
-            ViewData["DocumentId"] = new SelectList(_context.Document, "DocumentId", "DocNumber", documentDetail.DocumentId);
-            ViewData["ProductId"] = new SelectList(_context.ProductList, "ProductId", "Barcode", documentDetail.ProductId);
-            return View(documentDetail);
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Index", "Documents");
+            }
         }
 
         // POST: DocumentDetails/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        /// <summary>
+        /// Procesa la modificación de una línea de detalle existente.
+        /// Recalcula subtotal, impuesto y total mediante la capa BL.
+        /// </summary>
+        /// <param name="id">Identificador del detalle proveniente de la ruta.</param>
+        /// <param name="pDetail">Entidad <see cref="DocumentDetail"/> con los nuevos valores.</param>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("DocDetailId,DocumentId,ProductId,Quantity,UnitPrice,DiscountAmount,Subtotal,TaxPercentage,TaxAmount,TotalAmount,Notes")] DocumentDetail documentDetail)
+        public async Task<IActionResult> Edit(int id,
+            [Bind("DocDetailId,DocumentId,ProductId,Quantity,UnitPrice,DiscountAmount,TaxPercentage,Notes")]
+            DocumentDetail pDetail)
         {
-            if (id != documentDetail.DocDetailId)
+            if (id != pDetail.DocDetailId) return NotFound();
+
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                var doc = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = pDetail.DocumentId });
+                ViewBag.Document = doc;
+                await CargarListasAsync(pDetail.DocumentId);
+                return View(pDetail);
             }
 
-            if (ModelState.IsValid)
+            try
             {
-                try
-                {
-                    _context.Update(documentDetail);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!DocumentDetailExists(documentDetail.DocDetailId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await DocumentDetailBL.ModificarAsync(pDetail);
+                await ActualizarTotalDocumentoAsync(pDetail.DocumentId);
+
+                TempData["Success"] = "Línea de detalle modificada correctamente.";
+                return RedirectToAction("Details", "Documents", new { id = pDetail.DocumentId });
             }
-            ViewData["DocumentId"] = new SelectList(_context.Document, "DocumentId", "DocNumber", documentDetail.DocumentId);
-            ViewData["ProductId"] = new SelectList(_context.ProductList, "ProductId", "Barcode", documentDetail.ProductId);
-            return View(documentDetail);
+            catch (Exception ex)
+            {
+                ModelState.AddModelError(string.Empty, ex.Message);
+                var doc = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = pDetail.DocumentId });
+                ViewBag.Document = doc;
+                await CargarListasAsync(pDetail.DocumentId);
+                return View(pDetail);
+            }
         }
 
         // GET: DocumentDetails/Delete/5
+        /// <summary>
+        /// Muestra la confirmación para eliminar físicamente una línea de detalle.
+        /// </summary>
+        /// <param name="id">Identificador del detalle a eliminar.</param>
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var documentDetail = await _context.DocumentDetail
-                .Include(d => d.Document)
-                .Include(d => d.Product)
-                .FirstOrDefaultAsync(m => m.DocDetailId == id);
-            if (documentDetail == null)
+            try
             {
-                return NotFound();
+                var detail = await DocumentDetailBL.ObtenerPorIdAsync(new DocumentDetail { DocDetailId = id.Value });
+                if (detail == null) return NotFound();
+                return View(detail);
             }
-
-            return View(documentDetail);
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Index", "Documents");
+            }
         }
 
         // POST: DocumentDetails/Delete/5
+        /// <summary>
+        /// Elimina físicamente una línea de detalle de documento.
+        /// Solo debe ejecutarse sobre documentos en estado editable.
+        /// Recalcula el total del documento padre tras la eliminación.
+        /// </summary>
+        /// <param name="id">Identificador del detalle a eliminar.</param>
+        /// <param name="documentId">Identificador del documento padre para redirección y recálculo.</param>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id, int documentId)
         {
-            var documentDetail = await _context.DocumentDetail.FindAsync(id);
-            if (documentDetail != null)
+            try
             {
-                _context.DocumentDetail.Remove(documentDetail);
+                await DocumentDetailBL.EliminarAsync(new DocumentDetail { DocDetailId = id });
+                await ActualizarTotalDocumentoAsync(documentId);
+
+                TempData["Success"] = "Línea de detalle eliminada correctamente.";
+                return RedirectToAction("Details", "Documents", new { id = documentId });
             }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+                return RedirectToAction("Details", "Documents", new { id = documentId });
+            }
         }
 
-        private bool DocumentDetailExists(int id)
+        // ── Métodos Privados ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Carga la lista de productos activos para el control desplegable de la vista Create/Edit.
+        /// </summary>
+        /// <param name="documentId">Identificador del documento padre (para contexto en la vista).</param>
+        private async Task CargarListasAsync(int documentId)
         {
-            return _context.DocumentDetail.Any(e => e.DocDetailId == id);
+            ViewBag.ProductList = new SelectList(
+                await ProductListDAL.ObtenerTodosAsync(new ProductList { StatusId = 1 }),
+                "ProductId", "Name");
+
+            ViewData["DocumentId"] = documentId;
         }
 
-        private async Task CargarListasAsync()
+        /// <summary>
+        /// Recalcula y persiste el <c>TotalAmount</c> del documento padre
+        /// sumando los totales de todas sus líneas de detalle activas.
+        /// </summary>
+        /// <param name="pDocumentId">Identificador del documento cuyo total se recalculará.</param>
+        private async Task ActualizarTotalDocumentoAsync(int pDocumentId)
         {
-            ViewBag.StatusList = new SelectList(
-                await StatusDAL.ObtenerPorTiposAsync(new List<int> { 1, 3 }, pIsActive: true), 
-                "StatusId", "Name");
+            var detalles = await DocumentDetailBL.ObtenerPorDocumentoAsync(pDocumentId);
+            decimal nuevoTotal = detalles.Sum(d => d.TotalAmount);
+
+            var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = pDocumentId });
+            if (document != null)
+            {
+                document.TotalAmount = nuevoTotal;
+                await DocumentBL.ModificarAsync(document);
+            }
         }
     }
 }

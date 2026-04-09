@@ -16,7 +16,7 @@
         ctrl == "Categories" ||
         ctrl == "Inventories" ||
         ctrl == "InventoryMovements" ||
-        ctrl == "Brands" ||
+        // ctrl == "Brands" ||
         ctrl == "Suppliers";
 
     var seguridadOpen =
@@ -96,7 +96,7 @@
         </a>
 
         <a asp-controller="DocumentDetails"
-               asp-action="Index"
+               asp-action="Create"
                class="sidebar__item @(ctrl == "DocumentDetails" ? "sidebar__item--active" : "")">
             <span class="material-symbols-outlined sidebar__item-icon">description</span>
             <span class="sidebar__item-label">Detalle de Documentos</span>
@@ -125,10 +125,10 @@
                    class="sidebar__subitem @(ctrl == "Categories" ? "sidebar__subitem--active" : "")">
                 Categorías
             </a>
-            <a asp-controller="Brands" asp-action="Index"
+@*             <a asp-controller="Brands" asp-action="Index"
                    class="sidebar__subitem @(ctrl == "Brands" ? "sidebar__subitem--active" : "")">
                 Marcas
-            </a>
+            </a> *@
             <a asp-controller="Inventories" asp-action="Index"
                    class="sidebar__subitem @(ctrl == "Inventories" ? "sidebar__subitem--active" : "")">
                 Inventario

@@ -1,66 +1,86 @@
 ﻿@model SysGestionVentas.EN.InventoryMovement
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalle de Movimiento";
+    var tipo = Model.MovementType?.Name ?? "—";
+    var badgeClass = tipo switch
+    {
+        "Entrada" => "badge-admin",
+        "Devolución" => "badge-admin",
+        "Salida" => "badge-danger-outline",
+        "Transferencia" => "badge-danger-outline",
+        "Ajuste" => "badge-cliente",
+        _ => "badge-neutral"
+    };
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>InventoryMovement</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.MovementType)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.MovementType.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Quantity)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Quantity)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UnitCost)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.UnitCost)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Notes)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Notes)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedBy)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedBy.Email)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Inventory)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Inventory.InventoryId)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.MovementDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.MovementDate)
-        </dd>
-    </dl>
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Detalle de Movimiento</h1>
+        <p class="page-header__subtitle">
+            #@Model.InventoryMovementId —
+            <span class="badge @badgeClass">@tipo</span>
+        </p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.InventoryMovementId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-7">
+
+        <div class="card">
+            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
+                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:20px;">swap_vert</span>
+                <span style="font-size:.95rem;font-weight:700;color:var(--clr-text);">Información del Movimiento</span>
+                <span class="badge badge-neutral ms-auto">#@Model.InventoryMovementId</span>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Producto</span>
+                    <strong>@(Model.Inventory?.Product?.Name ?? $"Inv. #{Model.InventoryId}")</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Tipo de Movimiento</span>
+                    <span class="badge @badgeClass">@tipo</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Cantidad</span>
+                    <strong>@Model.Quantity</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Costo Unitario</span>
+                    <span>$@Model.UnitCost.ToString("0.00")</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Total Movimiento</span>
+                    <strong style="color:var(--clr-primary);">$@((Model.Quantity * Model.UnitCost).ToString("0.00"))</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Notas</span>
+                    <span style="color:var(--clr-text-muted);">@(string.IsNullOrWhiteSpace(Model.Notes) ? "—" : Model.Notes)</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Registrado por</span>
+                    <span>@(Model.CreatedBy?.UserName ?? "—")</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Fecha de Registro</span>
+                    <span style="color:var(--clr-text-muted);">@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert-custom alert-warning-custom mt-3" style="border-radius:var(--radius-lg);">
+            <span class="material-symbols-outlined" style="flex-shrink:0;">info</span>
+            <div style="font-size:.82rem;">
+                Los movimientos de inventario son <strong>registros históricos inmutables</strong>. No pueden modificarse ni eliminarse una vez registrados.
+            </div>
+        </div>
+
+    </div>
 </div>

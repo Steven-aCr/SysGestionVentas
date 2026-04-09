@@ -1,4 +1,4 @@
-﻿@model IEnumerable<SysGestionVentas.EN.Inventory>
+﻿@model SysGestionVentas.EN.Pagination.PagedResult<SysGestionVentas.EN.Inventory>
 
 @{
     ViewData["Title"] = "Inventario";
@@ -36,7 +36,7 @@
             </div>
 
             <span style="font-size:.8rem; color:var(--clr-text-muted);" id="recordCount">
-                @Model.Count() registro(s)
+                @(Model?.Items?.Count() ?? 0) registro(s)
             </span>
         </div>
 
@@ -56,7 +56,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (!Model.Any())
+                    @if (Model?.Items == null || !Model.Items.Any())
                     {
                         <tr>
                             <td colspan="8">
@@ -74,7 +74,7 @@
                     }
                     else
                     {
-                        @foreach (var item in Model)
+                        @foreach (var item in Model.Items)
                         {
                             var producto = item.Product?.Barcode ?? "—";
                             var estado = item.Status?.Name ?? "—";
@@ -142,7 +142,7 @@
         <!-- Footer -->
         <div class="table-footer">
             <span id="filteredCount">
-                Mostrando @Model.Count() registro(s)
+                Mostrando @(Model?.Items?.Count() ?? 0) registro(s)
             </span>
         </div>
 
