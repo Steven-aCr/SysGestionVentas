@@ -22,7 +22,7 @@
         {
             <tr>
                 <td>@Html.DisplayFor(modelItem => item.Inventory.InventoryId)</td>
-                <td>@(item.MovementType ? "Entrada" : "Salida")</td>
+                <td>@(item.MovementType)? "Entrada" : "Salida")</td>
                 <td>@Html.DisplayFor(modelItem => item.Quantity)</td>
                 <td>@Html.DisplayFor(modelItem => item.UnitCost)</td>
                 <td>@Html.DisplayFor(modelItem => item.CreatedAt)</td>
