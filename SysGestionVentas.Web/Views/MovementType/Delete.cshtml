@@ -1,0 +1,26 @@
+﻿@model SysGestionVentas.EN.MovementType
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Delete</h1>
+
+<h4>Movement Type</h4>
+<hr />
+<div>
+    <h4>Are you sure you want to delete this movement type?</h4>
+    <div>
+        <h5>@Model.Name</h5>
+        <p>Description: @Model.Description</p>
+        <p>Is Active: @Model.IsActive</p>
+    </div>
+</div>
+
+<form asp-action="DeleteConfirmed">
+    <input type="hidden" asp-for="MovementTypeId" />
+    <div>
+        <input type="submit" value="Delete" class="btn btn-danger" />
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>

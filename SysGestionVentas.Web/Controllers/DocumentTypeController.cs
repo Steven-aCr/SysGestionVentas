@@ -1,39 +1,47 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using SysGestionVentas.DAL;
+﻿using BDGestionVentas.BL; // Asegúrate de que este espacio de nombres sea correcto
+using Microsoft.AspNetCore.Mvc;
 using SysGestionVentas.EN;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SysGestionVentas.Web.Controllers
 {
-    public class PeopleController : Controller
+    public class DocumentTypeController : Controller
     {
-        // GET: Suppliers
+        private readonly DocumentTypeBL _documentTypeBL;
+
+        // Constructor con inyección de dependencias
+        public DocumentTypeController(DocumentTypeBL documentTypeBL)
+        {
+            _documentTypeBL = documentTypeBL ?? throw new ArgumentNullException(nameof(documentTypeBL));
+        }
+
+        // GET: DocumentType
         public async Task<IActionResult> Index()
         {
             try
             {
-                var suppliers = await SupplierDAL.ObtenerTodosAsync(new Supplier());
-                return View(suppliers);
+                var documentTypes = await _documentTypeBL.ObtenerTodosAsync();
+                return View(documentTypes);
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
-                return View(new List<Supplier>());
+                return View(new List<DocumentType>());
             }
         }
 
-        // GET: Suppliers/Details/5
+        // GET: DocumentType/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
+                var documentType = await _documentTypeBL.ObtenerPorIdAsync(id.Value);
+                if (documentType == null)
                     return NotFound();
-                return View(supplier);
+                return View(documentType);
             }
             catch (Exception ex)
             {
@@ -42,43 +50,43 @@ namespace SysGestionVentas.Web.Controllers
             }
         }
 
-        // GET: Suppliers/Create
+        // GET: DocumentType/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Suppliers/Create
+        // POST: DocumentType/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Supplier pSupplier)
+        public async Task<IActionResult> Create(DocumentType documentType)
         {
             if (!ModelState.IsValid)
-                return View(pSupplier);
+                return View(documentType);
             try
             {
-                await SupplierDAL.GuardarAsync(pSupplier);
-                TempData["Success"] = "Proveedor creado correctamente.";
+                await _documentTypeBL.GuardarAsync(documentType);
+                TempData["Success"] = "Tipo de documento creado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(pSupplier);
+                return View(documentType);
             }
         }
 
-        // GET: Suppliers/Edit/5
+        // GET: DocumentType/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
+                var documentType = await _documentTypeBL.ObtenerPorIdAsync(id.Value);
+                if (documentType == null)
                     return NotFound();
-                return View(supplier);
+                return View(documentType);
             }
             catch (Exception ex)
             {
@@ -87,39 +95,39 @@ namespace SysGestionVentas.Web.Controllers
             }
         }
 
-        // POST: Suppliers/Edit/5
+        // POST: DocumentType/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Supplier pSupplier)
+        public async Task<IActionResult> Edit(int id, DocumentType documentType)
         {
-            if (id != pSupplier.SupplierId)
+            if (id != documentType.DocTypeId)
                 return NotFound();
             if (!ModelState.IsValid)
-                return View(pSupplier);
+                return View(documentType);
             try
             {
-                await SupplierDAL.ModificarAsync(pSupplier);
-                TempData["Success"] = "Proveedor modificado correctamente.";
+                await _documentTypeBL.ModificarAsync(documentType);
+                TempData["Success"] = "Tipo de documento modificado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(pSupplier);
+                return View(documentType);
             }
         }
 
-        // GET: Suppliers/Delete/5
+        // GET: DocumentType/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
+                var documentType = await _documentTypeBL.ObtenerPorIdAsync(id.Value);
+                if (documentType == null)
                     return NotFound();
-                return View(supplier);
+                return View(documentType);
             }
             catch (Exception ex)
             {
@@ -128,15 +136,15 @@ namespace SysGestionVentas.Web.Controllers
             }
         }
 
-        // POST: Suppliers/Delete/5
+        // POST: DocumentType/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             try
             {
-                await SupplierDAL.EliminarAsync(new Supplier { SupplierId = id });
-                TempData["Success"] = "Proveedor eliminado correctamente.";
+                await _documentTypeBL.EliminarAsync(id);
+                TempData["Success"] = "Tipo de documento eliminado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -147,4 +155,3 @@ namespace SysGestionVentas.Web.Controllers
         }
     }
 }
-

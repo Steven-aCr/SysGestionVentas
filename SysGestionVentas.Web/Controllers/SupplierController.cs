@@ -1,19 +1,27 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using SysGestionVentas.DAL;
+﻿using BDGestionVentas.BL; // Asegúrate de que este espacio de nombres sea correcto
+using Microsoft.AspNetCore.Mvc;
 using SysGestionVentas.EN;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SysGestionVentas.Web.Controllers
 {
-    public class PeopleController : Controller
+    public class SupplierController : Controller
     {
+        private readonly SupplierBL _supplierBL;
+
+        // Constructor con inyección de dependencias
+        public SupplierController(SupplierBL supplierBL)
+        {
+            _supplierBL = supplierBL ?? throw new ArgumentNullException(nameof(supplierBL));
+        }
+
         // GET: Suppliers
         public async Task<IActionResult> Index()
         {
             try
             {
-                var suppliers = await SupplierDAL.ObtenerTodosAsync(new Supplier());
+                var suppliers = await _supplierBL.ObtenerTodosAsync();
                 return View(suppliers);
             }
             catch (Exception ex)
@@ -30,7 +38,7 @@ namespace SysGestionVentas.Web.Controllers
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
+                var supplier = await _supplierBL.ObtenerPorIdAsync(id.Value);
                 if (supplier == null)
                     return NotFound();
                 return View(supplier);
@@ -57,7 +65,7 @@ namespace SysGestionVentas.Web.Controllers
                 return View(pSupplier);
             try
             {
-                await SupplierDAL.GuardarAsync(pSupplier);
+                await _supplierBL.GuardarAsync(pSupplier);
                 TempData["Success"] = "Proveedor creado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
@@ -75,7 +83,7 @@ namespace SysGestionVentas.Web.Controllers
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
+                var supplier = await _supplierBL.ObtenerPorIdAsync(id.Value);
                 if (supplier == null)
                     return NotFound();
                 return View(supplier);
@@ -98,7 +106,7 @@ namespace SysGestionVentas.Web.Controllers
                 return View(pSupplier);
             try
             {
-                await SupplierDAL.ModificarAsync(pSupplier);
+                await _supplierBL.ModificarAsync(pSupplier);
                 TempData["Success"] = "Proveedor modificado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
@@ -116,7 +124,7 @@ namespace SysGestionVentas.Web.Controllers
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
+                var supplier = await _supplierBL.ObtenerPorIdAsync(id.Value);
                 if (supplier == null)
                     return NotFound();
                 return View(supplier);
@@ -135,7 +143,7 @@ namespace SysGestionVentas.Web.Controllers
         {
             try
             {
-                await SupplierDAL.EliminarAsync(new Supplier { SupplierId = id });
+                await _supplierBL.EliminarAsync(id);
                 TempData["Success"] = "Proveedor eliminado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
@@ -147,4 +155,3 @@ namespace SysGestionVentas.Web.Controllers
         }
     }
 }
-

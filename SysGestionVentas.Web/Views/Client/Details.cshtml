@@ -1,0 +1,30 @@
+﻿@model SysGestionVentas.EN.Client
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Client</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">Name</dt>
+        <dd class="col-sm-10">@Model.Name</dd>
+        
+        <dt class="col-sm-2">Email</dt>
+        <dd class="col-sm-10">@Model.Email</dd>
+        
+        <dt class="col-sm-2">Status ID</dt>
+        <dd class="col-sm-10">@Model.StatusId</dd>
+        
+        <dt class="col-sm-2">Document Type ID</dt>
+        <dd class="col-sm-10">@Model.DocumentTypeId</dd>
+    </dl>
+</div>
+
+<div>
+    <a asp-action="Edit" asp-route-id="@Model.ClientId">Edit</a> |
+    <a asp-action="Index">Back to List</a>
+</div>

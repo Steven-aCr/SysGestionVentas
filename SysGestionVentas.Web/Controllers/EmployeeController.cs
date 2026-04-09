@@ -1,39 +1,47 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using SysGestionVentas.DAL;
+﻿using BDGestionVentas.BL; // Asegúrate de que este espacio de nombres sea correcto
+using Microsoft.AspNetCore.Mvc;
 using SysGestionVentas.EN;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SysGestionVentas.Web.Controllers
 {
-    public class PeopleController : Controller
+    public class EmployeeController : Controller
     {
-        // GET: Suppliers
+        private readonly EmployeeBL _employeeBL;
+
+        // Constructor con inyección de dependencias
+        public EmployeeController(EmployeeBL employeeBL)
+        {
+            _employeeBL = employeeBL ?? throw new ArgumentNullException(nameof(employeeBL));
+        }
+
+        // GET: Employee
         public async Task<IActionResult> Index()
         {
             try
             {
-                var suppliers = await SupplierDAL.ObtenerTodosAsync(new Supplier());
-                return View(suppliers);
+                var employees = await _employeeBL.ObtenerTodosAsync();
+                return View(employees);
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
-                return View(new List<Supplier>());
+                return View(new List<Employee>());
             }
         }
 
-        // GET: Suppliers/Details/5
+        // GET: Employee/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
+                var employee = await _employeeBL.ObtenerPorIdAsync(id.Value);
+                if (employee == null)
                     return NotFound();
-                return View(supplier);
+                return View(employee);
             }
             catch (Exception ex)
             {
@@ -42,43 +50,43 @@ namespace SysGestionVentas.Web.Controllers
             }
         }
 
-        // GET: Suppliers/Create
+        // GET: Employee/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Suppliers/Create
+        // POST: Employee/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Supplier pSupplier)
+        public async Task<IActionResult> Create(Employee employee)
         {
             if (!ModelState.IsValid)
-                return View(pSupplier);
+                return View(employee);
             try
             {
-                await SupplierDAL.GuardarAsync(pSupplier);
-                TempData["Success"] = "Proveedor creado correctamente.";
+                await _employeeBL.GuardarAsync(employee);
+                TempData["Success"] = "Empleado creado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(pSupplier);
+                return View(employee);
             }
         }
 
-        // GET: Suppliers/Edit/5
+        // GET: Employee/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
+                var employee = await _employeeBL.ObtenerPorIdAsync(id.Value);
+                if (employee == null)
                     return NotFound();
-                return View(supplier);
+                return View(employee);
             }
             catch (Exception ex)
             {
@@ -87,39 +95,39 @@ namespace SysGestionVentas.Web.Controllers
             }
         }
 
-        // POST: Suppliers/Edit/5
+        // POST: Employee/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Supplier pSupplier)
+        public async Task<IActionResult> Edit(int id, Employee employee)
         {
-            if (id != pSupplier.SupplierId)
+            if (id != employee.EmployeeId)
                 return NotFound();
             if (!ModelState.IsValid)
-                return View(pSupplier);
+                return View(employee);
             try
             {
-                await SupplierDAL.ModificarAsync(pSupplier);
-                TempData["Success"] = "Proveedor modificado correctamente.";
+                await _employeeBL.ModificarAsync(employee);
+                TempData["Success"] = "Empleado modificado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(pSupplier);
+                return View(employee);
             }
         }
 
-        // GET: Suppliers/Delete/5
+        // GET: Employee/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
+                var employee = await _employeeBL.ObtenerPorIdAsync(id.Value);
+                if (employee == null)
                     return NotFound();
-                return View(supplier);
+                return View(employee);
             }
             catch (Exception ex)
             {
@@ -128,15 +136,15 @@ namespace SysGestionVentas.Web.Controllers
             }
         }
 
-        // POST: Suppliers/Delete/5
+        // POST: Employee/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             try
             {
-                await SupplierDAL.EliminarAsync(new Supplier { SupplierId = id });
-                TempData["Success"] = "Proveedor eliminado correctamente.";
+                await _employeeBL.EliminarAsync(id);
+                TempData["Success"] = "Empleado eliminado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -147,4 +155,3 @@ namespace SysGestionVentas.Web.Controllers
         }
     }
 }
-

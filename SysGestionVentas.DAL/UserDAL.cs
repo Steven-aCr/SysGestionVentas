@@ -51,7 +51,7 @@ namespace SysGestionVentas.DAL
         /// <returns><c>true</c> si el <c>UserName</c> ya existe, <c>false</c> en caso contrario.</returns>
         private static async Task<bool> ExisteUserName(User pUser, DbContexto dbContexto)
         {
-            return await dbContexto.User.AnyAsync(
+            return await dbContexto.Set<User>().AnyAsync(
                 u => u.UserName == pUser.UserName && u.UserId != pUser.UserId);
         }
 
@@ -64,7 +64,7 @@ namespace SysGestionVentas.DAL
         /// <returns><c>true</c> si el <c>Email</c> ya existe, <c>false</c> en caso contrario.</returns>
         private static async Task<bool> ExisteEmail(User pUser, DbContexto dbContexto)
         {
-            return await dbContexto.User.AnyAsync(
+            return await dbContexto.Set<User>().AnyAsync(
                 u => u.Email == pUser.Email && u.UserId != pUser.UserId);
         }
 
@@ -175,7 +175,7 @@ namespace SysGestionVentas.DAL
                     if (await ExisteEmail(pUser, dbContexto))
                         throw new Exception("El correo electrónico ya está registrado.");
 
-                    var user = await dbContexto.User.FirstOrDefaultAsync(
+                    var user = await dbContexto.Set<User>().FirstOrDefaultAsync(
                         u => u.UserId == pUser.UserId);
 
                     if (user == null)
@@ -220,7 +220,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    var user = await dbContexto.User.FirstOrDefaultAsync(
+                    var user = await dbContexto.Set<User>().FirstOrDefaultAsync(
                         u => u.UserId == pUser.UserId);
 
                     if (user == null)
@@ -266,7 +266,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    result = await dbContexto.User
+                    result = await dbContexto.Set<User>()
                         .Include(u => u.Rol)
                         .Include(u => u.Person)
                         .Include(u => u.Status)
@@ -301,7 +301,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    return await dbContexto.User
+                    return await dbContexto.Set<User>()
                         .Include(u => u.Rol)
                         .Include(u => u.Person)
                         .Include(u => u.Status)
@@ -332,7 +332,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    var baseQuery = dbContexto.User
+                    var baseQuery = dbContexto.Set<User>()
                         .Include(u => u.Rol)
                         .Include(u => u.Person)
                         .Include(u => u.Status)
@@ -405,7 +405,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    var user = await dbContexto.User
+                    var user = await dbContexto.Set<User>()
                         .Include(u => u.Status)
                         .FirstOrDefaultAsync(u => u.UserId == UserId);
                     if (user == null)
@@ -447,7 +447,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    var user = await dbContexto.User
+                    var user = await dbContexto.Set<User>()
                         .Include(u => u.Rol)
                         .Include(u => u.Person)
                         .Include(u => u.Status)
@@ -504,7 +504,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    var user = await dbContexto.User.FirstOrDefaultAsync(
+                    var user = await dbContexto.Set<User>().FirstOrDefaultAsync(
                         u => u.UserId == pUserId);
                     if (user == null)
                         throw new Exception($"No se encontró el usuario con ID {pUserId}.");

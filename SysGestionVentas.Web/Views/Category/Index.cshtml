@@ -1,0 +1,40 @@
+﻿@model IEnumerable<SysGestionVentas.EN.Category>
+
+@{
+    ViewData["Title"] = "Categories";
+}
+
+<h1>Categories</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Category</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Created At</th>
+            <th>Status ID</th>
+            <th>Created By</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var category in Model)
+        {
+            <tr>
+                <td>@category.Name</td>
+                <td>@category.Description</td>
+                <td>@category.CreatedAt.ToString("g")</td>
+                <td>@category.StatusId</td>
+                <td>@category.CreatedBy.UserName</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@category.CategoryId">Details</a> |
+                    <a asp-action="Edit" asp-route-id="@category.CategoryId">Edit</a> |
+                    <a asp-action="Delete" asp-route-id="@category.CategoryId">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

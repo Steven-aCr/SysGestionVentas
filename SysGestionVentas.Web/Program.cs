@@ -1,9 +1,19 @@
+using BDGestionVentas.BL;
 using Microsoft.EntityFrameworkCore;
 using SysGestionVentas.DAL;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<DbContexto>();
+builder.Services.AddScoped<CategoryBL>();
+builder.Services.AddScoped<ClientBL>();
+builder.Services.AddScoped<SupplierBL>();
+builder.Services.AddScoped<EmployeeBL>();
+builder.Services.AddScoped<DepartmentBL>();
+builder.Services.AddScoped<MovementTypeBL>();
+builder.Services.AddScoped<DocumentTypeBL>();
+builder.Services.AddScoped<ProductListBL>();
+
 
 // ─── 2. Servicios MVC ────
 builder.Services.AddControllersWithViews();

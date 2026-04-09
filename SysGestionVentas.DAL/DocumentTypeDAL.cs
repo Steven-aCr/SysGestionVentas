@@ -157,5 +157,10 @@ namespace SysGestionVentas.DAL
             }
             return result;
         }
+
+        public static async Task<int> EliminarAsync(DocumentType pDocType)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

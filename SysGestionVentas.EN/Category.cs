@@ -29,5 +29,8 @@ namespace SysGestionVentas.EN
         [ForeignKey("CreatedBy")]
         public int CreatedByUser { get; set; }
         public User? CreatedBy { get; set; }
+
+        public int CreatedByUserId { get; set; }
+       
     }
 }

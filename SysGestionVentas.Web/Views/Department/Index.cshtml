@@ -1,0 +1,38 @@
+﻿@model IEnumerable<SysGestionVentas.EN.Department>
+
+@{
+    ViewData["Title"] = "Departments";
+}
+
+<h1>Departments</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Department</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Created At</th>
+            <th>Status ID</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var department in Model)
+        {
+            <tr>
+                <td>@department.Name</td>
+                <td>@department.Description</td>
+                <td>@department.CreatedAt.ToString("g")</td>
+                <td>@department.StatusId</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@department.DepartmentId">Details</a> |
+                    <a asp-action="Edit" asp-route-id="@department.DepartmentId">Edit</a> |
+                    <a asp-action="Delete" asp-route-id="@department.DepartmentId">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

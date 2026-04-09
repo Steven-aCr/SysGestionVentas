@@ -1,39 +1,47 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using SysGestionVentas.DAL;
+﻿using BDGestionVentas.BL; // Asegúrate de que este espacio de nombres sea correcto
+using Microsoft.AspNetCore.Mvc;
 using SysGestionVentas.EN;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace SysGestionVentas.Web.Controllers
 {
-    public class PeopleController : Controller
+    public class DepartmentController : Controller
     {
-        // GET: Suppliers
+        private readonly DepartmentBL _departmentBL;
+
+        // Constructor con inyección de dependencias
+        public DepartmentController(DepartmentBL departmentBL)
+        {
+            _departmentBL = departmentBL ?? throw new ArgumentNullException(nameof(departmentBL));
+        }
+
+        // GET: Department
         public async Task<IActionResult> Index()
         {
             try
             {
-                var suppliers = await SupplierDAL.ObtenerTodosAsync(new Supplier());
-                return View(suppliers);
+                var departments = await _departmentBL.ObtenerTodosAsync();
+                return View(departments);
             }
             catch (Exception ex)
             {
                 TempData["Error"] = ex.Message;
-                return View(new List<Supplier>());
+                return View(new List<Department>());
             }
         }
 
-        // GET: Suppliers/Details/5
+        // GET: Department/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
+                var department = await _departmentBL.ObtenerPorIdAsync(id.Value);
+                if (department == null)
                     return NotFound();
-                return View(supplier);
+                return View(department);
             }
             catch (Exception ex)
             {
@@ -42,43 +50,43 @@ namespace SysGestionVentas.Web.Controllers
             }
         }
 
-        // GET: Suppliers/Create
+        // GET: Department/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Suppliers/Create
+        // POST: Department/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Supplier pSupplier)
+        public async Task<IActionResult> Create(Department department)
         {
             if (!ModelState.IsValid)
-                return View(pSupplier);
+                return View(department);
             try
             {
-                await SupplierDAL.GuardarAsync(pSupplier);
-                TempData["Success"] = "Proveedor creado correctamente.";
+                await _departmentBL.GuardarAsync(department);
+                TempData["Success"] = "Departamento creado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(pSupplier);
+                return View(department);
             }
         }
 
-        // GET: Suppliers/Edit/5
+        // GET: Department/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
+                var department = await _departmentBL.ObtenerPorIdAsync(id.Value);
+                if (department == null)
                     return NotFound();
-                return View(supplier);
+                return View(department);
             }
             catch (Exception ex)
             {
@@ -87,39 +95,39 @@ namespace SysGestionVentas.Web.Controllers
             }
         }
 
-        // POST: Suppliers/Edit/5
+        // POST: Department/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Supplier pSupplier)
+        public async Task<IActionResult> Edit(int id, Department department)
         {
-            if (id != pSupplier.SupplierId)
+            if (id != department.DepartmentId)
                 return NotFound();
             if (!ModelState.IsValid)
-                return View(pSupplier);
+                return View(department);
             try
             {
-                await SupplierDAL.ModificarAsync(pSupplier);
-                TempData["Success"] = "Proveedor modificado correctamente.";
+                await _departmentBL.ModificarAsync(department);
+                TempData["Success"] = "Departamento modificado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View(pSupplier);
+                return View(department);
             }
         }
 
-        // GET: Suppliers/Delete/5
+        // GET: Department/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
                 return NotFound();
             try
             {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
+                var department = await _departmentBL.ObtenerPorIdAsync(id.Value);
+                if (department == null)
                     return NotFound();
-                return View(supplier);
+                return View(department);
             }
             catch (Exception ex)
             {
@@ -128,15 +136,15 @@ namespace SysGestionVentas.Web.Controllers
             }
         }
 
-        // POST: Suppliers/Delete/5
+        // POST: Department/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             try
             {
-                await SupplierDAL.EliminarAsync(new Supplier { SupplierId = id });
-                TempData["Success"] = "Proveedor eliminado correctamente.";
+                await _departmentBL.EliminarAsync(id);
+                TempData["Success"] = "Departamento eliminado correctamente.";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -147,4 +155,3 @@ namespace SysGestionVentas.Web.Controllers
         }
     }
 }
-

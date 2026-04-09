@@ -66,7 +66,10 @@ namespace SysGestionVentas.Test
             db.SaveChanges();
         }
 
-        private DbContexto CrearContexto() => new(_options);
+        private DbContexto CrearContexto()
+        {
+            return new(_options);
+        }
 
         #region "GuardarAsync"
 

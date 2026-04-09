@@ -42,7 +42,13 @@ namespace SysGestionVentas.EN
         [Required(ErrorMessage = "El estado es obligatorio.")]
         [ForeignKey("Status")]
         public int StatusId { get; set; }
-        public Status? Status { get; set; }
+        public Status Status { get; set; }
+        
+        // Email property added so views and related computed properties can access it
+        [Required]
+        [EmailAddress]
+        [StringLength(100)]
+        public string? Email { get; set; }
 
         [NotMapped]
         public string FullName => $"{FirstName} {LastName}";

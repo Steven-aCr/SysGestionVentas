@@ -10,7 +10,6 @@ namespace SysGestionVentas.DAL
 
         public DbSet<Status> Status { get; set; }
         public DbSet<StatusType> StatusType { get; set; }
-        public DbSet<User> User { get; set; }
         public DbSet<Rol> Rol { get; set; }
         public DbSet<Permission> Permission { get; set; }
         public DbSet<RolPermission> RolPermission { get; set; }
@@ -29,6 +28,7 @@ namespace SysGestionVentas.DAL
         public DbSet<DocumentDetail> DocumentDetail { get; set; }
         public DbSet<Department> Department { get; set; }
         public DbSet<MovementType> MovementType { get; set; }
+        public DbSet<Client> Clients { get; set; }
 
         #endregion
 
@@ -46,6 +46,7 @@ namespace SysGestionVentas.DAL
         /// </para>
         /// </summary>
         public static DbContextOptions<DbContexto>? TestOptions { get; set; }
+        public DbSet<User> User { get; set; }
 
         #endregion
 
