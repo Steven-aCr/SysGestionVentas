@@ -11,14 +11,11 @@
 </p>
 <table class="table">
     <thead>
-        <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Created At</th>
-            <th>Status ID</th>
-            <th>Created By</th>
-            <th></th>
-        </tr>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Creation Date</th>
+        <th>Status</th>
+        <th>Created By</th>
     </thead>
     <tbody>
         @foreach (var category in Model)
@@ -27,7 +24,7 @@
                 <td>@category.Name</td>
                 <td>@category.Description</td>
                 <td>@category.CreatedAt.ToString("g")</td>
-                <td>@category.StatusId</td>
+                <td>@category.Status</td>
                 <td>@category.CreatedBy.UserName</td>
                 <td>
                     <a asp-action="Details" asp-route-id="@category.CategoryId">Details</a> |

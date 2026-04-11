@@ -1,5 +1,6 @@
 using BDGestionVentas.BL;
 using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.BL;
 using SysGestionVentas.DAL;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -21,7 +21,6 @@ namespace SysGestionVentas.Web.Controllers
         {
             var details = await _context.DocumentDetail
                 .Include(d => d.Document)
-                .Include(d => d.ProductList)
                 .ToListAsync();
             return View(details);
         }
@@ -34,7 +33,7 @@ namespace SysGestionVentas.Web.Controllers
 
             var detail = await _context.DocumentDetail
                 .Include(d => d.Document)
-                .Include(d => d.ProductList)
+                .Include(d => d.Product)
                 .FirstOrDefaultAsync(d => d.DocDetailId == id);
 
             if (detail == null)
@@ -121,7 +120,7 @@ namespace SysGestionVentas.Web.Controllers
 
             var detail = await _context.DocumentDetail
                 .Include(d => d.Document)
-                .Include(d => d.ProductList)
+                .Include(d => d.Product)
                 .FirstOrDefaultAsync(d => d.DocDetailId == id);
 
             if (detail == null)

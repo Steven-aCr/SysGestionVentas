@@ -12,21 +12,22 @@
 <table class="table">
     <thead>
         <tr>
+            <th>Client Id</th>
             <th>Name</th>
-            <th>Email</th>
             <th>Status ID</th>
             <th>Document Type ID</th>
-            <th></th>
+            <th>Address</th>
         </tr>
     </thead>
     <tbody>
         @foreach (var client in Model)
         {
             <tr>
+                <td>@client.ClientId</td>
                 <td>@client.Name</td>
-                <td>@client.Email</td>
                 <td>@client.StatusId</td>
                 <td>@client.DocumentTypeId</td>
+                <td>@client.Address</td>
                 <td>
                     <a asp-action="Details" asp-route-id="@client.ClientId">Details</a> |
                     <a asp-action="Edit" asp-route-id="@client.ClientId">Edit</a> |

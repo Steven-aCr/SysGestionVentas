@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using SysGestionVentas.EN;
 
+
+
 namespace SysGestionVentas.DAL
 {
     public class DbContexto : DbContext
@@ -28,7 +30,7 @@ namespace SysGestionVentas.DAL
         public DbSet<DocumentDetail> DocumentDetail { get; set; }
         public DbSet<Department> Department { get; set; }
         public DbSet<MovementType> MovementType { get; set; }
-        public DbSet<Client> Clients { get; set; }
+        
 
         #endregion
 

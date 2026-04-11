@@ -1,297 +1,87 @@
-﻿using SysGestionVentas.EN;
-using SysGestionVentas.EN.Pagination;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using SysGestionVentas.EN;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SysGestionVentas.DAL
 {
     public class ClientDAL
     {
-        #region "Métodos Privados"
-
-        /// <summary>
-        /// Aplica los filtros de búsqueda contenidos en <see cref="PagedQuery{Client}"/>
-        /// a una consulta <see cref="IQueryable{Client}"/> base.
-        /// No aplica paginación; esta responsabilidad recae en <see cref="BuscarAsync"/>,
-        /// lo que permite reutilizar este método para conteo sin Skip/Take.
-        /// </summary>
-        /// <param name="pQuery">Consulta base sin filtros aplicados.</param>
-        /// <param name="pPagedQuery">Parámetros de filtro, rango de fechas y paginación.</param>
-        /// <returns>
-        /// <see cref="IQueryable{Client}"/> con todos los filtros y el ordenamiento aplicados,
-        /// ordenado por apellido de la persona asociada de forma ascendente.
-        /// </returns>
-        private static IQueryable<Client> QuerySelect(
-            IQueryable<Client> pQuery,
-            PagedQuery<Client> pPagedQuery)
-        {
-            var f = pPagedQuery.Filter;
-
-            if (f.ClientId > 0)
-                pQuery = pQuery.Where(c => c.ClientId == f.ClientId);
-
-            if (f.PersonId > 0)
-                pQuery = pQuery.Where(c => c.PersonId == f.PersonId);
-
-            return pQuery.OrderBy(c => c.Person!.LastName)
-                             .ThenBy(c => c.Person!.FirstName);
-        }
-
-        #endregion
-
-        #region "CRUD"
-
-        /// <summary>
-        /// Registra un nuevo cliente en la base de datos.
-        /// </summary>
-        /// <param name="pClient">Objeto <see cref="Client"/> con los datos a guardar.</param>
-        /// <returns>
-        /// Número de filas afectadas. Retorna <c>1</c> si se guardó correctamente, <c>0</c> si falló.
-        /// </returns>
-        /// <exception cref="Exception">Se lanza si ocurre un error durante la operación.</exception>
+        // Guardar un nuevo registro
         public static async Task<int> GuardarAsync(Client pClient)
         {
             int result = 0;
-            try
+            using (var dbContexto = new DbContexto())
             {
-                using (var dbContexto = new DbContexto())
-                {
-                    dbContexto.Add(pClient);
-                    result = await dbContexto.SaveChangesAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                result = 0;
-                throw new Exception(ex.Message);
+                dbContexto.Client.Add(pClient);
+                result = await dbContexto.SaveChangesAsync();
             }
             return result;
         }
 
-        /// <summary>
-        /// Modifica los datos de un cliente existente en la base de datos.
-        /// </summary>
-        /// <param name="pClient">
-        /// Objeto <see cref="Client"/> con el <c>ClientId</c> del registro a modificar
-        /// y los nuevos valores a actualizar.
-        /// </param>
-        /// <returns>
-        /// Número de filas afectadas. Retorna <c>1</c> si se modificó correctamente, <c>0</c> si falló.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Se lanza si el cliente no existe o si ocurre un error durante la operación.
-        /// </exception>
+        // Modificar un registro existente
         public static async Task<int> ModificarAsync(Client pClient)
         {
             int result = 0;
-            try
+            using (var dbContexto = new DbContexto())
             {
-                using (var dbContexto = new DbContexto())
+                var client = await dbContexto.Client.FirstOrDefaultAsync(c => c.ClientId == pClient.ClientId);
+                if (client != null)
                 {
-                    var client = await dbContexto.Client.FirstOrDefaultAsync(
-                        c => c.ClientId == pClient.ClientId);
-
-                    if (client == null)
-                        throw new Exception($"No se encontró el cliente con ID {pClient.ClientId}.");
-
+                    // Actualización de campos
                     client.PersonId = pClient.PersonId;
+                    client.StatusId = pClient.StatusId;
+                    client.Address = pClient.Address;
+                    client.Name = pClient.Name;
+                    client.NumberPhone = pClient.NumberPhone;
+                    client.DocumentTypeId = pClient.DocumentTypeId;
 
                     dbContexto.Update(client);
                     result = await dbContexto.SaveChangesAsync();
                 }
             }
-            catch (Exception ex)
-            {
-                result = 0;
-                throw new Exception(ex.Message);
-            }
             return result;
         }
 
-        /// <summary>
-        /// Realiza una eliminación lógica de un cliente, cambiando el estado de su
-        /// <see cref="Person"/> asociada en la base de datos. No elimina el registro físicamente.
-        /// La entidad <see cref="Client"/> no posee <c>StatusId</c> propio; el estado
-        /// se gestiona a través de <see cref="Person.StatusId"/>.
-        /// </summary>
-        /// <param name="pClient">
-        /// Objeto <see cref="Client"/> con el <c>ClientId</c> del registro a desactivar.
-        /// Debe incluir <c>Person.StatusId</c> con el estado inactivo a aplicar.
-        /// </param>
-        /// <returns>
-        /// Número de filas afectadas. Retorna <c>1</c> si se cambió el estado correctamente, <c>0</c> si falló.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Se lanza si el cliente o su persona asociada no existen,
-        /// o si ocurre un error durante la operación.
-        /// </exception>
-        public static async Task<int> EliminarAsync(Client pClient)
+        // Eliminar un registro por ID
+        public static async Task<int> EliminarAsync(int pId)
         {
             int result = 0;
-            try
+            using (var dbContexto = new DbContexto())
             {
-                using (var dbContexto = new DbContexto())
+                var client = await dbContexto.Client.FirstOrDefaultAsync(c => c.ClientId == pId);
+                if (client != null)
                 {
-                    var client = await dbContexto.Client
-                        .Include(c => c.Person)
-                        .FirstOrDefaultAsync(c => c.ClientId == pClient.ClientId);
-
-                    if (client == null)
-                        throw new Exception($"No se encontró el cliente con ID {pClient.ClientId}.");
-
-                    if (client.Person == null)
-                        throw new Exception($"No se encontró la persona asociada al cliente con ID {pClient.ClientId}.");
-
-                    // Eliminación lógica: se cambia el estado de la Person asociada
-                    // ya que Client no posee StatusId propio.
-                    client.Person.StatusId = pClient.Person!.StatusId;
-
-                    dbContexto.Update(client.Person);
+                    dbContexto.Client.Remove(client);
                     result = await dbContexto.SaveChangesAsync();
                 }
             }
-            catch (Exception ex)
-            {
-                result = 0;
-                throw new Exception(ex.Message);
-            }
             return result;
         }
 
-        /// <summary>
-        /// Obtiene un cliente específico por su identificador, incluyendo
-        /// su relación con <see cref="Person"/> y el <see cref="Status"/> de la persona.
-        /// </summary>
-        /// <param name="pClient">Objeto <see cref="Client"/> con el <c>ClientId</c> a buscar.</param>
-        /// <returns>
-        /// El objeto <see cref="Client"/> encontrado, o <c>null</c> si no existe.
-        /// </returns>
-        /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
-        public static async Task<Client?> ObtenerPorIdAsync(Client pClient)
+        // Obtener un solo registro por ID (incluyendo relaciones)
+        public static async Task<Client?> ObtenerPorIdAsync(int pId)
         {
-            try
+            using (var dbContexto = new DbContexto())
             {
-                using (var dbContexto = new DbContexto())
-                {
-                    return await dbContexto.Client
-                        .Include(c => c.Person)
-                            .ThenInclude(p => p!.Status)
-                        .FirstOrDefaultAsync(c => c.ClientId == pClient.ClientId);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
+                return await dbContexto.Client
+                    .Include(c => c.Person)
+                    .Include(c => c.Status)
+                    .FirstOrDefaultAsync(c => c.ClientId == pId);
             }
         }
 
-        /// <summary>
-        /// Obtiene una lista de clientes aplicando filtros opcionales.
-        /// Los parámetros con valor <c>0</c> o <c>null</c> son ignorados en el filtro.
-        /// </summary>
-        /// <param name="pClient">
-        /// Objeto <see cref="Client"/> usado como filtro de búsqueda:
-        /// <list type="bullet">
-        ///   <item><description><c>PersonId</c>: filtra por persona asociada (0 = sin filtro).</description></item>
-        ///   <item><description><c>Person.StatusId</c>: filtra por estado de la persona (0 = sin filtro).</description></item>
-        /// </list>
-        /// </param>
-        /// <returns>
-        /// Lista de objetos <see cref="Client"/> que cumplen los filtros indicados,
-        /// ordenados por apellido de la persona asociada de forma ascendente.
-        /// </returns>
-        /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
-        public static async Task<List<Client>> ObtenerTodosAsync(Client pClient)
+        // Obtener la lista completa
+        public static async Task<List<Client>> ObtenerTodosAsync()
         {
-            var result = new List<Client>();
-            try
+            using (var dbContexto = new DbContexto())
             {
-                using (var dbContexto = new DbContexto())
-                {
-                    result = await dbContexto.Client
-                        .Include(c => c.Person)
-                            .ThenInclude(p => p!.Status)
-                        .Where(c =>
-                            (pClient.PersonId == 0 || c.PersonId == pClient.PersonId) &&
-                            (pClient.Person!.StatusId == 0 || c.Person!.StatusId == pClient.Person.StatusId)
-                        )
-                        .OrderBy(c => c.Person!.LastName)
-                            .ThenBy(c => c.Person!.FirstName)
-                        .ToListAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-            return result;
-        }
-
-        #endregion
-
-        #region "Búsqueda Avanzada con Paginación"
-
-        /// <summary>
-        /// Realiza una búsqueda avanzada de clientes con soporte para paginación
-        /// según los criterios especificados en <paramref name="pPagedQuery"/>.
-        /// Si <c>Top</c> es mayor a cero, devuelve únicamente los primeros <c>Top</c> registros
-        /// ignorando los parámetros de paginación.
-        /// </summary>
-        /// <param name="pPagedQuery">
-        /// Objeto <see cref="PagedQuery{Client}"/> que define los filtros, el tamaño de página,
-        /// el número de página y otros parámetros de búsqueda. No puede ser <c>null</c>.
-        /// </param>
-        /// <returns>
-        /// Objeto <see cref="PagedResult{Client}"/> con la lista de clientes encontrados
-        /// e información de paginación (total de registros, página actual, tamaño de página).
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Se lanza si ocurre un error durante la ejecución de la consulta o el acceso a la base de datos.
-        /// </exception>
-        public static async Task<PagedResult<Client>> BuscarAsync(PagedQuery<Client> pPagedQuery)
-        {
-            try
-            {
-                using (var dbContexto = new DbContexto())
-                {
-                    var baseQuery = dbContexto.Client
-                        .Include(c => c.Person)
-                            .ThenInclude(p => p!.Status)
-                        .AsQueryable();
-
-                    var filtered = QuerySelect(baseQuery, pPagedQuery);
-                    int total = await filtered.CountAsync();
-
-                    List<Client> items;
-
-                    if (pPagedQuery.Top > 0)
-                    {
-                        items = await filtered
-                            .Take(pPagedQuery.Top)
-                            .ToListAsync();
-                    }
-                    else
-                    {
-                        items = await filtered
-                            .Skip(pPagedQuery.Skip)
-                            .Take(pPagedQuery.PageSize)
-                            .ToListAsync();
-                    }
-
-                    return new PagedResult<Client>
-                    {
-                        Items = items,
-                        TotalCount = total,
-                        CurrentPage = pPagedQuery.Page,
-                        PageSize = pPagedQuery.PageSize
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
+                return await dbContexto.Client
+                    .Include(c => c.Person)
+                    .Include(c => c.Status)
+                    .ToListAsync();
             }
         }
-
-        #endregion
     }
 }

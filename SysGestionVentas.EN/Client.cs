@@ -1,37 +1,46 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SysGestionVentas.EN
 {
     public class Client
     {
-        public string name { get; set; }    
         [Key]
         public int ClientId { get; set; }
 
-        [Required]
         [ForeignKey("Person")]
-        public int PersonId { get; set; }
-        public Person? Person { get; set;  }
+        public int? PersonId { get; set; }
+        public Person? Person { get; set; }
 
-        [Required]
+        public string? Address { get; set; }
+
         [ForeignKey("Status")]
-        public int StatusId { get; set; }
+        [NotMapped]
+        public string StatusDescription => StatusId switch
+        {
+            1 => "Activo",
+            2 => "Inactivo",
+            3 => "Bloqueado",
+            _ => "Desconocido" // Valor por defecto si no coincide
+        };
+        public int? StatusId { get; set; }
+      
+       
         public Status? Status { get; set; }
-        public int Id { get; set; }
 
-        // Provide PascalCase properties used by the views. These are computed and not mapped to the database.
-        [NotMapped]
-        public string Name => !string.IsNullOrEmpty(name) ? name : (Person != null ? Person.FullName : string.Empty);
-
-        [NotMapped]
-        public string Email => Person?.Email ?? string.Empty;
-
+        [Required(ErrorMessage = "El tipo de documento es obligatorio")]
         public int DocumentTypeId { get; set; }
+
+        [Required(ErrorMessage = "El teléfono es obligatorio")]
+        public int NumberPhone { get; set; }
+
+        [Required(ErrorMessage = "El nombre es obligatorio")]
+        public string? Name { get; set; }
+
+        [NotMapped]
+        public string FullNameDisplay => Name ?? (Person != null ? $"{Person.FirstName} {Person.LastName}" : "Sin Nombre");
+
+        [NotMapped]
+        public string Email => Person?.Email ?? "N/A";
     }
 }

@@ -10,14 +10,17 @@
     <h4>Client</h4>
     <hr />
     <dl class="row">
+        <dt class="col-sm-2">ClientId</dt>
+        <dd class="col-sm-10">@Model.ClientId</dd>
+
         <dt class="col-sm-2">Name</dt>
         <dd class="col-sm-10">@Model.Name</dd>
         
-        <dt class="col-sm-2">Email</dt>
-        <dd class="col-sm-10">@Model.Email</dd>
+        <dt class="col-sm-2">Address</dt>
+        <dd class="col-sm-10">@Model.Address</dd>
         
-        <dt class="col-sm-2">Status ID</dt>
-        <dd class="col-sm-10">@Model.StatusId</dd>
+        <dt class="col-sm-2">Status</dt>
+        <dd class="col-sm-10">@Model.StatusDescription</dd> 
         
         <dt class="col-sm-2">Document Type ID</dt>
         <dd class="col-sm-10">@Model.DocumentTypeId</dd>
@@ -25,6 +28,6 @@
 </div>
 
 <div>
-    <a asp-action="Edit" asp-route-id="@Model.ClientId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model.ClientId" class="btn btn-primary">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>

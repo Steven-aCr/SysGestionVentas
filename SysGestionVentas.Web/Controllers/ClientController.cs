@@ -1,5 +1,6 @@
-﻿using BDGestionVentas.BL; // Asegúrate de que este espacio de nombres sea correcto
+﻿using BDGestionVentas.BL; 
 using Microsoft.AspNetCore.Mvc;
+using SysGestionVentas.BL;
 using SysGestionVentas.EN;
 using System.Collections.Generic;
 using System.Threading.Tasks;

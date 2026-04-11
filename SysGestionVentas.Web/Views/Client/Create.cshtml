@@ -14,27 +14,33 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             
             <div class="form-group">
-                <label asp-for="name" class="control-label"></label>
-                <input asp-for="name" class="form-control" />
-                <span asp-validation-for="name" class="text-danger"></span>
+                <label asp-for="ClientId" class="control-label"></label>
+                <input asp-for="ClientId" class="form-control" />
+                <span asp-validation-for="ClientId" class="text-danger"></span>
             </div>
-            
+
             <div class="form-group">
-                <label asp-for="PersonId" class="control-label"></label>
-                <select asp-for="PersonId" class="form-control" asp-items="ViewBag.PersonId"></select>
-                <span asp-validation-for="PersonId" class="text-danger"></span>
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
             </div>
             
             <div class="form-group">
                 <label asp-for="StatusId" class="control-label"></label>
-                <select asp-for="StatusId" class="form-control" asp-items="ViewBag.StatusId"></select>
+                <input asp-for="StatusId" class="form-control" />
                 <span asp-validation-for="StatusId" class="text-danger"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="DocumentTypeId" class="control-label"></label>
-                <select asp-for="DocumentTypeId" class="form-control" asp-items="ViewBag.DocumentTypeId"></select>
+                <input asp-for="DocumentTypeId" class="form-control" />
                 <span asp-validation-for="DocumentTypeId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Address" class="control-label"></label>
+                <input asp-for="Address" class="form-control" />
+                <span asp-validation-for="Address" class="text-danger"></span>
             </div>
 
             <div class="form-group">
