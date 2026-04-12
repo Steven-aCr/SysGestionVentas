@@ -1,72 +1,76 @@
 ﻿@model SysGestionVentas.EN.DocumentDetail
-
 @{
-    ViewData["Title"] = "Eliminar Detalle";
-    ViewData["BreadcrumbParent"] = "Detalle de Documentos";
+    ViewData["Title"] = "Eliminar Línea de Detalle";
 }
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header__title">Eliminar Línea de Detalle</h1>
-        <p class="page-header__subtitle">Esta operación eliminará físicamente la línea del documento.</p>
-    </div>
-    <div class="page-header__actions">
-        <a asp-action="Index" class="btn btn-light">
-            <span class="material-symbols-outlined">arrow_back</span>
-            Volver
-        </a>
-    </div>
-</div>
+<div class="page-container" style="max-width:560px">
 
-<div class="row g-4 justify-content-center">
-    <div class="col-lg-6 col-md-8">
-        <div class="alert-custom alert-danger-custom mb-4" style="border-radius:var(--radius-lg);align-items:flex-start;">
-            <span class="material-symbols-outlined" style="flex-shrink:0;margin-top:1px;">warning</span>
-            <div>
-                <strong>Eliminación física.</strong> Esta línea de detalle será eliminada permanentemente del documento N° <strong>@(Model.Document?.DocNumber ?? $"#{Model.DocumentId}")</strong>.
-            </div>
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title" style="color:var(--clr-danger)">
+                <span class="material-symbols-outlined">delete</span>
+                Eliminar Línea #@Model.DocDetailId
+            </h1>
+            <p class="page-header__subtitle">
+                Esta acción es irreversible y revertirá el movimiento de inventario asociado.
+            </p>
+        </div>
+    </div>
+
+    <div class="card p-4">
+
+        <div class="alert-custom alert-danger-custom mb-4">
+            <span class="material-symbols-outlined">warning</span>
+            <span>
+                Al eliminar esta línea, el stock del producto
+                <strong>@(Model.Product?.Name ?? $"ID {Model.ProductId}")</strong>
+                será <strong>revertido automáticamente</strong> y el total del documento
+                se recalculará.
+            </span>
         </div>
 
-        <div class="card mb-4">
-            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
-                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:20px;">description</span>
-                <span style="font-size:.95rem;font-weight:700;color:var(--clr-text);">Datos de la Línea</span>
-            </div>
-            <div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
-                    <span style="font-weight:600;color:var(--clr-text-muted);">Documento</span>
-                    <code style="background:var(--clr-surface-alt);padding:2px 8px;border-radius:var(--radius-sm);">@(Model.Document?.DocNumber ?? $"#{Model.DocumentId}")</code>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
-                    <span style="font-weight:600;color:var(--clr-text-muted);">Producto</span>
-                    <span style="font-weight:700;">@(Model.Product?.Name ?? Model.Product?.Barcode ?? $"#{Model.ProductId}")</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
-                    <span style="font-weight:600;color:var(--clr-text-muted);">Cantidad</span>
-                    <span>@Model.Quantity</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
-                    <span style="font-weight:600;color:var(--clr-text-muted);">Precio Unitario</span>
-                    <span>$@Model.UnitPrice.ToString("F2")</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;font-size:.86rem;">
-                    <span style="font-weight:600;color:var(--clr-text-muted);">Total Línea</span>
-                    <span style="font-weight:800;color:var(--clr-danger);">$@Model.TotalAmount.ToString("F2")</span>
-                </div>
-            </div>
-        </div>
+        <dl class="row mb-4" style="font-size:.875rem;row-gap:.5rem">
+            <dt class="col-5" style="color:var(--clr-text-muted)">Producto</dt>
+            <dd class="col-7 fw-600">
+                @(Model.Product?.Name ?? $"ID {Model.ProductId}")
+            </dd>
 
-        <form asp-action="Delete">
-            <input type="hidden" asp-for="DocDetailId" />
-            <div class="d-flex gap-3">
-                <button type="submit" class="btn btn-primary" style="background:var(--clr-danger);border-color:var(--clr-danger);">
-                    <span class="material-symbols-outlined">delete</span>
-                    Sí, eliminar línea
-                </button>
-                <a asp-action="Index" class="btn btn-light">
-                    <span class="material-symbols-outlined">close</span>
+            <dt class="col-5" style="color:var(--clr-text-muted)">Cantidad</dt>
+            <dd class="col-7">@Model.Quantity</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Precio unitario</dt>
+            <dd class="col-7">$@Model.UnitPrice.ToString("N2")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Subtotal</dt>
+            <dd class="col-7">$@Model.Subtotal.ToString("N2")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">IVA</dt>
+            <dd class="col-7">$@Model.TaxAmount.ToString("N2")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Total línea</dt>
+            <dd class="col-7 fw-600" style="color:var(--clr-primary)">
+                $@Model.TotalAmount.ToString("N2")
+            </dd>
+        </dl>
+
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.DocDetailId" />
+            <input type="hidden" name="documentId" value="@Model.DocumentId" />
+
+            <div class="form-actions form-actions--end">
+                <a asp-controller="Documents"
+                       asp-action="Details"
+                       asp-route-id="@Model.DocumentId"
+                       class="btn btn-light">
                     Cancelar
                 </a>
+                <button type="submit"
+                        class="btn"
+                        style="background:var(--clr-danger);color:#fff;border-color:var(--clr-danger)">
+                    <span class="material-symbols-outlined">delete</span>
+                    Confirmar eliminación
+                </button>
             </div>
         </form>
     </div>

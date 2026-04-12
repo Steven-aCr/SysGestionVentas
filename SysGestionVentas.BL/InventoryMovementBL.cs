@@ -169,6 +169,23 @@ namespace SysGestionVentas.BL
         }
 
         /// <summary>
+        /// Obtiene todos los movimientos de inventario asociados a un documento específico.
+        /// </summary>
+        /// <param name="pDocumentId">Identificador del documento a consultar.</param>
+        /// <returns>
+        /// Lista de <see cref="InventoryMovement"/> asociados al documento,
+        /// ordenados por fecha descendente.
+        /// </returns>
+        /// <exception cref="Exception">Se lanza si el ID no es válido o si ocurre un error en base de datos.</exception>
+        public static async Task<List<InventoryMovement>> ObtenerPorDocumentoAsync(int pDocumentId)
+        {
+            if (pDocumentId <= 0)
+                throw new Exception("El ID de documento no es válido.");
+
+            return await InventoryMovementDAL.ObtenerPorDocumentoAsync(pDocumentId);
+        }
+
+        /// <summary>
         /// Realiza una búsqueda avanzada de movimientos de inventario con soporte para paginación.
         /// </summary>
         /// <param name="pPagedQuery">

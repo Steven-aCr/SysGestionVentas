@@ -1,16 +1,16 @@
-﻿
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace SysGestionVentas.EN.ViewModels
 {
     /// <summary>
     /// ViewModel utilizado para capturar en un único formulario los datos
-    /// necesarios para crear una <see cref="Person"/> y su <see cref="User"/> asociado.
-    /// Permite que ambos registros se persistan en una sola transacción coordinada.
+    /// necesarios para crear una <see cref="Person"/>, su <see cref="User"/> asociado
+    /// y, cuando el rol corresponde a Vendedor (RolId = 2), su registro de
+    /// <see cref="Employee"/> en una sola transacción coordinada.
     /// </summary>
     public class CreateUserModel
     {
-        // Datos de Person
+        // ── Datos de Person ───────────────────────────────────────────
 
         [Required(ErrorMessage = "El nombre es obligatorio.")]
         [StringLength(50, MinimumLength = 2,
@@ -41,7 +41,7 @@ namespace SysGestionVentas.EN.ViewModels
         [Display(Name = "DUI")]
         public string? Dui { get; set; }
 
-        // Datos de Usuario
+        // ── Datos de Usuario ──────────────────────────────────────────
 
         [Required(ErrorMessage = "El nombre de usuario es obligatorio.")]
         [StringLength(50, MinimumLength = 3,
@@ -53,7 +53,6 @@ namespace SysGestionVentas.EN.ViewModels
         [EmailAddress(ErrorMessage = "Introduzca un correo electrónico válido.")]
         [StringLength(255)]
         [Display(Name = "Correo electrónico")]
-        
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "La contraseña es obligatoria.")]
@@ -76,5 +75,52 @@ namespace SysGestionVentas.EN.ViewModels
         [Required(ErrorMessage = "El estado es obligatorio.")]
         [Display(Name = "Estado")]
         public int StatusId { get; set; }
+
+        // ── Datos de Empleado (solo si RolId == 2 — Vendedor) ────────
+
+        /// <summary>
+        /// Código único del empleado. Requerido únicamente cuando el rol
+        /// seleccionado corresponde a Vendedor (RolId = 2).
+        /// </summary>
+        [StringLength(50, MinimumLength = 3,
+            ErrorMessage = "El código de empleado debe tener entre 3 y 50 caracteres.")]
+        [Display(Name = "Código de empleado")]
+        public string? EmployeeCode { get; set; }
+
+        /// <summary>
+        /// Fecha de contratación del empleado. Requerida únicamente cuando
+        /// el rol seleccionado corresponde a Vendedor (RolId = 2).
+        /// </summary>
+        [DataType(DataType.Date)]
+        [Display(Name = "Fecha de contratación")]
+        public DateTime? HireDate { get; set; }
+
+        /// <summary>
+        /// Salario mensual del empleado. Requerido únicamente cuando el rol
+        /// seleccionado corresponde a Vendedor (RolId = 2).
+        /// </summary>
+        [Range(0.01, double.MaxValue, ErrorMessage = "El salario debe ser mayor a $0.00.")]
+        [Display(Name = "Salario")]
+        public decimal? Salary { get; set; }
+
+        /// <summary>
+        /// Departamento al que pertenece el empleado. Opcional incluso para Vendedor.
+        /// </summary>
+        [Display(Name = "Departamento")]
+        public int? DepartmentId { get; set; }
+
+        // ── Constantes auxiliares ─────────────────────────────────
+
+        /// <summary>
+        /// Identificador del rol Administrador en el sistema.
+        /// Se utiliza para determinar si deben persistirse los datos de empleado.
+        /// </summary>
+        public const int RolAdministradorId = 1;
+
+        /// <summary>
+        /// Identificador del rol Vendedor en el sistema.
+        /// Se utiliza para determinar si deben persistirse los datos de empleado.
+        /// </summary>
+        public const int RolVendedorId = 2;
     }
 }

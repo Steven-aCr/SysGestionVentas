@@ -1,0 +1,217 @@
+﻿@model SysGestionVentas.EN.Pagination.PagedResult<SysGestionVentas.EN.Client>
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Clientes";
+    ViewData["BreadcrumbParent"] = "Personas";
+
+    var busqueda = ViewBag.Busqueda as string ?? string.Empty;
+    var statusId = (int)(ViewBag.StatusId ?? 0);
+    int page = Model.CurrentPage;
+    int totalPages = Model.TotalPages;
+}
+
+<div class="page-content">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">
+                <span class="material-symbols-outlined">group</span>
+                Clientes
+            </h1>
+            <p class="page-header__subtitle">Directorio de clientes registrados en el sistema</p>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-custom alert-success-custom mb-3">
+            <span class="material-symbols-outlined">check_circle</span>
+            @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert-custom alert-danger-custom mb-3">
+            <span class="material-symbols-outlined">error</span>
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- Card -->
+    <div class="table-card">
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+            <form asp-action="Index" method="get"
+                  style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;">
+
+                <div class="search-box">
+                    <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                    <input type="text" name="busqueda" value="@busqueda"
+                           placeholder="Nombre, apellido, DUI…" autocomplete="off" />
+                </div>
+
+                <select name="statusId" class="form-select" style="min-width:150px; font-size:.84rem;">
+                    <option value="0">— Todos los estados —</option>
+                    @foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.StatusList)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                    }
+                </select>
+
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-symbols-outlined">search</span>
+                    Buscar
+                </button>
+
+                @if (!string.IsNullOrWhiteSpace(busqueda) || statusId > 0)
+                {
+                    <a asp-action="Index" class="btn btn-light">
+                        <span class="material-symbols-outlined">close</span>
+                        Limpiar
+                    </a>
+                }
+            </form>
+
+            <span style="font-size:.8rem; color:var(--clr-text-muted);">
+                @Model.TotalCount registro(s)
+            </span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>DUI</th>
+                        <th>Teléfono</th>
+                        <th>Dirección</th>
+                        <th>Estado</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">group</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">
+                                        No se encontraron clientes
+                                        @if (!string.IsNullOrWhiteSpace(busqueda))
+                                        {
+                                            <text> con el término "<strong>@busqueda</strong>"</text>
+                                        }
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var client in Model.Items)
+                        {
+                            var fullName = client.Person?.FullName ?? "—";
+                            var initials = string.Concat(
+                                fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                        .Take(2).Select(w => w[0].ToString().ToUpper()));
+                            var isActive = client.Person?.Status?.Name?.Equals("Activo",
+                                               StringComparison.OrdinalIgnoreCase) ?? false;
+
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-cell__avatar">@initials</div>
+                                        <div>
+                                            <div class="user-cell__name">@fullName</div>
+                                            <div class="user-cell__meta">#@client.ClientId</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="color:var(--clr-text-muted);">
+                                    @(client.Person?.Dui ?? "—")
+                                </td>
+                                <td style="color:var(--clr-text-muted);">
+                                    @(client.Person?.PhoneNumber ?? "—")
+                                </td>
+                                <td style="color:var(--clr-text-muted); max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    @(client.Person?.Adress ?? "—")
+                                </td>
+                                <td>
+                                    <div class="status">
+                                        <span class="status-dot @(isActive ? "status-dot--active" : "status-dot--inactive")"></span>
+                                        <span>@(client.Person?.Status?.Name ?? "—")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@client.ClientId"
+                                               class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+                                        @if (isActive)
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@client.ClientId"
+                                                   class="btn btn-icon btn-danger-outline" title="Desactivar cliente">
+                                                <span class="material-symbols-outlined">block</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer / Paginación -->
+        <div class="table-footer">
+            <span>
+                Mostrando <strong>@Model.FirstItemIndex–@Model.LastItemIndex</strong>
+                de <strong>@Model.TotalCount</strong> cliente(s)
+            </span>
+
+            @if (totalPages > 1)
+            {
+                <nav>
+                    <ul class="pagination pagination-sm mb-0" style="gap:4px;">
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index"
+                                   asp-route-page="@(page - 1)"
+                                   asp-route-busqueda="@busqueda"
+                                   asp-route-statusId="@statusId">
+                                <span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span>
+                            </a>
+                        </li>
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == page ? "active" : "")">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-busqueda="@busqueda"
+                                   asp-route-statusId="@statusId">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index"
+                                   asp-route-page="@(page + 1)"
+                                   asp-route-busqueda="@busqueda"
+                                   asp-route-statusId="@statusId">
+                                <span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+
+    </div>
+</div>

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using SysGestionVentas.BL;
 using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
+using System.Security.Claims;
 
 namespace SysGestionVentas.Web.Controllers
 {
@@ -23,7 +24,9 @@ namespace SysGestionVentas.Web.Controllers
 
             try
             {
-                var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = documentId.Value });
+                var document = await DocumentBL.ObtenerPorIdAsync(
+                    new Document { DocumentId = documentId.Value });
+
                 if (document == null) return NotFound();
 
                 var detalles = await DocumentDetailBL.ObtenerPorDocumentoAsync(documentId.Value);
@@ -48,7 +51,9 @@ namespace SysGestionVentas.Web.Controllers
 
             try
             {
-                var detail = await DocumentDetailBL.ObtenerPorIdAsync(new DocumentDetail { DocDetailId = id.Value });
+                var detail = await DocumentDetailBL.ObtenerPorIdAsync(
+                    new DocumentDetail { DocDetailId = id.Value });
+
                 if (detail == null) return NotFound();
                 return View(detail);
             }
@@ -71,7 +76,9 @@ namespace SysGestionVentas.Web.Controllers
 
             try
             {
-                var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = documentId.Value });
+                var document = await DocumentBL.ObtenerPorIdAsync(
+                    new Document { DocumentId = documentId.Value });
+
                 if (document == null) return NotFound();
 
                 ViewBag.Document = document;
@@ -94,6 +101,7 @@ namespace SysGestionVentas.Web.Controllers
         /// <summary>
         /// Procesa el registro de una nueva línea de detalle en el documento indicado.
         /// Calcula automáticamente subtotal, impuesto y total de línea mediante la capa BL.
+        /// Genera además el movimiento de inventario correspondiente dentro de una transacción.
         /// </summary>
         /// <param name="pDetail">Entidad <see cref="DocumentDetail"/> con los datos del formulario.</param>
         [HttpPost]
@@ -102,9 +110,22 @@ namespace SysGestionVentas.Web.Controllers
             [Bind("DocumentId,ProductId,Quantity,UnitPrice,DiscountAmount,TaxPercentage,Notes")]
             DocumentDetail pDetail)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out int userId) || userId <= 0)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "No se pudo identificar al usuario autenticado.");
+                var doc = await DocumentBL.ObtenerPorIdAsync(
+                    new Document { DocumentId = pDetail.DocumentId });
+                ViewBag.Document = doc;
+                await CargarListasAsync(pDetail.DocumentId);
+                return View(pDetail);
+            }
+
             if (!ModelState.IsValid)
             {
-                var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = pDetail.DocumentId });
+                var document = await DocumentBL.ObtenerPorIdAsync(
+                    new Document { DocumentId = pDetail.DocumentId });
                 ViewBag.Document = document;
                 await CargarListasAsync(pDetail.DocumentId);
                 return View(pDetail);
@@ -112,18 +133,16 @@ namespace SysGestionVentas.Web.Controllers
 
             try
             {
-                await DocumentDetailBL.GuardarAsync(pDetail);
-
-                // Recalcular el total del documento padre
-                await ActualizarTotalDocumentoAsync(pDetail.DocumentId);
-
+                await DocumentDetailBL.GuardarAsync(pDetail, userId);
                 TempData["Success"] = "Línea de detalle agregada correctamente.";
-                return RedirectToAction("Details", "Documents", new { id = pDetail.DocumentId });
+                return RedirectToAction("Details", "Documents",
+                    new { id = pDetail.DocumentId });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = pDetail.DocumentId });
+                var document = await DocumentBL.ObtenerPorIdAsync(
+                    new Document { DocumentId = pDetail.DocumentId });
                 ViewBag.Document = document;
                 await CargarListasAsync(pDetail.DocumentId);
                 return View(pDetail);
@@ -141,10 +160,14 @@ namespace SysGestionVentas.Web.Controllers
 
             try
             {
-                var detail = await DocumentDetailBL.ObtenerPorIdAsync(new DocumentDetail { DocDetailId = id.Value });
+                var detail = await DocumentDetailBL.ObtenerPorIdAsync(
+                    new DocumentDetail { DocDetailId = id.Value });
+
                 if (detail == null) return NotFound();
 
-                var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = detail.DocumentId });
+                var document = await DocumentBL.ObtenerPorIdAsync(
+                    new Document { DocumentId = detail.DocumentId });
+
                 ViewBag.Document = document;
                 await CargarListasAsync(detail.DocumentId);
                 return View(detail);
@@ -173,7 +196,8 @@ namespace SysGestionVentas.Web.Controllers
 
             if (!ModelState.IsValid)
             {
-                var doc = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = pDetail.DocumentId });
+                var doc = await DocumentBL.ObtenerPorIdAsync(
+                    new Document { DocumentId = pDetail.DocumentId });
                 ViewBag.Document = doc;
                 await CargarListasAsync(pDetail.DocumentId);
                 return View(pDetail);
@@ -182,15 +206,15 @@ namespace SysGestionVentas.Web.Controllers
             try
             {
                 await DocumentDetailBL.ModificarAsync(pDetail);
-                await ActualizarTotalDocumentoAsync(pDetail.DocumentId);
-
                 TempData["Success"] = "Línea de detalle modificada correctamente.";
-                return RedirectToAction("Details", "Documents", new { id = pDetail.DocumentId });
+                return RedirectToAction("Details", "Documents",
+                    new { id = pDetail.DocumentId });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                var doc = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = pDetail.DocumentId });
+                var doc = await DocumentBL.ObtenerPorIdAsync(
+                    new Document { DocumentId = pDetail.DocumentId });
                 ViewBag.Document = doc;
                 await CargarListasAsync(pDetail.DocumentId);
                 return View(pDetail);
@@ -208,7 +232,9 @@ namespace SysGestionVentas.Web.Controllers
 
             try
             {
-                var detail = await DocumentDetailBL.ObtenerPorIdAsync(new DocumentDetail { DocDetailId = id.Value });
+                var detail = await DocumentDetailBL.ObtenerPorIdAsync(
+                    new DocumentDetail { DocDetailId = id.Value });
+
                 if (detail == null) return NotFound();
                 return View(detail);
             }
@@ -221,22 +247,28 @@ namespace SysGestionVentas.Web.Controllers
 
         // POST: DocumentDetails/Delete/5
         /// <summary>
-        /// Elimina físicamente una línea de detalle de documento.
-        /// Solo debe ejecutarse sobre documentos en estado editable.
-        /// Recalcula el total del documento padre tras la eliminación.
+        /// Elimina físicamente una línea de detalle, revierte el movimiento de inventario
+        /// asociado y recalcula el total del documento padre dentro de una transacción.
         /// </summary>
         /// <param name="id">Identificador del detalle a eliminar.</param>
-        /// <param name="documentId">Identificador del documento padre para redirección y recálculo.</param>
+        /// <param name="documentId">Identificador del documento padre para la redirección.</param>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id, int documentId)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out int userId) || userId <= 0)
+            {
+                TempData["Error"] = "No se pudo identificar al usuario autenticado.";
+                return RedirectToAction("Details", "Documents", new { id = documentId });
+            }
+
             try
             {
-                await DocumentDetailBL.EliminarAsync(new DocumentDetail { DocDetailId = id });
-                await ActualizarTotalDocumentoAsync(documentId);
+                await DocumentDetailBL.EliminarAsync(
+                    new DocumentDetail { DocDetailId = id }, userId);
 
-                TempData["Success"] = "Línea de detalle eliminada correctamente.";
+                TempData["Success"] = "Línea de detalle eliminada y stock revertido correctamente.";
                 return RedirectToAction("Details", "Documents", new { id = documentId });
             }
             catch (Exception ex)
@@ -249,7 +281,7 @@ namespace SysGestionVentas.Web.Controllers
         // ── Métodos Privados ─────────────────────────────────────────────────────
 
         /// <summary>
-        /// Carga la lista de productos activos para el control desplegable de la vista Create/Edit.
+        /// Carga la lista de productos activos para el control desplegable de las vistas Create y Edit.
         /// </summary>
         /// <param name="documentId">Identificador del documento padre (para contexto en la vista).</param>
         private async Task CargarListasAsync(int documentId)
@@ -259,24 +291,6 @@ namespace SysGestionVentas.Web.Controllers
                 "ProductId", "Name");
 
             ViewData["DocumentId"] = documentId;
-        }
-
-        /// <summary>
-        /// Recalcula y persiste el <c>TotalAmount</c> del documento padre
-        /// sumando los totales de todas sus líneas de detalle activas.
-        /// </summary>
-        /// <param name="pDocumentId">Identificador del documento cuyo total se recalculará.</param>
-        private async Task ActualizarTotalDocumentoAsync(int pDocumentId)
-        {
-            var detalles = await DocumentDetailBL.ObtenerPorDocumentoAsync(pDocumentId);
-            decimal nuevoTotal = detalles.Sum(d => d.TotalAmount);
-
-            var document = await DocumentBL.ObtenerPorIdAsync(new Document { DocumentId = pDocumentId });
-            if (document != null)
-            {
-                document.TotalAmount = nuevoTotal;
-                await DocumentBL.ModificarAsync(document);
-            }
         }
     }
 }

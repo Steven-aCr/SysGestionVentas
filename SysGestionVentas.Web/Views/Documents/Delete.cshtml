@@ -1,72 +1,70 @@
 ﻿@model SysGestionVentas.EN.Document
-
 @{
-    ViewData["Title"] = "Anular Documento";
-    ViewData["BreadcrumbParent"] = "Documentos";
+    ViewData["Title"] = $"Anular Documento #{Model.DocNumber}";
 }
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header__title">Anular Documento</h1>
-        <p class="page-header__subtitle">Esta acción cambiará el estado del documento a Anulado.</p>
-    </div>
-    <div class="page-header__actions">
-        <a asp-action="Index" class="btn btn-light">
-            <span class="material-symbols-outlined">arrow_back</span>
-            Volver
-        </a>
-    </div>
-</div>
+<div class="page-container" style="max-width:560px">
 
-<div class="row g-4 justify-content-center">
-    <div class="col-lg-6 col-md-8">
-        <div class="alert-custom alert-danger-custom mb-4" style="border-radius:var(--radius-lg);align-items:flex-start;">
-            <span class="material-symbols-outlined" style="flex-shrink:0;margin-top:1px;">warning</span>
-            <div>
-                <strong>¿Está seguro?</strong> El documento N° <strong>@Model.DocNumber</strong> será marcado como anulado y no podrá usarse en nuevas transacciones.
-            </div>
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title" style="color:var(--clr-danger)">
+                <span class="material-symbols-outlined">cancel</span>
+                Anular Documento
+            </h1>
+            <p class="page-header__subtitle">
+                Esta acción cambiará el estado del documento a "Anulado".
+            </p>
+        </div>
+    </div>
+
+    <div class="card p-4">
+        <div class="alert-custom alert-warning-custom mb-4">
+            <span class="material-symbols-outlined">warning</span>
+            <span>
+                Los movimientos de inventario ya generados <strong>no</strong> se revierten
+                automáticamente al anular el documento. Revise el inventario si es necesario.
+            </span>
         </div>
 
-        <div class="card mb-4">
-            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
-                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:20px;">receipt_long</span>
-                <span style="font-size:.95rem;font-weight:700;color:var(--clr-text);">Datos del Documento</span>
-            </div>
-            <div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
-                    <span style="font-weight:600;color:var(--clr-text-muted);">Tipo</span>
-                    <span style="font-weight:700;">@(Model.DocumentType?.Name ?? "—")</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
-                    <span style="font-weight:600;color:var(--clr-text-muted);">Número</span>
-                    <code style="background:var(--clr-surface-alt);padding:2px 8px;border-radius:var(--radius-sm);">@Model.DocNumber</code>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
-                    <span style="font-weight:600;color:var(--clr-text-muted);">Fecha de Emisión</span>
-                    <span>@Model.IssueDate.ToString("dd/MM/yyyy")</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
-                    <span style="font-weight:600;color:var(--clr-text-muted);">Monto Total</span>
-                    <span style="font-weight:800;color:var(--clr-primary);">$@Model.TotalAmount.ToString("F2")</span>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;font-size:.86rem;">
-                    <span style="font-weight:600;color:var(--clr-text-muted);">Estado actual</span>
-                    <span class="badge badge-vendedor"><span class="status-dot status-dot--active"></span>&nbsp;@(Model.Status?.Name ?? "—")</span>
-                </div>
-            </div>
-        </div>
+        <dl class="row mb-4" style="font-size:.875rem;row-gap:.5rem">
+            <dt class="col-5" style="color:var(--clr-text-muted)">Número</dt>
+            <dd class="col-7 fw-600">@Model.DocNumber</dd>
 
-        <form asp-action="Delete">
-            <input type="hidden" asp-for="DocumentId" />
-            <div class="d-flex gap-3">
-                <button type="submit" class="btn btn-primary" style="background:var(--clr-danger);border-color:var(--clr-danger);">
-                    <span class="material-symbols-outlined">block</span>
-                    Sí, anular documento
-                </button>
-                <a asp-action="Index" class="btn btn-light">
-                    <span class="material-symbols-outlined">close</span>
+            <dt class="col-5" style="color:var(--clr-text-muted)">Tipo</dt>
+            <dd class="col-7">@(Model.DocumentType?.Name ?? "—")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Fecha emisión</dt>
+            <dd class="col-7">@Model.IssueDate.ToString("dd/MM/yyyy")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Cliente</dt>
+            <dd class="col-7">@(Model.Person?.FullName ?? "—")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Total</dt>
+            <dd class="col-7 fw-600" style="color:var(--clr-primary)">
+                $@Model.TotalAmount.ToString("N2")
+            </dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Estado actual</dt>
+            <dd class="col-7">
+                <span class="status">
+                    <span class="status-dot status-dot--active"></span>
+                    @(Model.Status?.Name ?? "—")
+                </span>
+            </dd>
+        </dl>
+
+        <form asp-action="Delete" asp-route-id="@Model.DocumentId" method="post">
+            @Html.AntiForgeryToken()
+            <div class="form-actions form-actions--end">
+                <a asp-action="Details" asp-route-id="@Model.DocumentId"
+                       class="btn btn-light">
                     Cancelar
                 </a>
+                <button type="submit" class="btn btn-danger-outline"
+                        style="background:var(--clr-danger);color:#fff;border-color:var(--clr-danger)">
+                    <span class="material-symbols-outlined">cancel</span>
+                    Confirmar anulación
+                </button>
             </div>
         </form>
     </div>

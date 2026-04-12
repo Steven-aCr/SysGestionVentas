@@ -1,0 +1,249 @@
+﻿@model List<SysGestionVentas.EN.Document>
+@{
+    ViewData["Title"] = "Dashboard Ventas";
+    var totalMonto = Model?.Sum(d => d.TotalAmount) ?? 0;
+    var totalDocs = Model?.Count ?? 0;
+    var docsHoy = Model?.Count(d => d.IssueDate.Date == DateTime.Today) ?? 0;
+    var docsPendientes = Model?.Count(d => d.Status?.Name == "Pendiente") ?? 0;
+
+    // Últimos 5 documentos para la tabla de actividad rápida
+    var ultimos = Model?
+        .OrderByDescending(d => d.IssueDate)
+        .Take(5)
+        .ToList() ?? new List<SysGestionVentas.EN.Document>();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+}
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<div class="dash-header">
+    <div>
+        <h1 class="dash-header__title">Panel de Ventas</h1>
+        <p class="dash-header__subtitle">Gestión y seguimiento de documentos · @DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("es-ES"))</p>
+    </div>
+    <div style="display:flex;gap:8px">
+        <a href="@Url.Action("Create", "Documents")" class="btn btn-primary">
+            <span class="material-symbols-outlined" style="font-size:18px">add</span>
+            Nuevo Documento
+        </a>
+        <a href="@Url.Action("Documentos", "Ventas")" class="btn btn-light">
+            <span class="material-symbols-outlined" style="font-size:18px">list</span>
+            Ver Todos
+        </a>
+    </div>
+</div>
+
+<!-- ── KPI GRID ───────────────────────────────────────────── -->
+<div class="kpi-grid">
+
+    <!-- Total documentos -->
+    <div class="kpi-card kpi-card--ventas">
+        <div class="kpi-card__top">
+            <span class="kpi-card__label">Total Documentos</span>
+            <div class="kpi-card__icon">
+                <span class="material-symbols-outlined">receipt_long</span>
+            </div>
+        </div>
+        <div class="kpi-card__value">@totalDocs</div>
+        <span class="kpi-trend kpi-trend--up">
+            <span class="material-symbols-outlined">today</span>
+            @docsHoy emitidos hoy
+        </span>
+        <p class="kpi-card__footer">Documentos totales en el sistema</p>
+    </div>
+
+    <!-- Monto total -->
+    <div class="kpi-card kpi-card--monto">
+        <div class="kpi-card__top">
+            <span class="kpi-card__label">Monto Total</span>
+            <div class="kpi-card__icon">
+                <span class="material-symbols-outlined">payments</span>
+            </div>
+        </div>
+        <div class="kpi-card__value kpi-card__value--sm">$@totalMonto.ToString("N2")</div>
+        <span class="kpi-trend kpi-trend--up">
+            <span class="material-symbols-outlined">trending_up</span>
+            Facturación acumulada
+        </span>
+        <p class="kpi-card__footer">Suma total de todos los documentos</p>
+    </div>
+
+    <!-- Documentos pendientes -->
+    <div class="kpi-card kpi-card--clientes">
+        <div class="kpi-card__top">
+            <span class="kpi-card__label">Pendientes de Pago</span>
+            <div class="kpi-card__icon">
+                <span class="material-symbols-outlined">pending_actions</span>
+            </div>
+        </div>
+        <div class="kpi-card__value">@docsPendientes</div>
+        <span class="kpi-trend @(docsPendientes > 0 ? "kpi-trend--down" : "kpi-trend--up")">
+            <span class="material-symbols-outlined">@(docsPendientes > 0 ? "schedule" : "check_circle")</span>
+            @(docsPendientes > 0 ? "Requieren seguimiento" : "Sin pendientes")
+        </span>
+        <p class="kpi-card__footer">Documentos en estado Pendiente</p>
+    </div>
+
+    <!-- Emitidos hoy -->
+    <div class="kpi-card kpi-card--stock">
+        <div class="kpi-card__top">
+            <span class="kpi-card__label">Emitidos Hoy</span>
+            <div class="kpi-card__icon">
+                <span class="material-symbols-outlined">today</span>
+            </div>
+        </div>
+        <div class="kpi-card__value">@docsHoy</div>
+        <span class="kpi-trend kpi-trend--up">
+            <span class="material-symbols-outlined">event_available</span>
+            @DateTime.Today.ToString("dd/MM/yyyy")
+        </span>
+        <p class="kpi-card__footer">Documentos emitidos en el día</p>
+    </div>
+
+</div>
+
+<!-- ── ACCESOS RÁPIDOS ────────────────────────────────────── -->
+<div class="panel" style="margin-bottom:20px">
+    <div class="panel__header">
+        <span class="panel__title">
+            <span class="material-symbols-outlined">bolt</span>
+            Accesos Rápidos
+        </span>
+    </div>
+    <div class="panel__body">
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+
+            <a href="@Url.Action("Index", "Documents")" class="btn btn-light" style="gap:8px">
+                <span class="material-symbols-outlined" style="font-size:18px;color:var(--clr-primary)">description</span>
+                Gestionar Documentos
+            </a>
+
+            <a href="@Url.Action("Create", "Documents")" class="btn btn-light" style="gap:8px">
+                <span class="material-symbols-outlined" style="font-size:18px;color:var(--clr-primary)">add_circle</span>
+                Nuevo Documento
+            </a>
+
+            <a href="@Url.Action("Index", "Inventories")" class="btn btn-light" style="gap:8px">
+                <span class="material-symbols-outlined" style="font-size:18px;color:#6366f1">inventory_2</span>
+                Consultar Inventario
+            </a>
+
+            <a href="@Url.Action("Productos", "Ventas")" class="btn btn-light" style="gap:8px">
+                <span class="material-symbols-outlined" style="font-size:18px;color:#f59e0b">category</span>
+                Catálogo de Productos
+            </a>
+
+            <a href="@Url.Action("Index", "Clients")" class="btn btn-light" style="gap:8px">
+                <span class="material-symbols-outlined" style="font-size:18px;color:#ec4899">group</span>
+                Ver Clientes
+            </a>
+
+        </div>
+    </div>
+</div>
+
+<!-- ── ÚLTIMOS DOCUMENTOS ─────────────────────────────────── -->
+<div class="panel">
+    <div class="panel__header">
+        <span class="panel__title">
+            <span class="material-symbols-outlined">history</span>
+            Actividad Reciente
+        </span>
+        <a href="@Url.Action("Documentos", "Ventas")" class="panel__link">
+            Ver todos <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+        </a>
+    </div>
+    <div class="panel__body--flush">
+        @if (ultimos.Any())
+        {
+            <table class="activity-table">
+                <thead>
+                    <tr>
+                        <th>N° Documento</th>
+                        <th>Tipo</th>
+                        <th>Cliente / Persona</th>
+                        <th>Fecha</th>
+                        <th>Monto Total</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in ultimos)
+                    {
+                        var badgeClass = doc.Status?.Name switch
+                        {
+                            "Emitido" => "badge-status--active",
+                            "Pagado" => "badge-status--active",
+                            "Pendiente" => "badge-status--pending",
+                            "Anulado" => "badge-status--cancel",
+                            _ => "badge-status--default"
+                        };
+                        <tr>
+                            <td><span class="doc-num">@doc.DocNumber</span></td>
+                            <td style="font-size:.82rem;color:var(--clr-text-muted)">
+                                @doc.DocumentType?.Name
+                            </td>
+                            <td style="font-size:.84rem;font-weight:500">
+                                @doc.Person?.FullName
+                            </td>
+                            <td style="font-size:.82rem;color:var(--clr-text-muted)">
+                                @doc.IssueDate.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td style="font-weight:700;color:var(--clr-text)">
+                                $@doc.TotalAmount.ToString("N2")
+                            </td>
+                            <td>
+                                <span class="badge-status @badgeClass">@doc.Status?.Name</span>
+                            </td>
+                            <td>
+                                <a href="@Url.Action("DetalleDocumento", "Ventas", new { id = doc.DocumentId })"
+                                       class="btn-icon" title="Ver detalle">
+                                    <span class="material-symbols-outlined" style="font-size:16px">open_in_new</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="dash-empty">
+                <span class="material-symbols-outlined" style="font-size:40px;color:var(--clr-text-subtle)">inbox</span>
+                <p>No hay documentos registrados aún.</p>
+                <a href="@Url.Action("Create", "Documents")" class="btn btn-primary" style="margin-top:12px">
+                    <span class="material-symbols-outlined" style="font-size:16px">add</span>
+                    Crear primer documento
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Animar KPIs al cargar
+        document.querySelectorAll('.kpi-card__value').forEach(el => {
+            const text = el.textContent.trim();
+            const isDecimal = text.includes('.');
+            const prefix = text.startsWith('$') ? '$' : '';
+            const target = parseFloat(text.replace(/[$,]/g, ''));
+            if (!isNaN(target) && target > 0) {
+                const start = performance.now();
+                const duration = 800;
+                (function update(ts) {
+                    const p = Math.min((ts - start) / duration, 1);
+                    const e = 1 - Math.pow(1 - p, 3);
+                    const v = target * e;
+                    el.textContent = prefix + (isDecimal
+                        ? v.toLocaleString('es-SV', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        : Math.floor(v).toLocaleString('es-SV'));
+                    if (p < 1) requestAnimationFrame(update);
+                })(start);
+            }
+        });
+    </script>
+}

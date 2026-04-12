@@ -1,0 +1,160 @@
+﻿@model SysGestionVentas.EN.Pagination.PagedResult<SysGestionVentas.EN.Department>
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Departamentos";
+    ViewData["BreadcrumbParent"] = "Organización";
+
+    var busqueda = ViewBag.Busqueda as string ?? string.Empty;
+    var statusId = (int)(ViewBag.StatusId ?? 0);
+}
+
+<div class="page-content">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">
+                <span class="material-symbols-outlined">corporate_fare</span>
+                Departamentos
+            </h1>
+            <p class="page-header__subtitle">Estructura organizacional de la empresa</p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <span class="material-symbols-outlined">add</span>
+                Nuevo Departamento
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-custom alert-success-custom mb-3">
+            <span class="material-symbols-outlined">check_circle</span>
+            @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert-custom alert-danger-custom mb-3">
+            <span class="material-symbols-outlined">error</span>
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="table-card">
+
+        <div class="table-toolbar">
+            <form asp-action="Index" method="get"
+                  style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;">
+
+                <div class="search-box">
+                    <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                    <input type="text" name="busqueda" value="@busqueda"
+                           placeholder="Nombre del departamento…" autocomplete="off" />
+                </div>
+
+                <select name="statusId" class="form-select" style="min-width:150px; font-size:.84rem;">
+                    <option value="0">— Todos los estados —</option>
+                    @foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.StatusList)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                    }
+                </select>
+
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-symbols-outlined">search</span> Buscar
+                </button>
+
+                @if (!string.IsNullOrWhiteSpace(busqueda) || statusId > 0)
+                {
+                    <a asp-action="Index" class="btn btn-light">
+                        <span class="material-symbols-outlined">close</span> Limpiar
+                    </a>
+                }
+            </form>
+            <span style="font-size:.8rem; color:var(--clr-text-muted);">@Model.TotalCount registro(s)</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Departamento</th>
+                        <th>Descripción</th>
+                        <th>Creado</th>
+                        <th>Estado</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">corporate_fare</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">No se encontraron departamentos con los filtros aplicados.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var dept in Model.Items)
+                        {
+                            var isActive = dept.Status?.Name?.Equals("Activo", StringComparison.OrdinalIgnoreCase) ?? false;
+
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-cell__avatar" style="border-radius:var(--radius-sm); background:linear-gradient(135deg,#0d9488,#0f766e);">
+                                            <span class="material-symbols-outlined" style="font-size:16px;">corporate_fare</span>
+                                        </div>
+                                        <div class="user-cell__name">@(dept.Name ?? "—")</div>
+                                    </div>
+                                </td>
+                                <td style="color:var(--clr-text-muted); max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    @(dept.Description ?? "—")
+                                </td>
+                                <td style="color:var(--clr-text-muted); font-size:.83rem;">
+                                    @dept.CreatedAt.ToString("dd/MM/yyyy")
+                                </td>
+                                <td>
+                                    <div class="status">
+                                        <span class="status-dot @(isActive ? "status-dot--active" : "status-dot--inactive")"></span>
+                                        <span>@(dept.Status?.Name ?? "—")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@dept.DepartmentId" class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@dept.DepartmentId" class="btn btn-icon" title="Editar">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </a>
+                                        @if (isActive)
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@dept.DepartmentId"
+                                                   class="btn btn-icon btn-danger-outline" title="Desactivar">
+                                                <span class="material-symbols-outlined">block</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <span>Mostrando <strong>@Model.TotalCount</strong> departamento(s)</span>
+        </div>
+    </div>
+</div>

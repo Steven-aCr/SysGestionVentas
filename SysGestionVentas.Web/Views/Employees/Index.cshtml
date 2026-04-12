@@ -1,0 +1,237 @@
+﻿@model SysGestionVentas.EN.Pagination.PagedResult<SysGestionVentas.EN.Employee>
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Empleados";
+    ViewData["BreadcrumbParent"] = "Personas";
+
+    var busqueda     = ViewBag.Busqueda as string ?? string.Empty;
+    var statusId     = (int)(ViewBag.StatusId ?? 0);
+    var departmentId = (int)(ViewBag.DepartmentId ?? 0);
+    int page         = Model.CurrentPage;
+    int totalPages   = Model.TotalPages;
+}
+
+<div class="page-content">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">
+                <span class="material-symbols-outlined">badge</span>
+                Empleados
+            </h1>
+            <p class="page-header__subtitle">Gestión del personal interno de la empresa</p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <span class="material-symbols-outlined">person_add</span>
+                Nuevo Empleado
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-custom alert-success-custom mb-3">
+            <span class="material-symbols-outlined">check_circle</span>
+            @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert-custom alert-danger-custom mb-3">
+            <span class="material-symbols-outlined">error</span>
+            @TempData["Error"]
+        </div>
+    }
+
+    <!-- Card -->
+    <div class="table-card">
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+            <form asp-action="Index" method="get"
+                  style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;">
+
+                <div class="search-box">
+                    <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                    <input type="text" name="busqueda" value="@busqueda"
+                           placeholder="Código de empleado…" autocomplete="off" />
+                </div>
+
+                <select name="departmentId" class="form-select" style="min-width:180px; font-size:.84rem;">
+                    <option value="0">— Todos los departamentos —</option>
+                    @foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.DepartmentFilterList)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                    }
+                </select>
+
+                <select name="statusId" class="form-select" style="min-width:150px; font-size:.84rem;">
+                    <option value="0">— Todos los estados —</option>
+                    @foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.StatusList)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                    }
+                </select>
+
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-symbols-outlined">search</span>
+                    Buscar
+                </button>
+
+                @if (!string.IsNullOrWhiteSpace(busqueda) || statusId > 0 || departmentId > 0)
+                {
+                    <a asp-action="Index" class="btn btn-light">
+                        <span class="material-symbols-outlined">close</span>
+                        Limpiar
+                    </a>
+                }
+            </form>
+
+            <span style="font-size:.8rem; color:var(--clr-text-muted);">
+                @Model.TotalCount registro(s)
+            </span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Empleado</th>
+                        <th>Código</th>
+                        <th>Departamento</th>
+                        <th>Salario</th>
+                        <th>Contratación</th>
+                        <th>Estado</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">badge</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">No se encontraron empleados con los filtros aplicados.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var emp in Model.Items)
+                        {
+                            var fullName = emp.Person?.FullName ?? "—";
+                            var initials = string.Concat(
+                                fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                        .Take(2).Select(w => w[0].ToString().ToUpper()));
+                            var isActive = emp.Status?.Name?.Equals("Activo",
+                                               StringComparison.OrdinalIgnoreCase) ?? false;
+
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-cell__avatar">@initials</div>
+                                        <div>
+                                            <div class="user-cell__name">@fullName</div>
+                                            <div class="user-cell__meta">@(emp.Person?.PhoneNumber ?? string.Empty)</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-neutral">@(emp.EmployeeCode ?? "—")</span>
+                                </td>
+                                <td style="color:var(--clr-text-muted);">
+                                    @(emp.Department?.Name ?? "—")
+                                </td>
+                                <td>
+                                    <strong>$@emp.Salary.ToString("0.00")</strong>
+                                </td>
+                                <td style="color:var(--clr-text-muted); font-size:.83rem;">
+                                    @emp.HireDate.ToString("dd/MM/yyyy")
+                                </td>
+                                <td>
+                                    <div class="status">
+                                        <span class="status-dot @(isActive ? "status-dot--active" : "status-dot--inactive")"></span>
+                                        <span>@(emp.Status?.Name ?? "—")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@emp.EmployeeId"
+                                           class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@emp.EmployeeId"
+                                           class="btn btn-icon" title="Editar empleado">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </a>
+                                        @if (isActive)
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@emp.EmployeeId"
+                                               class="btn btn-icon btn-danger-outline" title="Desactivar empleado">
+                                                <span class="material-symbols-outlined">block</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer / Paginación -->
+        <div class="table-footer">
+            <span>
+                Mostrando <strong>@Model.FirstItemIndex–@Model.LastItemIndex</strong>
+                de <strong>@Model.TotalCount</strong> empleado(s)
+            </span>
+
+            @if (totalPages > 1)
+            {
+                <nav>
+                    <ul class="pagination pagination-sm mb-0" style="gap:4px;">
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-page="@(page - 1)"
+                               asp-route-busqueda="@busqueda"
+                               asp-route-statusId="@statusId"
+                               asp-route-departmentId="@departmentId">
+                                <span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span>
+                            </a>
+                        </li>
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == page ? "active" : "")">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-busqueda="@busqueda"
+                                   asp-route-statusId="@statusId"
+                                   asp-route-departmentId="@departmentId">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-page="@(page + 1)"
+                               asp-route-busqueda="@busqueda"
+                               asp-route-statusId="@statusId"
+                               asp-route-departmentId="@departmentId">
+                                <span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+
+    </div>
+</div>

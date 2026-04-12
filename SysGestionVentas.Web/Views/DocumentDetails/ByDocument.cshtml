@@ -1,0 +1,146 @@
+﻿@model List<SysGestionVentas.EN.DocumentDetail>
+@{
+    ViewData["Title"] = "Líneas de Detalle";
+    var document = ViewBag.Document as SysGestionVentas.EN.Document;
+}
+
+<div class="page-container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">
+                <span class="material-symbols-outlined">list_alt</span>
+                Líneas — Doc. #@document?.DocNumber
+            </h1>
+            <p class="page-header__subtitle">
+                @(document?.DocumentType?.Name ?? "—") ·
+                @(document?.IssueDate.ToString("dd/MM/yyyy"))
+            </p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Create"
+               asp-route-documentId="@document?.DocumentId"
+               class="btn btn-primary">
+                <span class="material-symbols-outlined">add</span>
+                Agregar línea
+            </a>
+            <a asp-controller="Documents"
+               asp-action="Details"
+               asp-route-id="@document?.DocumentId"
+               class="btn btn-light">
+                <span class="material-symbols-outlined">arrow_back</span>
+                Volver al documento
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-custom alert-success-custom mb-3">
+            <span class="material-symbols-outlined">check_circle</span>
+            @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert-custom alert-danger-custom mb-3">
+            <span class="material-symbols-outlined">error</span>
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="table-card">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Producto</th>
+                        <th class="text-end">Cantidad</th>
+                        <th class="text-end">Precio unit.</th>
+                        <th class="text-end">Descuento</th>
+                        <th class="text-end">Subtotal</th>
+                        <th class="text-end">IVA</th>
+                        <th class="text-end">Total línea</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="9">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">list_alt</span>
+                                    </div>
+                                    <p class="empty-state__title">Sin líneas registradas</p>
+                                    <p class="empty-state__text">
+                                        Agregue productos para comenzar.
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        int i = 1;
+                        foreach (var det in Model)
+                        {
+                            <tr>
+                                <td style="color:var(--clr-text-muted);font-size:.8rem">@(i++)</td>
+                                <td style="font-weight:600">
+                                    @(det.Product?.Name ?? $"Producto #{det.ProductId}")
+                                </td>
+                                <td class="text-end">@det.Quantity</td>
+                                <td class="text-end">$@det.UnitPrice.ToString("N2")</td>
+                                <td class="text-end">$@det.DiscountAmount.ToString("N2")</td>
+                                <td class="text-end">$@det.Subtotal.ToString("N2")</td>
+                                <td class="text-end" style="color:var(--clr-text-muted)">
+                                    $@det.TaxAmount.ToString("N2")
+                                </td>
+                                <td class="text-end fw-600" style="color:var(--clr-primary)">
+                                    $@det.TotalAmount.ToString("N2")
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@det.DocDetailId"
+                                           class="btn-icon" title="Ver">
+                                            <span class="material-symbols-outlined"
+                                                  style="font-size:18px">visibility</span>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@det.DocDetailId"
+                                           class="btn-icon" title="Editar">
+                                            <span class="material-symbols-outlined"
+                                                  style="font-size:18px">edit</span>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@det.DocDetailId"
+                                           class="btn-icon btn-danger-outline" title="Eliminar">
+                                            <span class="material-symbols-outlined"
+                                                  style="font-size:18px">delete</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+                @if (Model.Any())
+                {
+                    <tfoot>
+                        <tr style="background:var(--clr-surface-alt);font-weight:700">
+                            <td colspan="7" class="text-end"
+                                style="color:var(--clr-text-muted)">
+                                TOTAL DOCUMENTO
+                            </td>
+                            <td class="text-end" style="color:var(--clr-primary);font-size:1rem">
+                                $@Model.Sum(d => d.TotalAmount).ToString("N2")
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                }
+            </table>
+        </div>
+    </div>
+</div>

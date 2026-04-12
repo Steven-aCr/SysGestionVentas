@@ -1,159 +1,145 @@
 ﻿@model SysGestionVentas.EN.DocumentDetail
-
 @{
-    ViewData["Title"] = "Nuevo Detalle de Documento";
-    ViewData["BreadcrumbParent"] = "Detalle de Documentos";
+    ViewData["Title"] = "Agregar Línea de Detalle";
+    var document = ViewBag.Document as SysGestionVentas.EN.Document;
 }
 
-<div class="page-header">
-    <div>
-        <h1 class="page-header__title">Nuevo Detalle de Documento</h1>
-        <p class="page-header__subtitle">Agregue una línea de producto al documento.</p>
-    </div>
-    <div class="page-header__actions">
-        <a asp-action="Index" class="btn btn-light">
+<div class="page-container" style="max-width:720px">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">
+                <span class="material-symbols-outlined">add_circle</span>
+                Agregar Línea
+            </h1>
+            <p class="page-header__subtitle">
+                Documento #@document?.DocNumber · @document?.DocumentType?.Name
+            </p>
+        </div>
+        <a asp-action="Details" asp-controller="Documents"
+               asp-route-id="@Model.DocumentId" class="btn btn-light">
             <span class="material-symbols-outlined">arrow_back</span>
-            Volver al listado
+            Volver
         </a>
     </div>
-</div>
 
-<div class="row g-4">
-    <div class="col-lg-8">
-        <div class="card">
-            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
-                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:20px;">description</span>
-                <span style="font-size:.95rem;font-weight:700;color:var(--clr-text);">Línea de Detalle</span>
+    <div class="card p-4">
+        <form asp-action="Create" method="post" id="createDetailForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="DocumentId" />
+
+            <div asp-validation-summary="ModelOnly" class="alert-custom alert-danger-custom mb-3">
             </div>
-            <div style="padding:24px;">
-                <form asp-action="Create" class="needs-validation" novalidate>
-                    <div asp-validation-summary="ModelOnly" class="alert-custom alert-danger-custom mb-4" role="alert"></div>
 
-                    <div class="form-section">
-                        <div class="form-section-title">
-                            <span class="material-symbols-outlined">link</span>
-                            Documento y Producto
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label asp-for="DocumentId" class="form-label">Documento <span style="color:var(--clr-danger)">*</span></label>
-                                <select asp-for="DocumentId" asp-items="ViewBag.DocumentId" class="form-select" required>
-                                    <option value="">— Seleccione —</option>
-                                </select>
-                                <span asp-validation-for="DocumentId" class="text-danger" style="font-size:.78rem;"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="ProductId" class="form-label">Producto <span style="color:var(--clr-danger)">*</span></label>
-                                <select asp-for="ProductId" asp-items="ViewBag.ProductId" class="form-select" required>
-                                    <option value="">— Seleccione —</option>
-                                </select>
-                                <span asp-validation-for="ProductId" class="text-danger" style="font-size:.78rem;"></span>
-                            </div>
-                        </div>
+            <!-- Producto y cantidad -->
+            <div class="form-section">
+                <div class="form-section__header">
+                    <span class="material-symbols-outlined form-section__icon">
+                        inventory_2
+                    </span>
+                    <span class="form-section__title">Producto</span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-8">
+                        <label asp-for="ProductId" class="form-label">Producto</label>
+                        <select asp-for="ProductId" asp-items="ViewBag.ProductList"
+                                class="form-select" id="productSelect">
+                            <option value="">— Seleccione un producto —</option>
+                        </select>
+                        <span asp-validation-for="ProductId" class="text-danger"></span>
                     </div>
-
-                    <div class="form-section">
-                        <div class="form-section-title">
-                            <span class="material-symbols-outlined">shopping_cart</span>
-                            Cantidad y Precio
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label asp-for="Quantity" class="form-label">Cantidad <span style="color:var(--clr-danger)">*</span></label>
-                                <input asp-for="Quantity" class="form-control" type="number" min="1" placeholder="1" data-type="integer" required />
-                                <span asp-validation-for="Quantity" class="text-danger" style="font-size:.78rem;"></span>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="UnitPrice" class="form-label">Precio Unitario <span style="color:var(--clr-danger)">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);font-weight:600;color:var(--clr-text-muted);">$</span>
-                                    <input asp-for="UnitPrice" class="form-control" type="number" step="0.01" min="0.01" placeholder="0.00" data-type="currency" required />
-                                </div>
-                                <span asp-validation-for="UnitPrice" class="text-danger" style="font-size:.78rem;"></span>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="DiscountAmount" class="form-label">Descuento ($)</label>
-                                <div class="input-group">
-                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);font-weight:600;color:var(--clr-text-muted);">$</span>
-                                    <input asp-for="DiscountAmount" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" data-type="currency" />
-                                </div>
-                                <span asp-validation-for="DiscountAmount" class="text-danger" style="font-size:.78rem;"></span>
-                            </div>
-                        </div>
+                    <div class="col-12 col-md-4">
+                        <label asp-for="Quantity" class="form-label">Cantidad</label>
+                        <input asp-for="Quantity" class="form-control"
+                               type="number" min="1" id="quantity" />
+                        <span asp-validation-for="Quantity" class="text-danger"></span>
                     </div>
-
-                    <div class="form-section">
-                        <div class="form-section-title">
-                            <span class="material-symbols-outlined">calculate</span>
-                            Impuestos y Totales
-                        </div>
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label asp-for="Subtotal" class="form-label">Subtotal <span style="color:var(--clr-danger)">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);font-weight:600;color:var(--clr-text-muted);">$</span>
-                                    <input asp-for="Subtotal" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" data-type="currency" required />
-                                </div>
-                                <span asp-validation-for="Subtotal" class="text-danger" style="font-size:.78rem;"></span>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="TaxPercentage" class="form-label">IVA (%)</label>
-                                <div class="input-group">
-                                    <input asp-for="TaxPercentage" class="form-control" type="number" step="0.01" min="0" max="100" placeholder="13" />
-                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);color:var(--clr-text-muted);">%</span>
-                                </div>
-                                <span asp-validation-for="TaxPercentage" class="text-danger" style="font-size:.78rem;"></span>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="TaxAmount" class="form-label">Monto IVA</label>
-                                <div class="input-group">
-                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);font-weight:600;color:var(--clr-text-muted);">$</span>
-                                    <input asp-for="TaxAmount" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" data-type="currency" />
-                                </div>
-                                <span asp-validation-for="TaxAmount" class="text-danger" style="font-size:.78rem;"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="TotalAmount" class="form-label">Total Línea <span style="color:var(--clr-danger)">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text" style="background:var(--clr-surface-alt);border-color:var(--clr-border);font-weight:700;color:var(--clr-primary);">$</span>
-                                    <input asp-for="TotalAmount" class="form-control" type="number" step="0.01" min="0" placeholder="0.00" data-type="currency" required />
-                                </div>
-                                <span asp-validation-for="TotalAmount" class="text-danger" style="font-size:.78rem;"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Notes" class="form-label">Notas</label>
-                                <input asp-for="Notes" class="form-control" placeholder="Observaciones opcionales…" />
-                                <span asp-validation-for="Notes" class="text-danger" style="font-size:.78rem;"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr style="border-color:var(--clr-border);margin:24px 0;" />
-
-                    <div class="d-flex gap-3 flex-wrap">
-                        <button type="submit" class="btn btn-primary">
-                            <span class="material-symbols-outlined">save</span>
-                            Guardar Detalle
-                        </button>
-                        <a asp-action="Index" class="btn btn-light">
-                            <span class="material-symbols-outlined">close</span>
-                            Cancelar
-                        </a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-4">
-        <div style="position:sticky;top:calc(var(--topbar-h) + 16px);">
-            <div class="alert-custom alert-warning-custom" style="border-radius:var(--radius-lg);">
-                <span class="material-symbols-outlined" style="flex-shrink:0;">info</span>
-                <div style="font-size:.81rem;">
-                    <strong>Cálculo manual:</strong> Los campos de subtotal, IVA y total deben calcularse antes de guardar. El sistema no los calcula automáticamente en este formulario.
                 </div>
             </div>
-        </div>
+
+            <!-- Precios -->
+            <div class="form-section">
+                <div class="form-section__header">
+                    <span class="material-symbols-outlined form-section__icon">
+                        attach_money
+                    </span>
+                    <span class="form-section__title">Precios y Descuentos</span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label asp-for="UnitPrice" class="form-label">Precio Unitario</label>
+                        <div class="input-icon-group input-icon-group--left">
+                            <span class="input-icon input-icon--left">$</span>
+                            <input asp-for="UnitPrice" class="form-control"
+                                   type="number" step="0.01" min="0.01" id="unitPrice" />
+                        </div>
+                        <span asp-validation-for="UnitPrice" class="text-danger"></span>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label asp-for="DiscountAmount" class="form-label">Descuento ($)</label>
+                        <div class="input-icon-group input-icon-group--left">
+                            <span class="input-icon input-icon--left">$</span>
+                            <input asp-for="DiscountAmount" class="form-control"
+                                   type="number" step="0.01" min="0" id="discountAmount" />
+                        </div>
+                        <span asp-validation-for="DiscountAmount" class="text-danger"></span>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label asp-for="TaxPercentage" class="form-label">IVA (%)</label>
+                        <div class="input-icon-group input-icon-group--left">
+                            <span class="input-icon input-icon--left">%</span>
+                            <input asp-for="TaxPercentage" class="form-control"
+                                   type="number" step="0.01" min="0" max="100" id="taxPercentage" />
+                        </div>
+                        <span asp-validation-for="TaxPercentage" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview de totales -->
+            <div class="card p-3 mb-3" style="background:var(--clr-surface-alt)">
+                <div class="row g-2 text-center">
+                    <div class="col-4">
+                        <p class="mb-0" style="font-size:.75rem;color:var(--clr-text-muted)">
+                            SUBTOTAL
+                        </p>
+                        <p class="mb-0 fw-600" id="previewSubtotal">$0.00</p>
+                    </div>
+                    <div class="col-4">
+                        <p class="mb-0" style="font-size:.75rem;color:var(--clr-text-muted)">
+                            IVA
+                        </p>
+                        <p class="mb-0 fw-600" id="previewTax">$0.00</p>
+                    </div>
+                    <div class="col-4">
+                        <p class="mb-0" style="font-size:.75rem;color:var(--clr-text-muted)">
+                            TOTAL
+                        </p>
+                        <p class="mb-0 fw-600"
+                           style="color:var(--clr-primary);font-size:1.05rem"
+                           id="previewTotal">$0.00</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notas -->
+            <div class="mb-3">
+                <label asp-for="Notes" class="form-label">Notas (opcional)</label>
+                <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+
+            <div class="form-actions form-actions--end">
+                <a asp-action="Details" asp-controller="Documents"
+                       asp-route-id="@Model.DocumentId" class="btn btn-light">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span class="material-symbols-outlined">save</span>
+                    Guardar línea
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -161,4 +147,26 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        function calcular() {
+            const qty      = parseFloat(document.getElementById('quantity').value)      || 0;
+            const price    = parseFloat(document.getElementById('unitPrice').value)     || 0;
+            const discount = parseFloat(document.getElementById('discountAmount').value)|| 0;
+            const taxPct   = parseFloat(document.getElementById('taxPercentage').value) || 0;
+
+            const subtotal = Math.max((qty * price) - discount, 0);
+            const tax      = Math.round(subtotal * (taxPct / 100) * 100) / 100;
+            const total    = subtotal + tax;
+
+            document.getElementById('previewSubtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('previewTax').textContent      = `$${tax.toFixed(2)}`;
+            document.getElementById('previewTotal').textContent    = `$${total.toFixed(2)}`;
+        }
+
+        ['quantity','unitPrice','discountAmount','taxPercentage']
+            .forEach(id => document.getElementById(id)
+                ?.addEventListener('input', calcular));
+
+        calcular();
+    </script>
 }

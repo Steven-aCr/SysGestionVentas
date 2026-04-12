@@ -1,78 +1,85 @@
 ﻿@model SysGestionVentas.EN.DocumentDetail
-
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = $"Detalle de Línea #{Model.DocDetailId}";
 }
 
-<h1>Details</h1>
+<div class="page-container" style="max-width:640px">
 
-<div>
-    <h4>DocumentDetail</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Document)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Document.DocNumber)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Product)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Product.Barcode)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Quantity)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Quantity)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UnitPrice)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.UnitPrice)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DiscountAmount)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.DiscountAmount)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Subtotal)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Subtotal)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TaxPercentage)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TaxPercentage)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TaxAmount)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TaxAmount)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TotalAmount)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TotalAmount)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Notes)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Notes)
-        </dd>
-    </dl>
-</div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.DocDetailId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">
+                <span class="material-symbols-outlined">list_alt</span>
+                Línea #@Model.DocDetailId
+            </h1>
+            <p class="page-header__subtitle">
+                Producto: @(Model.Product?.Name ?? $"ID {Model.ProductId}") ·
+                Doc. #@Model.DocumentId
+            </p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Edit" asp-route-id="@Model.DocDetailId"
+                   class="btn btn-light">
+                <span class="material-symbols-outlined">edit</span>
+                Editar
+            </a>
+            <a asp-controller="Documents"
+                   asp-action="Details"
+                   asp-route-id="@Model.DocumentId"
+                   class="btn btn-light">
+                <span class="material-symbols-outlined">arrow_back</span>
+                Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="card p-4">
+
+        @* Producto *@
+        <div class="form-section__header mb-3">
+            <span class="material-symbols-outlined form-section__icon">inventory_2</span>
+            <span class="form-section__title">Producto</span>
+        </div>
+        <dl class="row mb-4" style="font-size:.875rem;row-gap:.5rem">
+            <dt class="col-5" style="color:var(--clr-text-muted)">Producto</dt>
+            <dd class="col-7 fw-600">
+                @(Model.Product?.Name ?? $"ID {Model.ProductId}")
+            </dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Cantidad</dt>
+            <dd class="col-7">@Model.Quantity</dd>
+        </dl>
+
+        @* Precios *@
+        <div class="form-section__header mb-3">
+            <span class="material-symbols-outlined form-section__icon">attach_money</span>
+            <span class="form-section__title">Precios y Totales</span>
+        </div>
+        <dl class="row mb-4" style="font-size:.875rem;row-gap:.5rem">
+            <dt class="col-5" style="color:var(--clr-text-muted)">Precio unitario</dt>
+            <dd class="col-7">$@Model.UnitPrice.ToString("N2")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Descuento</dt>
+            <dd class="col-7">$@Model.DiscountAmount.ToString("N2")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Subtotal</dt>
+            <dd class="col-7">$@Model.Subtotal.ToString("N2")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">IVA (@Model.TaxPercentage%)</dt>
+            <dd class="col-7">$@Model.TaxAmount.ToString("N2")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted);font-weight:700">Total línea</dt>
+            <dd class="col-7 fw-600" style="color:var(--clr-primary);font-size:1rem">
+                $@Model.TotalAmount.ToString("N2")
+            </dd>
+        </dl>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Notes))
+        {
+            <div class="form-section__header mb-2">
+                <span class="material-symbols-outlined form-section__icon">notes</span>
+                <span class="form-section__title">Notas</span>
+            </div>
+            <p style="font-size:.875rem;color:var(--clr-text)">@Model.Notes</p>
+        }
+    </div>
 </div>

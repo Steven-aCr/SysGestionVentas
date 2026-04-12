@@ -36,29 +36,28 @@ namespace SysGestionVentas.BL
         #region "CRUD"
 
         /// <summary>
-        /// Crea de forma atómica una <see cref="Person"/> y su <see cref="User"/> asociado
-        /// en una única transacción de base de datos.
-        /// Si cualquiera de las dos operaciones falla, se revierte la transacción completa
+        /// Crea de forma atómica una <see cref="Person"/>, su <see cref="User"/> asociado
+        /// y, cuando el rol corresponde a Vendedor (<c>RolId == CreateUserModel.RolVendedorId</c>),
+        /// también el registro de <see cref="Employee"/> vinculado.
+        /// Si cualquiera de las operaciones falla, la transacción completa se revierte
         /// garantizando la integridad de los datos.
         /// </summary>
-        /// <param name="pViewModel">
-        /// ViewModel con los datos combinados de <see cref="Person"/> y <see cref="User"/>
-        /// capturados desde el formulario de registro.
+        /// <param name="pModel">
+        /// ViewModel con los datos combinados capturados desde el formulario de registro.
+        /// Los campos de empleado (<c>EmployeeCode</c>, <c>HireDate</c>, <c>Salary</c>)
+        /// son obligatorios cuando <c>RolId == CreateUserModel.RolVendedorId</c>.
         /// </param>
         /// <returns>
-        /// Número de filas afectadas. Retorna <c>2</c> si ambos registros
-        /// se guardaron correctamente.
+        /// Número de filas afectadas. Retorna <c>2</c> para usuario + persona,
+        /// o <c>3</c> cuando además se crea el registro de empleado.
         /// </returns>
-        /// <exception cref="ValidationException">
-        /// Se lanza si los datos del ViewModel no pasan las validaciones de negocio.
-        /// </exception>
         /// <exception cref="Exception">
         /// Se lanza si ocurre un error durante la transacción o si hay duplicados
-        /// de DUI, teléfono, nombre de usuario o correo electrónico.
+        /// de DUI, teléfono, nombre de usuario, correo electrónico o código de empleado.
         /// </exception>
         public static async Task<int> CrearConPersonaAsync(CreateUserModel pModel)
         {
-            // Validaciones de negocio previas
+            // ── Validaciones comunes ──────────────────────────────────────────
             if (string.IsNullOrWhiteSpace(pModel.UserName))
                 throw new Exception("El nombre de usuario es obligatorio.");
 
@@ -71,6 +70,29 @@ namespace SysGestionVentas.BL
             if (pModel.Password.Length < 8)
                 throw new Exception("La contraseña debe tener al menos 8 caracteres.");
 
+            // ── Validaciones adicionales para rol Vendedor ────────────────────
+            bool esVendedor = pModel.RolId == CreateUserModel.RolVendedorId;
+
+            // ── Determinar si el rol requiere registro de empleado ────────────
+            bool esEmpleado = pModel.RolId == CreateUserModel.RolAdministradorId
+                           || pModel.RolId == CreateUserModel.RolVendedorId;
+
+            // ── Validaciones adicionales cuando aplica datos laborales ────────
+            if (esEmpleado)
+            {
+                if (string.IsNullOrWhiteSpace(pModel.EmployeeCode))
+                    throw new Exception("El código de empleado es obligatorio para este rol.");
+
+                if (pModel.HireDate == null)
+                    throw new Exception("La fecha de contratación es obligatoria para este rol.");
+
+                if (pModel.HireDate.Value.Date > DateTime.UtcNow.Date)
+                    throw new Exception("La fecha de contratación no puede ser una fecha futura.");
+
+                if (pModel.Salary == null || pModel.Salary <= 0)
+                    throw new Exception("El salario debe ser mayor a $0.00 para este rol.");
+            }
+
             int result = 0;
 
             using (var dbContexto = new DbContexto())
@@ -78,7 +100,7 @@ namespace SysGestionVentas.BL
             {
                 try
                 {
-                    // Datos para construir y registrar la nueva Persona 
+                    // 1 — Crear y persistir la Persona
                     var person = new Person
                     {
                         FirstName = pModel.FirstName,
@@ -92,7 +114,7 @@ namespace SysGestionVentas.BL
                     await PersonDAL.GuardarEnTransaccionAsync(person, dbContexto);
                     await dbContexto.SaveChangesAsync(); // genera el PersonId
 
-                    // Datos para construir y registrar el nuevo Usuario, relacionándolo con la Persona creada
+                    // 2 — Crear el Usuario relacionado con la Persona
                     var user = new User
                     {
                         UserName = pModel.UserName,
@@ -100,12 +122,33 @@ namespace SysGestionVentas.BL
                         PasswordHash = pModel.Password, // se encripta dentro del DAL
                         RolId = pModel.RolId,
                         StatusId = pModel.StatusId,
-                        PersonId = person.PersonId  // relaciona el usuario con la persona recién creada
+                        PersonId = person.PersonId
                     };
 
                     await UserDAL.GuardarEnTransaccionAsync(user, dbContexto);
-                    result = await dbContexto.SaveChangesAsync();
+                    await dbContexto.SaveChangesAsync(); // genera el UserId
 
+                    // 3 — Si el rol requiere empleado, crear también el registro de Employee
+                    if (esEmpleado)
+                    {
+                        var employee = new Employee
+                        {
+                            EmployeeCode = pModel.EmployeeCode!,
+                            HireDate = pModel.HireDate!.Value,
+                            Salary = pModel.Salary!.Value,
+                            DepartmentId = pModel.DepartmentId,
+                            UserId = user.UserId,
+                            PersonId = person.PersonId,
+                            StatusId = pModel.StatusId
+                        };
+
+                        if (await EmployeeDAL.ExisteEmployeeCode(employee, dbContexto))
+                            throw new Exception("El código de empleado ya existe.");
+
+                        dbContexto.Employee.Add(employee);
+                    }
+
+                    result = await dbContexto.SaveChangesAsync();
                     await transaction.CommitAsync();
                 }
                 catch (Exception ex)

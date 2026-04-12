@@ -230,7 +230,7 @@ namespace SysGestionVentas.Web.Controllers
                 "ProductId", "Name");
 
             ViewBag.StatusList = new SelectList(
-                await StatusDAL.ObtenerPorTiposAsync(new List<int> { 4 }, pIsActive: true),
+                await StatusDAL.ObtenerPorTiposAsync(new List<int> { 1 , 4 }, pIsActive: true),
                 "StatusId", "Name");
         }
     }

@@ -15,7 +15,7 @@ namespace SysGestionVentas.DAL
         /// <param name="pEmployee">Objeto <see cref="Employee"/> con el <c>EmployeeCode</c> a validar.</param>
         /// <param name="dbContexto">Contexto de base de datos activo.</param>
         /// <returns><c>true</c> si el código ya existe, <c>false</c> en caso contrario.</returns>
-        private static async Task<bool> ExisteEmployeeCode(Employee pEmployee, DbContexto dbContexto)
+        public static async Task<bool> ExisteEmployeeCode(Employee pEmployee, DbContexto dbContexto)
         {
             return await dbContexto.Employee.AnyAsync(
                 e => e.EmployeeCode == pEmployee.EmployeeCode

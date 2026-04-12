@@ -76,6 +76,40 @@ namespace SysGestionVentas.Web.Controllers
             }
         }
 
+        /// <summary>
+        /// Obtiene en formato JSON los movimientos de inventario asociados a un documento,
+        /// para su consumo desde la vista de detalle vía fetch.
+        /// </summary>
+        /// <param name="id">Identificador del documento.</param>
+        /// <returns>Lista de movimientos serializados o NotFound si el documento no existe.</returns>
+        [HttpGet]
+        public async Task<IActionResult> Movimientos(int? id)
+        {
+            if (id == null) return NotFound();
+
+            try
+            {
+                var movimientos = await InventoryMovementBL.ObtenerPorDocumentoAsync(id.Value);
+
+                var resultado = movimientos.Select(m => new
+                {
+                    m.InventoryMovementId,
+                    MovementType = m.MovementType?.Name,
+                    Product = m.Inventory?.Product?.Name,
+                    m.Quantity,
+                    m.UnitCost,
+                    CreatedBy = m.CreatedBy?.UserName,
+                    m.Notes
+                });
+
+                return Json(resultado);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
         // GET: Documents/Create
         /// <summary>
         /// Muestra el formulario para registrar un nuevo documento.

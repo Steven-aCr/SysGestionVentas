@@ -1,0 +1,147 @@
+﻿@model SysGestionVentas.EN.Category
+
+@{
+    ViewData["Title"] = "Detalle de la Categoría";
+    ViewData["BreadcrumbParent"] = "Categorías";
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">@Model.Name</h1>
+        <p class="page-header__subtitle">Detalle de la categoría · ID #@Model.CategoryId</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Edit" asp-route-id="@Model.CategoryId" class="btn btn-primary">
+            <span class="material-symbols-outlined">edit</span>
+            Editar
+        </a>
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- ── COLUMNA PRINCIPAL ──────────────────────────── -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div style="padding:18px 22px; border-bottom:1px solid var(--clr-border);
+                display:flex; align-items:center; gap:10px;">
+                <span class="material-symbols-outlined"
+                      style="color:var(--clr-primary); font-size:20px;">category</span>
+                <span style="font-size:.95rem; font-weight:700; color:var(--clr-text);">
+                    Información de la Categoría
+                </span>
+                <span class="badge @(Model.Status?.Name == "Activo" ? "badge-vendedor" : "badge-neutral") ms-auto">
+                    <span class="status-dot @(Model.Status?.Name == "Activo" ? "status-dot--active" : "status-dot--inactive")"></span>
+                    &nbsp;@(Model.Status?.Name ?? "—")
+                </span>
+            </div>
+
+            <div>
+                <!-- Nombre -->
+                <div style="display:flex; gap:16px; padding:16px 22px;
+                    border-bottom:1px solid var(--clr-border);">
+                    <span style="min-width:140px; font-size:.82rem; font-weight:700;
+                    color:var(--clr-text-muted); text-transform:uppercase;
+                    letter-spacing:.04em; padding-top:2px;">Nombre</span>
+                    <span style="font-size:.92rem; font-weight:600; color:var(--clr-text);">
+                        @Model.Name
+                    </span>
+                </div>
+
+                <!-- Descripción -->
+                <div style="display:flex; gap:16px; padding:16px 22px;
+                    border-bottom:1px solid var(--clr-border);">
+                    <span style="min-width:140px; font-size:.82rem; font-weight:700;
+                    color:var(--clr-text-muted); text-transform:uppercase;
+                    letter-spacing:.04em; padding-top:2px;">Descripción</span>
+                    <span style="font-size:.88rem; color:var(--clr-text-muted);">
+                        @(string.IsNullOrEmpty(Model.Description) ? "Sin descripción" : Model.Description)
+                    </span>
+                </div>
+
+                <!-- Estado -->
+                <div style="display:flex; gap:16px; padding:16px 22px;
+                    border-bottom:1px solid var(--clr-border);">
+                    <span style="min-width:140px; font-size:.82rem; font-weight:700;
+                    color:var(--clr-text-muted); text-transform:uppercase;
+                    letter-spacing:.04em; padding-top:2px;">Estado</span>
+                    <span style="font-size:.88rem; font-weight:600;">
+                        @(Model.Status?.Name ?? "—")
+                    </span>
+                </div>
+
+                <!-- Creado por -->
+                <div style="display:flex; gap:16px; padding:16px 22px;
+                    border-bottom:1px solid var(--clr-border);">
+                    <span style="min-width:140px; font-size:.82rem; font-weight:700;
+                    color:var(--clr-text-muted); text-transform:uppercase;
+                    letter-spacing:.04em; padding-top:2px;">Creado por</span>
+                    <span style="font-size:.88rem; color:var(--clr-text-muted);">
+                        @(Model.CreatedBy?.Email ?? "—")
+                    </span>
+                </div>
+
+                <!-- Fecha de registro -->
+                <div style="display:flex; gap:16px; padding:16px 22px;">
+                    <span style="min-width:140px; font-size:.82rem; font-weight:700;
+                    color:var(--clr-text-muted); text-transform:uppercase;
+                    letter-spacing:.04em; padding-top:2px;">Fecha de registro</span>
+                    <span style="font-size:.88rem; color:var(--clr-text-muted);">
+                        @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── COLUMNA LATERAL ────────────────────────────── -->
+    <div class="col-lg-4">
+        <div style="position:sticky; top:calc(var(--topbar-h) + 16px);">
+
+            <!-- Acciones -->
+            <div class="card mb-3">
+                <div style="padding:14px 18px; border-bottom:1px solid var(--clr-border);
+                    display:flex; align-items:center; gap:10px;">
+                    <span class="material-symbols-outlined"
+                          style="color:var(--clr-primary); font-size:18px;">more_horiz</span>
+                    <span style="font-size:.88rem; font-weight:700;">Acciones</span>
+                </div>
+                <div style="padding:14px; display:flex; flex-direction:column; gap:8px;">
+                    <a asp-action="Edit" asp-route-id="@Model.CategoryId"
+                           class="btn btn-primary" style="justify-content:flex-start; gap:10px;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
+                        Editar categoría
+                    </a>
+                    <a asp-controller="Products" asp-action="Index"
+                           class="btn btn-light" style="justify-content:flex-start; gap:10px;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">package_2</span>
+                        Ver productos de esta categoría
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.CategoryId"
+                           class="btn btn-danger-outline" style="justify-content:flex-start; gap:10px;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">block</span>
+                        Desactivar categoría
+                    </a>
+                </div>
+            </div>
+
+            <!-- Nota de estado -->
+            @if (Model.Status?.Name != "Activo")
+            {
+                <div class="alert-custom alert-danger-custom" style="border-radius:var(--radius-lg);">
+                    <span class="material-symbols-outlined" style="flex-shrink:0;">warning</span>
+                    <div style="font-size:.81rem;">
+                        Esta categoría está <strong>inactiva</strong> y no está disponible para asignar a nuevos productos.
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+
+</div>

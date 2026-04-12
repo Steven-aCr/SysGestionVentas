@@ -1,0 +1,220 @@
+﻿@model SysGestionVentas.EN.ViewModels.CreateEmployeeModel
+
+@{
+    ViewData["Title"] = "Crear Empleado";
+    ViewData["BreadcrumbParent"] = "Empleados";
+    ViewData["BreadcrumbCurrent"] = "Crear Empleado";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">
+            <span class="material-symbols-outlined"
+                  style="font-size:1.3rem;color:var(--clr-primary);vertical-align:middle;">
+                person_add
+            </span>
+            Crear Empleado
+        </h1>
+        <p class="page-header__subtitle">
+            Registra una nueva persona y sus datos laborales en una sola operación.
+        </p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
+
+<div class="card" style="max-width:860px;">
+    <div class="card-body p-4">
+        <form asp-action="Create" id="createEmployeeForm" autocomplete="off" novalidate>
+            @Html.AntiForgeryToken()
+
+            @* Resumen de errores del servidor *@
+            <div asp-validation-summary="ModelOnly"
+                 class="alert alert-danger d-flex align-items-center gap-2 mb-4"
+                 id="serverErrors"
+                 style="display:none!important">
+                <span class="material-symbols-outlined flex-shrink-0">error</span>
+                <div></div>
+            </div>
+            
+            @* ══════════════════════════════════════════
+                   SECCIÓN 1 — DATOS PERSONALES
+                   ══════════════════════════════════════════ *@
+
+            <div class="form-section mb-4">
+                <div class="form-section__header">
+                    <span class="material-symbols-outlined form-section__icon">person</span>
+                    <h6 class="form-section__title mb-0">Datos Personales</h6>
+                </div>
+
+                <div class="row g-3 mt-1">
+
+                    @* Nombre *@
+                    <div class="col-md-6">
+                        <label asp-for="FirstName" class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <input asp-for="FirstName"
+                               class="form-control"
+                               placeholder="Ej. Juan"
+                               autocomplete="given-name" />
+                        <span asp-validation-for="FirstName" class="field-validation-error"></span>
+                    </div>
+
+                    @* Apellido *@
+                    <div class="col-md-6">
+                        <label asp-for="LastName" class="form-label">Apellido <span class="text-danger">*</span></label>
+                        <input asp-for="LastName"
+                               class="form-control"
+                               placeholder="Ej. Pérez"
+                               autocomplete="family-name" />
+                        <span asp-validation-for="LastName" class="field-validation-error"></span>
+                    </div>
+
+                    @* Dirección *@
+                    <div class="col-12">
+                        <label asp-for="Adress" class="form-label">Dirección <span class="text-danger">*</span></label>
+                        <div class="input-icon-group input-icon-group--left">
+                            <span class="input-icon input-icon--left material-symbols-outlined">location_on</span>
+                            <input asp-for="Adress"
+                                   class="form-control"
+                                   placeholder="Dirección completa de residencia"
+                                   autocomplete="street-address" />
+                        </div>
+                        <span asp-validation-for="Adress" class="field-validation-error"></span>
+                    </div>
+
+                    @* Teléfono — Validación única en tiempo real *@
+                    <div class="col-md-6">
+                        <label asp-for="PhoneNumber" class="form-label">Teléfono <span class="text-danger">*</span></label>
+                        <div class="input-icon-group input-icon-group--left">
+                            <span class="input-icon input-icon--left material-symbols-outlined">phone</span>
+                            <input asp-for="PhoneNumber"
+                                   id="PhoneNumber"
+                                   class="form-control"
+                                   placeholder="Ej. 7000-0000"
+                                   autocomplete="tel"
+                                   data-unique-check="PhoneNumber"
+                                   data-unique-exclude="0"
+                                   data-unique-url="/Users/CheckUnique"
+                                   data-unique-msg="Este número de teléfono ya está registrado." />
+                        </div>
+                        <span asp-validation-for="PhoneNumber" class="field-validation-error"></span>
+                        <div class="unique-feedback invalid-feedback" id="PhoneNumber-unique-feedback"></div>
+                    </div>
+
+                    @* DUI — Validación única en tiempo real *@
+                    <div class="col-md-6">
+                        <label asp-for="Dui" class="form-label">DUI</label>
+                        <input asp-for="Dui"
+                               id="Dui"
+                               class="form-control"
+                               placeholder="12345678-9"
+                               autocomplete="off"
+                               data-unique-check="Dui"
+                               data-unique-exclude="0"
+                               data-unique-url="/Users/CheckUnique"
+                               data-unique-msg="Este DUI ya está registrado." />
+                        <span asp-validation-for="Dui" class="field-validation-error"></span>
+                        <div class="unique-feedback invalid-feedback" id="Dui-unique-feedback"></div>
+                        <div class="form-text">Formato: 12345678-9 (opcional)</div>
+                    </div>
+
+                </div>
+            </div>
+
+            @* ══════════════════════════════════════════
+                   SECCIÓN 2 — DATOS DE EMPLEADO
+                   ══════════════════════════════════════════ *@
+            
+            <div class="form-section mb-4">
+                <div class="form-section__header">
+                    <span class="material-symbols-outlined form-section__icon">work</span>
+                    <h6 class="form-section__title mb-0">Datos Laborales</h6>
+                </div>
+
+                <div class="row g-3 mt-1">
+
+                    <div class="col-md-6">
+                        <label asp-for="EmployeeCode" class="form-label">
+                            Código de empleado <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-icon-group input-icon-group--left">
+                            <span class="input-icon input-icon--left material-symbols-outlined">badge</span>
+                            <input asp-for="EmployeeCode" class="form-control"
+                                   placeholder="Ej. EMP-001" autocomplete="off" />
+                        </div>
+                        <span asp-validation-for="EmployeeCode" class="field-validation-error"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="HireDate" class="form-label">
+                            Fecha de contratación <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="HireDate" type="date" class="form-control" />
+                        <span asp-validation-for="HireDate" class="field-validation-error"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Salary" class="form-label">
+                            Salario mensual <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="Salary" type="number" step="0.01" min="0.01"
+                                   class="form-control" placeholder="0.00"
+                                   data-type="currency" />
+                        </div>
+                        <span asp-validation-for="Salary" class="field-validation-error"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="UserId" class="form-label">Usuario</label>
+                        <select asp-for="UserId" class="form-select" asp-items="ViewBag.UserList">
+                            <option value="">— Sin usuario —</option>
+                        </select>
+                        <span asp-validation-for="UserId" class="field-validation-error"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DepartmentId" class="form-label">Departamento</label>
+                        <select asp-for="DepartmentId" class="form-select"
+                                asp-items="ViewBag.DepartmentList">
+                            <option value="">— Sin departamento —</option>
+                        </select>
+                        <span asp-validation-for="DepartmentId" class="field-validation-error"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="StatusId" class="form-label">
+                            Estado <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="StatusId" class="form-select"
+                                asp-items="ViewBag.StatusList">
+                            <option value="">— Seleccione un estado —</option>
+                        </select>
+                        <span asp-validation-for="StatusId" class="field-validation-error"></span>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="form-actions form-actions--between">
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span class="material-symbols-outlined">save</span>
+                    Registrar Empleado
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+<script src="~/js/createUser.js" asp-append-version="true"></script>
+}

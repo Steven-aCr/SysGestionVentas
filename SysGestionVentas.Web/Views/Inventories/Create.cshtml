@@ -54,7 +54,7 @@
                                 Producto <span style="color:var(--clr-danger);">*</span>
                             </label>
                             <select asp-for="ProductId"
-                                    asp-items="ViewBag.ProductId"
+                                    asp-items="ViewBag.ProductList"
                                     class="form-select"
                                     required>
                                 <option value="">— Seleccione un producto —</option>
@@ -177,7 +177,7 @@
                                 Estado <span style="color:var(--clr-danger);">*</span>
                             </label>
                             <select asp-for="StatusId"
-                                    asp-items="ViewBag.StatusId"
+                                    asp-items="ViewBag.StatusList"
                                     class="form-select"
                                     required>
                                 <option value="">— Seleccione un estado —</option>

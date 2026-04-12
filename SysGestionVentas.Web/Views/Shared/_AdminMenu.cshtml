@@ -4,19 +4,14 @@
 
 @using System.Security.Claims
 
-@*
-    Variables para controlar qué sección del menú está activa y expandida (submenús).
-*@
-
 @{
     var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
 
     var inventarioOpen =
-        ctrl == "ProductList" ||
+        ctrl == "Products" ||
         ctrl == "Categories" ||
         ctrl == "Inventories" ||
         ctrl == "InventoryMovements" ||
-        // ctrl == "Brands" ||
         ctrl == "Suppliers";
 
     var seguridadOpen =
@@ -27,11 +22,16 @@
     var empresaOpen =
         ctrl == "People" ||
         ctrl == "Employees" ||
-        ctrl == "Customers";
+        ctrl == "Clients";
 
     var catalogosOpen =
         ctrl == "Status" ||
         ctrl == "StatusTypes";
+
+    var ventasActivo =
+        ctrl == "Documents" ||
+        ctrl == "DocumentDetails" ||
+        ctrl == "Ventas";
 
     var fullName = User.FindFirst("FullName")?.Value
                    ?? User.Identity?.Name
@@ -90,16 +90,9 @@
 
         <a asp-controller="Documents"
                asp-action="Index"
-               class="sidebar__item @(ctrl == "Documents" ? "sidebar__item--active" : "")">
+               class="sidebar__item @(ventasActivo ? "sidebar__item--active" : "")">
             <span class="material-symbols-outlined sidebar__item-icon">receipt_long</span>
             <span class="sidebar__item-label">Documentos</span>
-        </a>
-
-        <a asp-controller="DocumentDetails"
-               asp-action="Create"
-               class="sidebar__item @(ctrl == "DocumentDetails" ? "sidebar__item--active" : "")">
-            <span class="material-symbols-outlined sidebar__item-icon">description</span>
-            <span class="sidebar__item-label">Detalle de Documentos</span>
         </a>
 
         <!-- INVENTARIO -->
@@ -117,18 +110,14 @@
         <div id="submenu-inventario"
              class="sidebar__submenu @(inventarioOpen ? "sidebar__submenu--open" : "")">
 
-            <a asp-controller="ProductList" asp-action="Index"
-                   class="sidebar__subitem @(ctrl == "ProductList" ? "sidebar__subitem--active" : "")">
+            <a asp-controller="Products" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Products" ? "sidebar__subitem--active" : "")">
                 Productos
             </a>
             <a asp-controller="Categories" asp-action="Index"
                    class="sidebar__subitem @(ctrl == "Categories" ? "sidebar__subitem--active" : "")">
                 Categorías
             </a>
-@*             <a asp-controller="Brands" asp-action="Index"
-                   class="sidebar__subitem @(ctrl == "Brands" ? "sidebar__subitem--active" : "")">
-                Marcas
-            </a> *@
             <a asp-controller="Inventories" asp-action="Index"
                    class="sidebar__subitem @(ctrl == "Inventories" ? "sidebar__subitem--active" : "")">
                 Inventario
@@ -195,8 +184,8 @@
                    class="sidebar__subitem @(ctrl == "Employees" ? "sidebar__subitem--active" : "")">
                 Empleados
             </a>
-            <a asp-controller="Customers" asp-action="Index"
-                   class="sidebar__subitem @(ctrl == "Customers" ? "sidebar__subitem--active" : "")">
+            <a asp-controller="Clients" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Clients" ? "sidebar__subitem--active" : "")">
                 Clientes
             </a>
         </div>
@@ -227,6 +216,7 @@
         </div>
 
     </nav>
+
     <div class="sidebar__footer">
 
         <a asp-controller="Account"
@@ -251,6 +241,10 @@
               method="post"
               class="sidebar__logout-form">
             @Html.AntiForgeryToken()
+            <button type="submit" class="sidebar__logout-btn">
+                <span class="material-symbols-outlined" style="font-size:20px">logout</span>
+                Cerrar sesión
+            </button>
         </form>
 
     </div>

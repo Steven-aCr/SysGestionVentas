@@ -311,6 +311,10 @@ namespace SysGestionVentas.Web.Controllers
             ViewBag.Statuses = new SelectList(
                 await StatusDAL.ObtenerPorTiposAsync(new List<int> { 1, 2 }, pIsActive: true),
                 "StatusId", "Name");
+
+            ViewBag.DepartmentList = new SelectList(
+        await DepartmentDAL.ObtenerTodosAsync(new Department { StatusId = 1 }),
+        "DepartmentId", "Name");
         }
     }
 }

@@ -1,0 +1,172 @@
+﻿@model SysGestionVentas.EN.Category
+
+@{
+    ViewData["Title"] = "Nueva Categoría";
+    ViewData["BreadcrumbParent"] = "Categorías";
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Nueva Categoría</h1>
+        <p class="page-header__subtitle">Complete los datos para registrar una nueva categoría de productos.</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver al listado
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- ── FORMULARIO ─────────────────────────────────── -->
+    <div class="col-lg-8">
+        <div class="card">
+
+            <div style="padding:18px 22px; border-bottom:1px solid var(--clr-border);
+                display:flex; align-items:center; gap:10px;">
+                <span class="material-symbols-outlined"
+                      style="color:var(--clr-primary); font-size:20px;">add_box</span>
+                <span style="font-size:.95rem; font-weight:700; color:var(--clr-text);">
+                    Datos de la Categoría
+                </span>
+            </div>
+
+            <div style="padding:24px;">
+                <form asp-action="Create" class="needs-validation" novalidate>
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="alert-custom alert-danger-custom mb-4"
+                         role="alert"
+                         style="display:none;"></div>
+
+                    <!-- Sección: Información General -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <span class="material-symbols-outlined form-section__icon">info</span>
+                            <span class="form-section__title">Información General</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">
+                                Nombre de la Categoría <span style="color:var(--clr-danger);">*</span>
+                            </label>
+                            <input asp-for="Name"
+                                   class="form-control"
+                                   placeholder="Ej: Electrónica, Ropa, Alimentos..."
+                                   required />
+                            <span asp-validation-for="Name"
+                                  class="text-danger" style="font-size:.78rem;"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Descripción</label>
+                            <textarea asp-for="Description"
+                                      class="form-control"
+                                      rows="3"
+                                      placeholder="Descripción opcional de la categoría..."></textarea>
+                            <span asp-validation-for="Description"
+                                  class="text-danger" style="font-size:.78rem;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Sección: Estado -->
+                    <div class="form-section" style="margin-bottom:0;">
+                        <div class="form-section-header">
+                            <span class="material-symbols-outlined form-section__icon">toggle_on</span>
+                            <span class="form-section__title">Estado del Registro</span>
+                        </div>
+
+                        <div>
+                            <label asp-for="StatusId" class="form-label">
+                                Estado <span style="color:var(--clr-danger);">*</span>
+                            </label>
+                            <select asp-for="StatusId"
+                                    asp-items="ViewBag.StatusList"
+                                    class="form-select"
+                                    required>
+                                <option value="">— Seleccione un estado —</option>
+                            </select>
+                            <span asp-validation-for="StatusId"
+                                  class="text-danger" style="font-size:.78rem;"></span>
+                        </div>
+                    </div>
+
+                    <hr style="border-color:var(--clr-border); margin:24px 0;" />
+
+                    <!-- Botones -->
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-symbols-outlined">save</span>
+                            Guardar Categoría
+                        </button>
+                        <a asp-action="Index" class="btn btn-light">
+                            <span class="material-symbols-outlined">close</span>
+                            Cancelar
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── PANEL LATERAL ──────────────────────────────── -->
+    <div class="col-lg-4">
+        <div style="position:sticky; top:calc(var(--topbar-h) + 16px);">
+
+            <!-- Guía rápida -->
+            <div class="card mb-3">
+                <div style="padding:14px 18px; border-bottom:1px solid var(--clr-border);
+                    display:flex; align-items:center; gap:10px;">
+                    <span class="material-symbols-outlined"
+                          style="color:var(--clr-primary); font-size:18px;">info</span>
+                    <span style="font-size:.88rem; font-weight:700; color:var(--clr-text);">
+                        Guía Rápida
+                    </span>
+                </div>
+                <div style="padding:18px;">
+                    <ul class="list-unstyled mb-0"
+                        style="font-size:.82rem; color:var(--clr-text-muted);
+                        display:flex; flex-direction:column; gap:10px;">
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined"
+                                  style="font-size:16px; color:var(--clr-primary); flex-shrink:0; margin-top:1px;">check_circle</span>
+                            Las categorías permiten <strong>clasificar y filtrar</strong> los productos del catálogo.
+                        </li>
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined"
+                                  style="font-size:16px; color:var(--clr-primary); flex-shrink:0; margin-top:1px;">check_circle</span>
+                            Una categoría <strong>inactiva</strong> no aparece disponible al crear productos.
+                        </li>
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined"
+                                  style="font-size:16px; color:var(--clr-primary); flex-shrink:0; margin-top:1px;">check_circle</span>
+                            No se pueden eliminar categorías con <strong>productos asociados</strong>.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Nota -->
+            <div class="alert-custom alert-success-custom"
+                 style="border-radius:var(--radius-lg);">
+                <span class="material-symbols-outlined" style="flex-shrink:0;">category</span>
+                <div style="font-size:.81rem;">
+                    <strong>Consejo:</strong><br>
+                    Use nombres cortos y descriptivos para facilitar la búsqueda y filtrado de productos.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
