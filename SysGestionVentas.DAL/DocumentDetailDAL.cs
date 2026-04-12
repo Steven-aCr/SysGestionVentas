@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SysGestionVentas.EN;
-using SysGestionVentas.EN.Pagination;
 
 namespace SysGestionVentas.DAL
 {
@@ -233,11 +232,6 @@ namespace SysGestionVentas.DAL
                 throw new Exception(ex.Message);
             }
             return result;
-        }
-
-        public static async Task<PagedResult<DocumentDetail>> BuscarAsync(PagedQuery<DocumentDetail> pPagedQuery)
-        {
-            throw new NotImplementedException();
         }
 
         #endregion

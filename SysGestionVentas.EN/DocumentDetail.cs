@@ -11,16 +11,12 @@ namespace SysGestionVentas.EN
         [Required(ErrorMessage = "El documento es obligatorio.")]
         [ForeignKey("Document")]
         public int DocumentId { get; set; }
-
-        // Relación con Document
         public Document? Document { get; set; }
 
         [Required(ErrorMessage = "El producto es obligatorio.")]
         [ForeignKey("Product")]
         public int ProductId { get; set; }
-
-        // 🔥 CORREGIDO: antes estaba mal como ProductList
-        public Product? Product { get; set; }
+        public ProductList? Product { get; set; }
 
         [Required(ErrorMessage = "La cantidad es obligatoria.")]
         [Range(1, int.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0.")]

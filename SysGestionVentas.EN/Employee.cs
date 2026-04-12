@@ -40,6 +40,5 @@ namespace SysGestionVentas.EN
         [ForeignKey("Status")]
         public int StatusId { get; set; }
         public Status? Status { get; set; }
-        public int Id { get; set; }
     }
 }
