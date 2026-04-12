@@ -1,0 +1,275 @@
+﻿@model SysGestionVentas.EN.ProductList
+
+@{
+    ViewData["Title"] = "Detalle del Producto";
+    ViewData["BreadcrumbParent"] = "Productos";
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">@Model.Name</h1>
+        <p class="page-header__subtitle">Detalle completo del producto · ID #@Model.ProductId</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Edit" asp-route-id="@Model.ProductId" class="btn btn-primary">
+            <span class="material-symbols-outlined">edit</span>
+            Editar
+        </a>
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- ── COLUMNA PRINCIPAL ──────────────────────────── -->
+    <div class="col-lg-8">
+
+        <!-- Datos principales -->
+        <div class="card mb-4">
+            <div style="padding:18px 22px; border-bottom:1px solid var(--clr-border);
+                display:flex; align-items:center; gap:10px;">
+                <span class="material-symbols-outlined"
+                      style="color:var(--clr-primary); font-size:20px;">package_2</span>
+                <span style="font-size:.95rem; font-weight:700; color:var(--clr-text);">
+                    Información del Producto
+                </span>
+                <span class="badge @(Model.Status?.Name == "Activo" ? "badge-vendedor" : "badge-neutral") ms-auto">
+                    <span class="status-dot @(Model.Status?.Name == "Activo" ? "status-dot--active" : "status-dot--inactive")"></span>
+                    &nbsp;@(Model.Status?.Name ?? "—")
+                </span>
+            </div>
+
+            <div>
+                <!-- Nombre -->
+                <div style="display:flex; gap:16px; padding:16px 22px;
+                    border-bottom:1px solid var(--clr-border);">
+                    <span style="min-width:140px; font-size:.82rem; font-weight:700;
+                    color:var(--clr-text-muted); text-transform:uppercase;
+                    letter-spacing:.04em; padding-top:2px;">Nombre</span>
+                    <span style="font-size:.92rem; font-weight:600; color:var(--clr-text);">
+                        @Model.Name
+                    </span>
+                </div>
+
+                <!-- Descripción -->
+                <div style="display:flex; gap:16px; padding:16px 22px;
+                    border-bottom:1px solid var(--clr-border);">
+                    <span style="min-width:140px; font-size:.82rem; font-weight:700;
+                    color:var(--clr-text-muted); text-transform:uppercase;
+                    letter-spacing:.04em; padding-top:2px;">Descripción</span>
+                    <span style="font-size:.88rem; color:var(--clr-text-muted);">
+                        @(string.IsNullOrEmpty(Model.Description) ? "Sin descripción" : Model.Description)
+                    </span>
+                </div>
+
+                <!-- Código de barras -->
+                <div style="display:flex; gap:16px; padding:16px 22px;
+                    border-bottom:1px solid var(--clr-border);">
+                    <span style="min-width:140px; font-size:.82rem; font-weight:700;
+                    color:var(--clr-text-muted); text-transform:uppercase;
+                    letter-spacing:.04em; padding-top:2px;">Código de barras</span>
+                    <code style="font-size:.88rem; background:var(--clr-surface-alt);
+                        padding:3px 10px; border-radius:var(--radius-sm);
+                        border:1px solid var(--clr-border);">
+                        @Model.Barcode
+                    </code>
+                </div>
+
+                <!-- Categoría -->
+                <div style="display:flex; gap:16px; padding:16px 22px;
+                    border-bottom:1px solid var(--clr-border);">
+                    <span style="min-width:140px; font-size:.82rem; font-weight:700;
+                    color:var(--clr-text-muted); text-transform:uppercase;
+                    letter-spacing:.04em; padding-top:2px;">Categoría</span>
+                    <span style="font-size:.88rem; font-weight:600;">
+                        @(Model.Category?.Name ?? "—")
+                    </span>
+                </div>
+
+                <!-- Creado por -->
+                <div style="display:flex; gap:16px; padding:16px 22px;
+                    border-bottom:1px solid var(--clr-border);">
+                    <span style="min-width:140px; font-size:.82rem; font-weight:700;
+                    color:var(--clr-text-muted); text-transform:uppercase;
+                    letter-spacing:.04em; padding-top:2px;">Creado por</span>
+                    <span style="font-size:.88rem; color:var(--clr-text-muted);">
+                        @(Model.CreatedBy?.Email ?? "—")
+                    </span>
+                </div>
+
+                <!-- Fecha de registro -->
+                <div style="display:flex; gap:16px; padding:16px 22px;">
+                    <span style="min-width:140px; font-size:.82rem; font-weight:700;
+                    color:var(--clr-text-muted); text-transform:uppercase;
+                    letter-spacing:.04em; padding-top:2px;">Fecha de registro</span>
+                    <span style="font-size:.88rem; color:var(--clr-text-muted);">
+                        @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventario asociado -->
+        @if (Model.Inventory != null)
+        {
+            <div class="card">
+                <div style="padding:18px 22px; border-bottom:1px solid var(--clr-border);
+                    display:flex; align-items:center; gap:10px;">
+                    <span class="material-symbols-outlined"
+                          style="color:var(--clr-primary); font-size:20px;">inventory_2</span>
+                    <span style="font-size:.95rem; font-weight:700; color:var(--clr-text);">
+                        Inventario
+                    </span>
+                    <a asp-controller="Inventories"
+                           asp-action="Details"
+                           asp-route-id="@Model.Inventory.InventoryId"
+                           class="panel__link ms-auto">
+                        Ver detalle <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+                    </a>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(4,1fr);">
+                    <div style="padding:18px; border-right:1px solid var(--clr-border); text-align:center;">
+                        <div style="font-size:.72rem; font-weight:700; text-transform:uppercase;
+                            letter-spacing:.05em; color:var(--clr-text-subtle); margin-bottom:6px;">
+                            Stock Actual
+                        </div>
+                        <div style="font-size:1.5rem; font-weight:800;
+                            color:@(Model.Inventory.CurrentStock <= Model.Inventory.MinimumStock ? "var(--clr-danger)" : "var(--clr-success)")">
+                            @Model.Inventory.CurrentStock
+                        </div>
+                        <div style="font-size:.72rem; color:var(--clr-text-subtle);">unidades</div>
+                    </div>
+                    <div style="padding:18px; border-right:1px solid var(--clr-border); text-align:center;">
+                        <div style="font-size:.72rem; font-weight:700; text-transform:uppercase;
+                            letter-spacing:.05em; color:var(--clr-text-subtle); margin-bottom:6px;">
+                            Stock Mínimo
+                        </div>
+                        <div style="font-size:1.5rem; font-weight:800; color:var(--clr-text);">
+                            @Model.Inventory.MinimumStock
+                        </div>
+                        <div style="font-size:.72rem; color:var(--clr-text-subtle);">unidades</div>
+                    </div>
+                    <div style="padding:18px; border-right:1px solid var(--clr-border); text-align:center;">
+                        <div style="font-size:.72rem; font-weight:700; text-transform:uppercase;
+                            letter-spacing:.05em; color:var(--clr-text-subtle); margin-bottom:6px;">
+                            Precio Compra
+                        </div>
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--clr-text);">
+                            $@Model.Inventory.PurchasePrice.ToString("F2")
+                        </div>
+                    </div>
+                    <div style="padding:18px; text-align:center;">
+                        <div style="font-size:.72rem; font-weight:700; text-transform:uppercase;
+                            letter-spacing:.05em; color:var(--clr-text-subtle); margin-bottom:6px;">
+                            Precio Venta
+                        </div>
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--clr-primary);">
+                            $@Model.Inventory.SalePrice.ToString("F2")
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.Inventory.CurrentStock <= Model.Inventory.MinimumStock)
+                {
+                    <div style="padding:10px 22px; background:var(--clr-danger-bg);
+                        display:flex; align-items:center; gap:8px; font-size:.82rem; color:var(--clr-danger);">
+                        <span class="material-symbols-outlined" style="font-size:16px;">warning</span>
+                        <strong>Alerta:</strong> Stock por debajo del mínimo configurado.
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="alert-custom alert-warning-custom" style="border-radius:var(--radius-lg);">
+                <span class="material-symbols-outlined" style="flex-shrink:0;">inventory_2</span>
+                <div style="font-size:.84rem;">
+                    <strong>Sin inventario:</strong> Este producto no tiene un registro de inventario.
+                    <a asp-controller="Inventories" asp-action="Create"
+                           style="color:var(--clr-warning); font-weight:600; margin-left:6px;">
+                        Registrar inventario →
+                    </a>
+                </div>
+            </div>
+        }
+
+    </div>
+
+    <!-- ── COLUMNA LATERAL ────────────────────────────── -->
+    <div class="col-lg-4">
+        <div style="position:sticky; top:calc(var(--topbar-h) + 16px);">
+
+            <!-- Imagen -->
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <div class="card mb-3">
+                    <div style="padding:14px 18px; border-bottom:1px solid var(--clr-border);
+                        display:flex; align-items:center; gap:10px;">
+                        <span class="material-symbols-outlined"
+                              style="color:var(--clr-primary); font-size:18px;">image</span>
+                        <span style="font-size:.88rem; font-weight:700;">Imagen del Producto</span>
+                    </div>
+                    <div style="padding:16px; text-align:center;">
+                        <img src="@Model.ImageUrl"
+                             alt="@Model.Name"
+                             style="max-width:100%; max-height:220px;
+                        border-radius:var(--radius-md); object-fit:contain;" />
+                    </div>
+                </div>
+            }
+
+            <!-- Acciones -->
+            <div class="card mb-3">
+                <div style="padding:14px 18px; border-bottom:1px solid var(--clr-border);
+                    display:flex; align-items:center; gap:10px;">
+                    <span class="material-symbols-outlined"
+                          style="color:var(--clr-primary); font-size:18px;">more_horiz</span>
+                    <span style="font-size:.88rem; font-weight:700;">Acciones</span>
+                </div>
+                <div style="padding:14px; display:flex; flex-direction:column; gap:8px;">
+                    <a asp-action="Edit" asp-route-id="@Model.ProductId"
+                           class="btn btn-primary" style="justify-content:flex-start; gap:10px;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
+                        Editar producto
+                    </a>
+                    @if (Model.Inventory != null)
+                    {
+                        <a asp-controller="Inventories"
+                               asp-action="Edit"
+                               asp-route-id="@Model.Inventory.InventoryId"
+                               class="btn btn-light" style="justify-content:flex-start; gap:10px;">
+                            <span class="material-symbols-outlined" style="font-size:18px;">inventory_2</span>
+                            Editar inventario
+                        </a>
+                        <a asp-controller="InventoryMovements"
+                               asp-action="Create"
+                               class="btn btn-light" style="justify-content:flex-start; gap:10px;">
+                            <span class="material-symbols-outlined" style="font-size:18px;">swap_vert</span>
+                            Registrar movimiento
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Inventories" asp-action="Create"
+                               class="btn btn-light" style="justify-content:flex-start; gap:10px;">
+                            <span class="material-symbols-outlined" style="font-size:18px;">add_circle</span>
+                            Crear inventario
+                        </a>
+                    }
+                    <a asp-action="Delete" asp-route-id="@Model.ProductId"
+                           class="btn btn-danger-outline" style="justify-content:flex-start; gap:10px;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">block</span>
+                        Desactivar producto
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>

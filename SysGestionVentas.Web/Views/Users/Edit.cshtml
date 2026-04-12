@@ -1,0 +1,195 @@
+﻿@model SysGestionVentas.EN.User
+
+@{
+    ViewData["Title"] = "Editar Usuario";
+    ViewData["BreadcrumbParent"] = "Usuarios";
+    ViewData["BreadcrumbCurrent"] = "Editar";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">
+            <span class="material-symbols-outlined" style="font-size:1.3rem;color:var(--clr-primary);vertical-align:middle;">manage_accounts</span>
+            Editar Usuario
+        </h1>
+        <p class="page-header__subtitle">
+            Modifica los datos de acceso de
+            <strong>@(Model.Person?.FullName ?? Model.UserName)</strong>.
+            La contraseña no se actualiza desde aquí.
+        </p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Details" asp-route-id="@Model.UserId" class="btn btn-light">
+            <span class="material-symbols-outlined">visibility</span>
+            Ver detalle
+        </a>
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-8">
+        <div class="card">
+            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);
+                        display:flex;align-items:center;gap:10px;">
+                <span class="material-symbols-outlined"
+                      style="color:var(--clr-primary);font-size:20px;">person_edit</span>
+                <span style="font-size:.95rem;font-weight:700;color:var(--clr-text);">
+                    Datos de Acceso
+                </span>
+            </div>
+
+            <div class="card-body p-4">
+                <form asp-action="Edit" id="editUserForm" autocomplete="off">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="UserId" />
+                    <input type="hidden" asp-for="PersonId" />
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="alert-custom alert-danger-custom mb-4"
+                         style="border-radius:var(--radius-md);">
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="UserName" class="form-label">
+                                Nombre de usuario <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-icon-group input-icon-group--left">
+                                <span class="input-icon input-icon--left material-symbols-outlined">badge</span>
+                                <input asp-for="UserName"
+                                       class="form-control"
+                                       placeholder="Ej. jperez"
+                                       autocomplete="username" />
+                            </div>
+                            <span asp-validation-for="UserName" class="field-validation-error"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label">
+                                Correo electrónico <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-icon-group input-icon-group--left">
+                                <span class="input-icon input-icon--left material-symbols-outlined">email</span>
+                                <input asp-for="Email"
+                                       class="form-control"
+                                       placeholder="correo@empresa.com"
+                                       autocomplete="email" />
+                            </div>
+                            <span asp-validation-for="Email" class="field-validation-error"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="RolId" class="form-label">
+                                Rol <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="RolId" class="form-select" asp-items="ViewBag.Roles">
+                                <option value="">— Seleccione un rol —</option>
+                            </select>
+                            <span asp-validation-for="RolId" class="field-validation-error"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="StatusId" class="form-label">
+                                Estado <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="StatusId" class="form-select" asp-items="ViewBag.Statuses">
+                                <option value="">— Seleccione un estado —</option>
+                            </select>
+                            <span asp-validation-for="StatusId" class="field-validation-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="alert-custom alert-warning-custom mt-4"
+                         style="border-radius:var(--radius-md);">
+                        <span class="material-symbols-outlined" style="flex-shrink:0;">info</span>
+                        <span>
+                            Para cambiar la contraseña del usuario usa la opción
+                            <strong>"Generar acceso temporal"</strong> desde el detalle del usuario.
+                        </span>
+                    </div>
+
+                    <div class="form-actions form-actions--end mt-4">
+                        <a asp-action="Index" class="btn btn-light">Cancelar</a>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <span class="material-symbols-outlined">save</span>
+                            Guardar cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div style="position:sticky;top:calc(var(--topbar-h) + 16px);">
+
+            <div class="card mb-3">
+                <div style="padding:28px 22px;text-align:center;">
+                    <div style="width:70px;height:70px;border-radius:50%;
+                                background:linear-gradient(135deg,var(--clr-primary),var(--clr-primary-dark));
+                                color:#fff;display:inline-flex;align-items:center;
+                                justify-content:center;font-size:1.5rem;font-weight:800;
+                                margin-bottom:14px;">
+                        @(Model.UserName?.Length > 0 ? Model.UserName[0].ToString().ToUpper() : "U")
+                    </div>
+                    <div style="font-weight:700;font-size:.97rem;color:var(--clr-text);">
+                        @(Model.Person?.FullName ?? Model.UserName)
+                    </div>
+                    <div style="font-size:.8rem;color:var(--clr-text-muted);margin-top:3px;">
+                        @Model.Email
+                    </div>
+                    <div class="mt-2">
+                        @if (Model.Status?.Name == "Activo")
+                        {
+                            <span class="badge badge-vendedor">
+                                <span class="status-dot status-dot--active"></span>
+                                &nbsp;Activo
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-neutral">
+                                <span class="status-dot status-dot--inactive"></span>
+                                &nbsp;@(Model.Status?.Name ?? "Inactivo")
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--clr-border);
+                            display:flex;align-items:center;gap:10px;">
+                    <span class="material-symbols-outlined"
+                          style="color:var(--clr-primary);font-size:18px;">person</span>
+                    <span style="font-size:.88rem;font-weight:700;color:var(--clr-text);">
+                        Persona asociada
+                    </span>
+                </div>
+                <div style="padding:16px;">
+                    <div style="font-size:.82rem;color:var(--clr-text-muted);margin-bottom:4px;">Nombre completo</div>
+                    <div style="font-weight:600;font-size:.88rem;margin-bottom:12px;">
+                        @(Model.Person?.FullName ?? "—")
+                    </div>
+                    <div style="font-size:.82rem;color:var(--clr-text-muted);margin-bottom:4px;">Teléfono</div>
+                    <div style="font-weight:600;font-size:.88rem;margin-bottom:12px;">
+                        @(Model.Person?.PhoneNumber ?? "—")
+                    </div>
+                    <div style="font-size:.82rem;color:var(--clr-text-muted);margin-bottom:4px;">Registro</div>
+                    <div style="font-size:.82rem;">@Model.CreatedAt.ToString("dd MMM yyyy")</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

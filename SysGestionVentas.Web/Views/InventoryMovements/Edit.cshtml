@@ -1,0 +1,66 @@
+﻿@model SysGestionVentas.EN.InventoryMovement
+
+@{
+    ViewData["Title"] = "Editar Movimiento";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Movimiento No Editable</h1>
+        <p class="page-header__subtitle">#@Model.InventoryMovementId</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="alert-custom alert-warning-custom mb-4" style="border-radius:var(--radius-lg);align-items:flex-start;">
+            <span class="material-symbols-outlined" style="flex-shrink:0;margin-top:1px;">lock</span>
+            <div>
+                <strong>Registro inmutable.</strong><br>
+                Los movimientos de inventario son registros históricos y no pueden modificarse una vez creados. Si necesita corregir un error, registre un nuevo movimiento de ajuste.
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
+                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:20px;">swap_vert</span>
+                <span style="font-size:.95rem;font-weight:700;color:var(--clr-text);">Detalle del Movimiento</span>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Producto</span>
+                    <strong>@(Model.Inventory?.Product?.Name ?? $"Inv. #{Model.InventoryId}")</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Tipo</span>
+                    <span>@(Model.MovementType?.Name ?? "—")</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;border-bottom:1px solid var(--clr-border);font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Cantidad</span>
+                    <strong>@Model.Quantity</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 22px;font-size:.86rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Fecha</span>
+                    <span>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-3">
+            <a asp-action="Create" class="btn btn-primary">
+                <span class="material-symbols-outlined">add</span>
+                Registrar Ajuste
+            </a>
+            <a asp-action="Details" asp-route-id="@Model.InventoryMovementId" class="btn btn-light">
+                <span class="material-symbols-outlined">visibility</span>
+                Ver Detalle
+            </a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,82 @@
+﻿@model SysGestionVentas.EN.Rol
+
+@{
+    ViewData["Title"] = "Nuevo Rol";
+    ViewData["BreadcrumbParent"] = "Roles";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Nuevo Rol</h1>
+        <p class="page-header__subtitle">Defina un rol de acceso para el sistema.</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card">
+            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
+                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:20px;">badge</span>
+                <span style="font-size:.95rem;font-weight:700;color:var(--clr-text);">Datos del Rol</span>
+            </div>
+            <div style="padding:24px;">
+                <form asp-action="Create" class="needs-validation" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="alert-custom alert-danger-custom mb-4" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label">Nombre del Rol <span style="color:var(--clr-danger)">*</span></label>
+                        <input asp-for="Name" class="form-control" placeholder="Ej: Administrador, Vendedor…" required />
+                        <span asp-validation-for="Name" class="text-danger" style="font-size:.78rem;"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Descripción</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" placeholder="Describa brevemente las responsabilidades de este rol…" style="resize:vertical;"></textarea>
+                        <span asp-validation-for="Description" class="text-danger" style="font-size:.78rem;"></span>
+                    </div>
+                    <div class="mb-4">
+                        <label asp-for="StatusId" class="form-label">Estado <span style="color:var(--clr-danger)">*</span></label>
+                        <select asp-for="StatusId" asp-items="ViewBag.StatusId" class="form-select" required>
+                            <option value="">— Seleccione —</option>
+                        </select>
+                        <span asp-validation-for="StatusId" class="text-danger" style="font-size:.78rem;"></span>
+                    </div>
+
+                    <hr style="border-color:var(--clr-border);margin:24px 0;" />
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-symbols-outlined">save</span>
+                            Guardar Rol
+                        </button>
+                        <a asp-action="Index" class="btn btn-light">
+                            <span class="material-symbols-outlined">close</span>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div style="position:sticky;top:calc(var(--topbar-h) + 16px);">
+            <div class="alert-custom alert-success-custom" style="border-radius:var(--radius-lg);">
+                <span class="material-symbols-outlined" style="flex-shrink:0;">info</span>
+                <div style="font-size:.81rem;">
+                    Los roles definen qué acciones puede realizar un usuario en el sistema. Asigne permisos desde la sección <strong>Seguridad → Permisos</strong>.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

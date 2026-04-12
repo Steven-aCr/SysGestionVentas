@@ -1,0 +1,99 @@
+﻿@model SysGestionVentas.EN.Rol
+
+@{
+    ViewData["Title"] = "Editar Rol";
+    ViewData["BreadcrumbParent"] = "Roles";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Editar Rol</h1>
+        <p class="page-header__subtitle"><strong>@Model.Name</strong> — ID #@Model.RolId</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card">
+            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
+                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:20px;">edit</span>
+                <span style="font-size:.95rem;font-weight:700;color:var(--clr-text);">Actualizar Rol</span>
+                <span class="badge badge-neutral ms-auto">ID #@Model.RolId</span>
+            </div>
+            <div style="padding:24px;">
+                <form asp-action="Edit" class="needs-validation" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="alert-custom alert-danger-custom mb-4" role="alert"></div>
+                    <input type="hidden" asp-for="RolId" />
+                    <input type="hidden" asp-for="CreatedAt" />
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label">Nombre del Rol <span style="color:var(--clr-danger)">*</span></label>
+                        <input asp-for="Name" class="form-control" required />
+                        <span asp-validation-for="Name" class="text-danger" style="font-size:.78rem;"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label">Descripción</label>
+                        <textarea asp-for="Description" class="form-control" rows="3" style="resize:vertical;"></textarea>
+                        <span asp-validation-for="Description" class="text-danger" style="font-size:.78rem;"></span>
+                    </div>
+                    <div class="mb-4">
+                        <label asp-for="StatusId" class="form-label">Estado <span style="color:var(--clr-danger)">*</span></label>
+                        <select asp-for="StatusId" asp-items="ViewBag.StatusId" class="form-select" required>
+                            <option value="">— Seleccione —</option>
+                        </select>
+                        <span asp-validation-for="StatusId" class="text-danger" style="font-size:.78rem;"></span>
+                    </div>
+
+                    <hr style="border-color:var(--clr-border);margin:24px 0;" />
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-symbols-outlined">save</span>
+                            Guardar Cambios
+                        </button>
+                        <a asp-action="Index" class="btn btn-light">
+                            <span class="material-symbols-outlined">close</span>
+                            Cancelar
+                        </a>
+                        <a asp-action="Delete" asp-route-id="@Model.RolId" class="btn btn-danger-outline ms-auto" style="font-size:.84rem;">
+                            <span class="material-symbols-outlined">block</span>
+                            Desactivar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div style="position:sticky;top:calc(var(--topbar-h) + 16px);">
+            <div class="card">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
+                    <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:18px;">info</span>
+                    <span style="font-size:.88rem;font-weight:700;color:var(--clr-text);">Información</span>
+                </div>
+                <div style="padding:16px 18px;font-size:.83rem;color:var(--clr-text-muted);">
+                    <div class="d-flex gap-2 align-items-center mb-2">
+                        <span class="material-symbols-outlined" style="font-size:16px;">calendar_today</span>
+                        Creado el <strong style="color:var(--clr-text);margin-left:4px;">@Model.CreatedAt.ToString("dd/MM/yyyy")</strong>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="material-symbols-outlined" style="font-size:16px;">toggle_on</span>
+                        Estado actual: <span class="badge badge-vendedor ms-2">@(Model.Status?.Name ?? "—")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

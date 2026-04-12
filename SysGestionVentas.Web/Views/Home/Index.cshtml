@@ -1,8 +1,437 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model SysGestionVentas.Web.Models.AdminDashboardModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var maxMonto = Model.VentasPorMes.Any() ? Model.VentasPorMes.Max(v => v.Monto) : 1;
+    var totalRoles = Model.DistribucionPorRol.Sum(r => r.Cantidad);
+    var maxEmpleados = Model.EmpleadosPorDepartamento.Any()
+        ? Model.EmpleadosPorDepartamento.Max(d => d.Cantidad) : 1;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+@section Styles {
+    <link rel="stylesheet" href="~/css/dashboard.css" />
+}
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<div class="dash-header">
+    <div>
+        <h1 class="dash-header__title">Panel de Administración</h1>
+        <p class="dash-header__subtitle">Resumen ejecutivo del sistema · Datos en tiempo real</p>
+    </div>
+    <div class="dash-header__date">
+        <span class="material-symbols-outlined" style="font-size:17px">calendar_today</span>
+        <span id="dashDate"></span>
+    </div>
 </div>
+
+<!-- ── KPI GRID ───────────────────────────────────────────── -->
+<div class="kpi-grid">
+
+    <!-- Ventas del mes -->
+    <div class="kpi-card kpi-card--ventas">
+        <div class="kpi-card__top">
+            <span class="kpi-card__label">Ventas del Mes</span>
+            <div class="kpi-card__icon">
+                <span class="material-symbols-outlined">receipt_long</span>
+            </div>
+        </div>
+        <div class="kpi-card__value">@Model.VentasMesActual</div>
+        <span class="kpi-trend @(Model.TendenciaVentasPositiva ? "kpi-trend--up" : "kpi-trend--down")">
+            <span class="material-symbols-outlined">@(Model.TendenciaVentasPositiva ? "trending_up" : "trending_down")</span>
+            @(Model.VariacionVentas > 0 ? "+" : "")@Model.VariacionVentas%
+        </span>
+        <p class="kpi-card__footer">vs @Model.VentasMesAnterior docs. mes anterior</p>
+    </div>
+
+    <!-- Monto facturado -->
+    <div class="kpi-card kpi-card--monto">
+        <div class="kpi-card__top">
+            <span class="kpi-card__label">Monto Facturado</span>
+            <div class="kpi-card__icon">
+                <span class="material-symbols-outlined">attach_money</span>
+            </div>
+        </div>
+        <div class="kpi-card__value kpi-card__value--sm">
+            $@Model.MontoTotalMes.ToString("N2")
+        </div>
+        <span class="kpi-trend @(Model.TendenciaMontoPositiva ? "kpi-trend--up" : "kpi-trend--down")">
+            <span class="material-symbols-outlined">@(Model.TendenciaMontoPositiva ? "trending_up" : "trending_down")</span>
+            @(Model.VariacionMonto > 0 ? "+" : "")@Model.VariacionMonto%
+        </span>
+        <p class="kpi-card__footer">vs $@Model.MontoTotalMesAnterior.ToString("N2") mes anterior</p>
+    </div>
+
+    <!-- Clientes activos -->
+    <div class="kpi-card kpi-card--clientes">
+        <div class="kpi-card__top">
+            <span class="kpi-card__label">Clientes Activos</span>
+            <div class="kpi-card__icon">
+                <span class="material-symbols-outlined">group</span>
+            </div>
+        </div>
+        <div class="kpi-card__value">@Model.TotalClientesActivos</div>
+        <span class="kpi-trend kpi-trend--up">
+            <span class="material-symbols-outlined">people</span>
+            @Model.TotalClientes total registrados
+        </span>
+        <p class="kpi-card__footer">@Model.TotalEmpleados empleados activos</p>
+    </div>
+
+    <!-- Stock crítico -->
+    <div class="kpi-card kpi-card--stock">
+        <div class="kpi-card__top">
+            <span class="kpi-card__label">Bajo Stock</span>
+            <div class="kpi-card__icon">
+                <span class="material-symbols-outlined">inventory_2</span>
+            </div>
+        </div>
+        <div class="kpi-card__value">@Model.ProductosBajoStock</div>
+        <span class="kpi-trend @(Model.ProductosBajoStock > 0 ? "kpi-trend--down" : "kpi-trend--up")">
+            <span class="material-symbols-outlined">@(Model.ProductosBajoStock > 0 ? "warning" : "check_circle")</span>
+            @(Model.ProductosBajoStock > 0 ? "Requiere atención" : "Stock saludable")
+        </span>
+        <p class="kpi-card__footer">De @Model.TotalProductos productos registrados</p>
+    </div>
+
+</div>
+
+<!-- ── ROW 2: Gráfico ventas + Distribución usuarios ─────── -->
+<div class="section-grid section-grid--3col" style="margin-bottom:20px">
+
+    <!-- Gráfico de barras: ventas por mes -->
+    <div class="panel">
+        <div class="panel__header">
+            <span class="panel__title">
+                <span class="material-symbols-outlined">bar_chart</span>
+                Tendencia de Ventas — Últimos 6 Meses
+            </span>
+            <a href="@Url.Action("Index", "Documents")" class="panel__link">
+                Ver todos <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+            </a>
+        </div>
+        <div class="panel__body">
+            <div class="bar-chart" id="barChart">
+                @foreach (var item in Model.VentasPorMes)
+                {
+                    var heightPct = maxMonto > 0
+                        ? (double)item.Monto / (double)maxMonto * 100
+                        : 0;
+                    <div class="bar-chart__col">
+                        <div class="bar-chart__bar-wrap">
+                            <div class="bar-chart__bar"
+                                 data-height="@heightPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)"
+                                 style="height:0%">
+                                <div class="bar-chart__bar-tooltip">
+                                    $@item.Monto.ToString("N2") · @item.Cantidad docs
+                                </div>
+                            </div>
+                        </div>
+                        <span class="bar-chart__label">@item.Mes</span>
+                    </div>
+                }
+            </div>
+
+            <!-- Leyenda numérica -->
+            <div style="display:flex;gap:20px;margin-top:14px;padding-top:12px;border-top:1px solid var(--clr-border)">
+                <div>
+                    <div style="font-size:.72rem;color:var(--clr-text-subtle);font-weight:700;text-transform:uppercase;letter-spacing:.05em">Total 6 meses</div>
+                    <div style="font-size:1.05rem;font-weight:800;color:var(--clr-text)">
+                        $@Model.VentasPorMes.Sum(v => v.Monto).ToString("N2")
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:.72rem;color:var(--clr-text-subtle);font-weight:700;text-transform:uppercase;letter-spacing:.05em">Documentos</div>
+                    <div style="font-size:1.05rem;font-weight:800;color:var(--clr-text)">
+                        @Model.VentasPorMes.Sum(v => v.Cantidad)
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:.72rem;color:var(--clr-text-subtle);font-weight:700;text-transform:uppercase;letter-spacing:.05em">Promedio/mes</div>
+                    <div style="font-size:1.05rem;font-weight:800;color:var(--clr-text)">
+                        $@(Model.VentasPorMes.Any() ? (Model.VentasPorMes.Sum(v => v.Monto) / Model.VentasPorMes.Count).ToString("N2") : "0.00")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donut: distribución por rol -->
+    <div class="panel">
+        <div class="panel__header">
+            <span class="panel__title">
+                <span class="material-symbols-outlined">donut_small</span>
+                Usuarios por Rol
+            </span>
+            <a href="@Url.Action("Index", "Users")" class="panel__link">
+                Ver todos <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+            </a>
+        </div>
+        <div class="panel__body">
+            @if (Model.DistribucionPorRol.Any() && totalRoles > 0)
+            {
+                <!-- SVG Donut dinámico -->
+                <div class="donut-wrap">
+                    <svg class="donut-svg" width="140" height="140" viewBox="0 0 140 140" id="donutSvg">
+                        <circle cx="70" cy="70" r="52" fill="none" stroke="var(--clr-border)" stroke-width="20" />
+                        @{
+                            double circumference = 2 * Math.PI * 52;
+                            double offset = 0;
+                        }
+                        @foreach (var rol in Model.DistribucionPorRol)
+                        {
+                            double pct = totalRoles > 0 ? (double)rol.Cantidad / totalRoles : 0;
+                            double dashLen = pct * circumference;
+                            double dashGap = circumference - dashLen;
+                            <circle cx="70" cy="70" r="52"
+                                    fill="none"
+                                    stroke="@rol.Color"
+                                    stroke-width="20"
+                                    stroke-dasharray="@dashLen.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) @dashGap.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
+                                    stroke-dashoffset="@(-(offset)).ToString(" F2", System.Globalization.CultureInfo.InvariantCulture)"
+                                    transform="rotate(-90 70 70)"
+                                    style="transition:stroke-dasharray .6s ease">
+                            </circle>
+                            offset += dashLen;
+                        }
+                        <text x="70" y="65" text-anchor="middle" font-size="20" font-weight="800" fill="var(--clr-text)">@Model.TotalUsuarios</text>
+                        <text x="70" y="80" text-anchor="middle" font-size="9" fill="var(--clr-text-subtle)">USUARIOS</text>
+                    </svg>
+
+                    <div class="donut-legend">
+                        @foreach (var rol in Model.DistribucionPorRol)
+                        {
+                            var pct = totalRoles > 0 ? (double)rol.Cantidad / totalRoles * 100 : 0;
+                            <div class="donut-legend__item">
+                                <div class="donut-legend__dot" style="background:@rol.Color"></div>
+                                <span class="donut-legend__name">@rol.Rol</span>
+                                <span class="donut-legend__count">@rol.Cantidad</span>
+                                <span style="font-size:.72rem;color:var(--clr-text-subtle)">(@pct.ToString("F0")%)</span>
+                            </div>
+                        }
+                        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--clr-border)">
+                            <div style="font-size:.78rem;color:var(--clr-text-muted)">
+                                <span style="font-weight:700;color:var(--clr-success)">@Model.TotalUsuariosActivos activos</span>
+                                · @(Model.TotalUsuarios - Model.TotalUsuariosActivos) inactivos
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="dash-empty">
+                    <span class="material-symbols-outlined" style="font-size:36px;color:var(--clr-text-subtle)">person_off</span>
+                    <p>Sin datos de usuarios</p>
+                </div>
+            }
+        </div>
+    </div>
+
+</div>
+
+<!-- ── ROW 3: Últimos documentos ──────────────────────────── -->
+<div class="panel" style="margin-bottom:20px">
+    <div class="panel__header">
+        <span class="panel__title">
+            <span class="material-symbols-outlined">description</span>
+            Documentos Recientes
+        </span>
+        <a href="@Url.Action("Index", "Documents")" class="panel__link">
+            Ver todos <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+        </a>
+    </div>
+    <div class="panel__body--flush">
+        @if (Model.UltimosDocumentos.Any())
+        {
+            <table class="activity-table">
+                <thead>
+                    <tr>
+                        <th>N° Documento</th>
+                        <th>Tipo</th>
+                        <th>Persona</th>
+                        <th>Fecha</th>
+                        <th>Monto</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in Model.UltimosDocumentos)
+                    {
+                        var badgeClass = doc.Status?.Name switch
+                        {
+                            "Emitido" => "badge-status--active",
+                            "Pagado" => "badge-status--active",
+                            "Pendiente" => "badge-status--pending",
+                            "Anulado" => "badge-status--cancel",
+                            _ => "badge-status--default"
+                        };
+                        <tr>
+                            <td><span class="doc-num">@doc.DocNumber</span></td>
+                            <td style="font-size:.82rem;color:var(--clr-text-muted)">@doc.DocumentType?.Name</td>
+                            <td style="font-size:.84rem">@doc.Person?.FullName</td>
+                            <td style="font-size:.82rem;color:var(--clr-text-muted)">@doc.IssueDate.ToString("dd/MM/yyyy")</td>
+                            <td style="font-weight:700">$@doc.TotalAmount.ToString("N2")</td>
+                            <td><span class="badge-status @badgeClass">@doc.Status?.Name</span></td>
+                            <td>
+                                <a href="@Url.Action("Details", "Documents", new { id = doc.DocumentId })"
+                                       class="btn-icon" title="Ver detalle">
+                                    <span class="material-symbols-outlined" style="font-size:16px">open_in_new</span>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <div class="dash-empty">
+                <span class="material-symbols-outlined" style="font-size:36px;color:var(--clr-text-subtle)">inbox</span>
+                <p>No hay documentos registrados aún</p>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ── ROW 4: Stock crítico + Departamentos + Movimientos ─── -->
+<div class="section-grid section-grid--2col">
+
+    <!-- Stock crítico -->
+    <div class="panel">
+        <div class="panel__header">
+            <span class="panel__title">
+                <span class="material-symbols-outlined">warning</span>
+                Inventario Crítico
+            </span>
+            <a href="@Url.Action("Index", "Inventories")" class="panel__link">
+                Ver inventario <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+            </a>
+        </div>
+        <div class="panel__body--flush">
+            @if (Model.InventarioCritico.Any())
+            {
+                @foreach (var inv in Model.InventarioCritico)
+                {
+                    var pct = inv.MinimumStock > 0
+                        ? Math.Min((double)inv.CurrentStock / inv.MinimumStock * 100, 100)
+                        : 0;
+                    <div class="stock-row">
+                        <div class="stock-row__name">@inv.Product?.Name</div>
+                        <div class="stock-row__bar-wrap">
+                            <div class="stock-row__bar" style="width:@pct.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                        </div>
+                        <div class="stock-row__counts">
+                            <span class="stock-row__current">@inv.CurrentStock uds</span>
+                            <span class="stock-row__min">Mín: @inv.MinimumStock</span>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="dash-empty">
+                    <span class="material-symbols-outlined" style="font-size:32px;color:var(--clr-success)">check_circle</span>
+                    <p style="color:var(--clr-success);font-weight:600">Todos los productos con stock saludable</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Panel derecho: Departamentos + Movimientos -->
+    <div style="display:flex;flex-direction:column;gap:20px">
+
+        <!-- Empleados por departamento -->
+        <div class="panel">
+            <div class="panel__header">
+                <span class="panel__title">
+                    <span class="material-symbols-outlined">business</span>
+                    Empleados por Departamento
+                </span>
+                <a href="@Url.Action("Index", "Employees")" class="panel__link">
+                    Ver empleados <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+                </a>
+            </div>
+            <div class="panel__body--flush">
+                @if (Model.EmpleadosPorDepartamento.Any())
+                {
+                    @foreach (var dept in Model.EmpleadosPorDepartamento)
+                    {
+                        var pctDept = maxEmpleados > 0
+                            ? (double)dept.Cantidad / maxEmpleados * 100
+                            : 0;
+                        <div class="dept-row">
+                            <span class="dept-row__name">@dept.Departamento</span>
+                            <div class="dept-row__bar-wrap">
+                                <div class="dept-row__bar" style="width:@pctDept.ToString("F0", System.Globalization.CultureInfo.InvariantCulture)%"></div>
+                            </div>
+                            <span class="dept-row__count">@dept.Cantidad</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="dash-empty">
+                        <span class="material-symbols-outlined" style="font-size:28px;color:var(--clr-text-subtle)">business_center</span>
+                        <p>Sin empleados registrados</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Últimos movimientos de inventario -->
+        <div class="panel">
+            <div class="panel__header">
+                <span class="panel__title">
+                    <span class="material-symbols-outlined">swap_vert</span>
+                    Movimientos Recientes
+                </span>
+                <a href="@Url.Action("Index", "InventoryMovements")" class="panel__link">
+                    Ver todos <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+                </a>
+            </div>
+            <div class="panel__body--flush">
+                @if (Model.UltimosMovimientos.Any())
+                {
+                    @foreach (var mov in Model.UltimosMovimientos)
+                    {
+                        var (iconClass, iconName) = mov.MovementType?.Name switch
+                        {
+                            "Entrada" => ("mov-row__icon--in", "add_circle"),
+                            "Devolución" => ("mov-row__icon--in", "undo"),
+                            "Salida" => ("mov-row__icon--out", "remove_circle"),
+                            "Transferencia" => ("mov-row__icon--out", "swap_horiz"),
+                            "Ajuste" => ("mov-row__icon--adj", "tune"),
+                            _ => ("mov-row__icon--adj", "sync")
+                        };
+                        <div class="mov-row">
+                            <div class="mov-row__icon @iconClass">
+                                <span class="material-symbols-outlined">@iconName</span>
+                            </div>
+                            <div class="mov-row__info">
+                                <div class="mov-row__product">@mov.Inventory?.Product?.Name</div>
+                                <div class="mov-row__meta">
+                                    @mov.MovementType?.Name · @mov.CreatedAt.ToString("dd/MM HH:mm")
+                                </div>
+                            </div>
+                            <div class="mov-row__qty">
+                                @(mov.MovementType?.Name is "Salida" or "Transferencia" ? "-" : "+")@mov.Quantity
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="dash-empty">
+                        <span class="material-symbols-outlined" style="font-size:28px;color:var(--clr-text-subtle)">history</span>
+                        <p>Sin movimientos recientes</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/dashboard.js"></script>
+}

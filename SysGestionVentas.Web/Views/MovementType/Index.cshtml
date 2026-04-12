@@ -1,0 +1,36 @@
+﻿@model IEnumerable<SysGestionVentas.EN.MovementType>
+
+@{
+    ViewData["Title"] = "Movement Types";
+}
+
+<h1>Movement Types</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Create New Movement Type</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Is Active</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var movementType in Model)
+        {
+            <tr>
+                <td>@movementType.Name</td>
+                <td>@movementType.Description</td>
+                <td>@movementType.IsActive</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@movementType.MovementTypeId">Details</a> |
+                    <a asp-action="Edit" asp-route-id="@movementType.MovementTypeId">Edit</a> |
+                    <a asp-action="Delete" asp-route-id="@movementType.MovementTypeId">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

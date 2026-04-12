@@ -1,0 +1,149 @@
+﻿@model IEnumerable<SysGestionVentas.EN.StatusType>
+
+@{
+    ViewData["Title"] = "Tipos de Estado";
+    ViewData["BreadcrumbParent"] = "Catálogos";
+
+    var search = ViewData["Search"]?.ToString() ?? string.Empty;
+}
+
+<div class="page-content">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">Tipos de Estado</h1>
+            <p class="page-header__subtitle">Gestiona los estados del sistema</p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <span class="material-symbols-outlined">add</span>
+                Nuevo Tipo de Estado
+            </a>
+        </div>
+    </div>
+
+    <!-- Card -->
+    <div class="table-card">
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+            <form asp-action="Index" method="get"
+                  style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;">
+
+                <div class="search-box">
+                    <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                    <input type="text" name="search" value="@search"
+                           placeholder="Buscar por nombre o descripción…" autocomplete="off" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-symbols-outlined">search</span>
+                    Buscar
+                </button>
+
+                @if (!string.IsNullOrWhiteSpace(search))
+                {
+                    <a asp-action="Index" class="btn btn-light">
+                        <span class="material-symbols-outlined">close</span>
+                        Limpiar
+                    </a>
+                }
+            </form>
+
+            <span style="font-size:.8rem; color:var(--clr-text-muted);">
+                @Model.Count() registro(s)
+            </span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">inventory_2</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">
+                                        No se encontraron tipos de estado
+                                        @if (!string.IsNullOrWhiteSpace(search))
+                                        {
+                                            <text> con el término "<strong>@search</strong>"</text>
+                                        }
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var isActive = item.IsActive;
+
+                            <tr>
+                                <td>
+                                    <strong>@item.Name</strong>
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    @(string.IsNullOrWhiteSpace(item.Description) ? "—" : item.Description)
+                                </td>
+
+                                <td>
+                                    <div class="status">
+                                        <span class="status-dot @(isActive ? "status-dot--active" : "status-dot--inactive")"></span>
+                                        <span>@(isActive ? "Activo" : "Inactivo")</span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@item.StatusTypeId"
+                                               class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+
+                                        <a asp-action="Edit" asp-route-id="@item.StatusTypeId"
+                                               class="btn btn-icon" title="Editar">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </a>
+
+                                        <a asp-action="Delete" asp-route-id="@item.StatusTypeId"
+                                               class="btn btn-icon btn-danger-outline" title="Eliminar">
+                                            <span class="material-symbols-outlined">delete</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="table-footer">
+            <span>
+                Mostrando <strong>@Model.Count()</strong> tipo(s) de estado
+            </span>
+            <span>
+                Catálogo del sistema
+            </span>
+        </div>
+
+    </div>
+</div>

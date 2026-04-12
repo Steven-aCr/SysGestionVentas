@@ -1,0 +1,271 @@
+﻿@model SysGestionVentas.EN.ProductList
+
+@{
+    ViewData["Title"] = "Nuevo Producto";
+    ViewData["BreadcrumbParent"] = "Productos";
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Nuevo Producto</h1>
+        <p class="page-header__subtitle">Complete los datos para registrar un nuevo producto en el catálogo.</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver al listado
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- ── FORMULARIO ─────────────────────────────────── -->
+    <div class="col-lg-8">
+        <div class="card">
+
+            <div style="padding:18px 22px; border-bottom:1px solid var(--clr-border);
+                display:flex; align-items:center; gap:10px;">
+                <span class="material-symbols-outlined"
+                      style="color:var(--clr-primary); font-size:20px;">add_box</span>
+                <span style="font-size:.95rem; font-weight:700; color:var(--clr-text);">
+                    Datos del Producto
+                </span>
+            </div>
+
+            <div style="padding:24px;">
+                <form asp-action="Create" class="needs-validation" novalidate>
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="alert-custom alert-danger-custom mb-4"
+                         role="alert"
+                         style="display:none;"></div>
+
+                    <!-- Sección: Información General -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <span class="material-symbols-outlined form-section__icon">info</span>
+                            <span class="form-section__title">Información General</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">
+                                Nombre del Producto <span style="color:var(--clr-danger);">*</span>
+                            </label>
+                            <input asp-for="Name"
+                                   class="form-control"
+                                   placeholder="Ej: Laptop Dell XPS 15"
+                                   required />
+                            <span asp-validation-for="Name"
+                                  class="text-danger" style="font-size:.78rem;"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Descripción</label>
+                            <textarea asp-for="Description"
+                                      class="form-control"
+                                      rows="3"
+                                      placeholder="Descripción opcional del producto..."></textarea>
+                            <span asp-validation-for="Description"
+                                  class="text-danger" style="font-size:.78rem;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Sección: Identificación -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <span class="material-symbols-outlined form-section__icon">qr_code</span>
+                            <span class="form-section__title">Identificación</span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Barcode" class="form-label">
+                                Código de Barras <span style="color:var(--clr-danger);">*</span>
+                            </label>
+                            <div class="input-icon-group input-icon-group--left">
+                                <span class="input-icon input-icon--left">
+                                    <span class="material-symbols-outlined" style="font-size:18px;">barcode</span>
+                                </span>
+                                <input asp-for="Barcode"
+                                       class="form-control"
+                                       placeholder="Ej: PROD-001"
+                                       required />
+                            </div>
+                            <span asp-validation-for="Barcode"
+                                  class="text-danger" style="font-size:.78rem;"></span>
+                            <small style="color:var(--clr-text-subtle);">
+                                Debe ser único en el sistema. Formato: letras, números y guiones.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ImageUrl" class="form-label">URL de Imagen</label>
+                            <div class="input-icon-group input-icon-group--left">
+                                <span class="input-icon input-icon--left">
+                                    <span class="material-symbols-outlined" style="font-size:18px;">image</span>
+                                </span>
+                                <input asp-for="ImageUrl"
+                                       class="form-control"
+                                       placeholder="https://ejemplo.com/imagen.jpg" />
+                            </div>
+                            <span asp-validation-for="ImageUrl"
+                                  class="text-danger" style="font-size:.78rem;"></span>
+                            <small style="color:var(--clr-text-subtle);">
+                                Opcional. Ingrese una URL válida de imagen.
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Sección: Clasificación -->
+                    <div class="form-section">
+                        <div class="form-section-header">
+                            <span class="material-symbols-outlined form-section__icon">category</span>
+                            <span class="form-section__title">Clasificación</span>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="CategoryId" class="form-label">
+                                    Categoría <span style="color:var(--clr-danger);">*</span>
+                                </label>
+                                <select asp-for="CategoryId"
+                                        asp-items="ViewBag.CategoryList"
+                                        class="form-select"
+                                        required>
+                                    <option value="">— Seleccione una categoría —</option>
+                                </select>
+                                <span asp-validation-for="CategoryId"
+                                      class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="StatusId" class="form-label">
+                                    Estado <span style="color:var(--clr-danger);">*</span>
+                                </label>
+                                <select asp-for="StatusId"
+                                        asp-items="ViewBag.StatusList"
+                                        class="form-select"
+                                        required>
+                                    <option value="">— Seleccione un estado —</option>
+                                </select>
+                                <span asp-validation-for="StatusId"
+                                      class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr style="border-color:var(--clr-border); margin:24px 0;" />
+
+                    <!-- Botones -->
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-symbols-outlined">save</span>
+                            Guardar Producto
+                        </button>
+                        <a asp-action="Index" class="btn btn-light">
+                            <span class="material-symbols-outlined">close</span>
+                            Cancelar
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── PANEL LATERAL ──────────────────────────────── -->
+    <div class="col-lg-4">
+        <div style="position:sticky; top:calc(var(--topbar-h) + 16px);">
+
+            <!-- Vista previa de imagen -->
+            <div class="card mb-3" id="imagePreviewCard" style="display:none;">
+                <div style="padding:14px 18px; border-bottom:1px solid var(--clr-border);
+                    display:flex; align-items:center; gap:10px;">
+                    <span class="material-symbols-outlined"
+                          style="color:var(--clr-primary); font-size:18px;">preview</span>
+                    <span style="font-size:.88rem; font-weight:700; color:var(--clr-text);">
+                        Vista Previa
+                    </span>
+                </div>
+                <div style="padding:16px; text-align:center;">
+                    <img id="imagePreview"
+                         src=""
+                         alt="Vista previa"
+                         style="max-width:100%; max-height:180px;
+                    border-radius:var(--radius-md);
+                    object-fit:contain;" />
+                </div>
+            </div>
+
+            <!-- Guía rápida -->
+            <div class="card mb-3">
+                <div style="padding:14px 18px; border-bottom:1px solid var(--clr-border);
+                    display:flex; align-items:center; gap:10px;">
+                    <span class="material-symbols-outlined"
+                          style="color:var(--clr-primary); font-size:18px;">info</span>
+                    <span style="font-size:.88rem; font-weight:700; color:var(--clr-text);">
+                        Guía Rápida
+                    </span>
+                </div>
+                <div style="padding:18px;">
+                    <ul class="list-unstyled mb-0"
+                        style="font-size:.82rem; color:var(--clr-text-muted);
+                        display:flex; flex-direction:column; gap:10px;">
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined"
+                                  style="font-size:16px; color:var(--clr-primary); flex-shrink:0; margin-top:1px;">check_circle</span>
+                            El <strong>código de barras</strong> debe ser único en todo el sistema.
+                        </li>
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined"
+                                  style="font-size:16px; color:var(--clr-primary); flex-shrink:0; margin-top:1px;">check_circle</span>
+                            Tras crear el producto, registre su <strong>inventario</strong> para activar el control de stock.
+                        </li>
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined"
+                                  style="font-size:16px; color:var(--clr-primary); flex-shrink:0; margin-top:1px;">check_circle</span>
+                            La <strong>URL de imagen</strong> es opcional; puede agregarse después.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Nota -->
+            <div class="alert-custom alert-success-custom"
+                 style="border-radius:var(--radius-lg);">
+                <span class="material-symbols-outlined" style="flex-shrink:0;">inventory_2</span>
+                <div style="font-size:.81rem;">
+                    <strong>Siguiente paso:</strong><br>
+                    Después de crear el producto, registre su inventario para habilitar precios y stock.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        // Vista previa de imagen en tiempo real
+        const imageUrlInput = document.getElementById('ImageUrl');
+        const previewCard   = document.getElementById('imagePreviewCard');
+        const previewImg    = document.getElementById('imagePreview');
+
+        if (imageUrlInput) {
+            imageUrlInput.addEventListener('input', function () {
+                const url = this.value.trim();
+                if (url) {
+                    previewImg.src = url;
+                    previewImg.onload  = () => previewCard.style.display = 'block';
+                    previewImg.onerror = () => previewCard.style.display = 'none';
+                } else {
+                    previewCard.style.display = 'none';
+                }
+            });
+        }
+    </script>
+}

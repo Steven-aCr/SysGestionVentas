@@ -1,0 +1,156 @@
+﻿.login-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ── Panel izquierdo (branding) ───────── */
+.login-brand {
+    width: 44%;
+    background: linear-gradient(145deg, #003d6b 0%, #0079c2 60%, #00a8e8 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 56px 48px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+    /* Círculo decorativo de fondo */
+    .login-brand::before {
+        content: '';
+        position: absolute;
+        width: 480px;
+        height: 480px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.05);
+        top: -120px;
+        right: -160px;
+        pointer-events: none;
+    }
+
+    .login-brand::after {
+        content: '';
+        position: absolute;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.04);
+        bottom: -80px;
+        left: -80px;
+        pointer-events: none;
+    }
+
+.login-brand__logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.login-brand__logo-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,.15);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+}
+
+    .login-brand__logo-icon .material-symbols-outlined {
+        font-size: 22px;
+        color: #fff;
+        font-variation-settings: 'FILL' 1, 'wght' 400;
+    }
+
+.login-brand__logo-name {
+    font-size: var(--text-base);
+    font-weight: var(--font-bold);
+    color: #fff;
+    letter-spacing: -0.01em;
+}
+
+.login-brand__body {
+    position: relative;
+    z-index: 1;
+}
+
+.login-brand__title {
+    font-size: 2.25rem;
+    font-weight: var(--font-bold);
+    color: #fff;
+    line-height: 1.2;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+}
+
+.login-brand__subtitle {
+    font-size: var(--text-base);
+    color: rgba(255,255,255,.65);
+    line-height: var(--leading-loose);
+    max-width: 320px;
+}
+
+.login-brand__features {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.login-brand__feature {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: var(--text-sm);
+    color: rgba(255,255,255,.75);
+}
+
+    .login-brand__feature .material-symbols-outlined {
+        font-size: 18px;
+        color: rgba(255,255,255,.5);
+        font-variation-settings: 'FILL' 1, 'wght' 400;
+    }
+
+/* ── Panel derecho (formulario) ───────── */
+.login-form-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--surface-app);
+    padding: var(--space-8);
+}
+
+.login-form-box {
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-form-box__heading {
+    margin-bottom: var(--space-8);
+}
+
+.login-form-box__title {
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+    color: var(--color-neutral-900);
+    letter-spacing: -0.025em;
+    margin-bottom: var(--space-1);
+}
+
+.login-form-box__subtitle {
+    font-size: var(--text-sm);
+    color: var(--color-neutral-500);
+}
+
+/* Responsive: ocultar panel izquierdo en móvil */
+@media (max-width: 768px) {
+    .login-brand {
+        display: none;
+    }
+}

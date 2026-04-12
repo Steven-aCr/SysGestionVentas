@@ -1,0 +1,143 @@
+﻿@model IEnumerable<SysGestionVentas.EN.Person>
+
+@{
+    ViewData["Title"] = "Personas";
+    ViewData["BreadcrumbParent"] = "Gestión";
+}
+
+<div class="page-content">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">Personas</h1>
+            <p class="page-header__subtitle">Gestiona los registros de personas en el sistema</p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <span class="material-symbols-outlined">person_add</span>
+                Nueva Persona
+            </a>
+        </div>
+    </div>
+
+    <!-- Card -->
+    <div class="table-card">
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+            <div class="search-box">
+                <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                <input type="text"
+                       class="table-search__input"
+                       data-table="peopleTable"
+                       data-count="filteredCount"
+                       placeholder="Buscar por nombre, DUI o teléfono..." />
+            </div>
+
+            <span style="font-size:.8rem; color:var(--clr-text-muted);" id="recordCount">
+                @Model.Count() registro(s)
+            </span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table" id="peopleTable">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>DUI</th>
+                        <th>Teléfono</th>
+                        <th>Dirección</th>
+                        <th>Creado</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">person_off</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">
+                                        No hay personas registradas
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var initials = string.Concat(
+                                (item.FullName ?? "")
+                                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                .Take(2)
+                                .Select(w => w[0].ToString().ToUpper())
+                            );
+
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-cell__avatar">@initials</div>
+                                        <div>
+                                            <div class="user-cell__name">@item.FullName</div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>@(string.IsNullOrWhiteSpace(item.Dui) ? "—" : item.Dui)</td>
+
+                                <td>@(string.IsNullOrWhiteSpace(item.PhoneNumber) ? "—" : item.PhoneNumber)</td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    @(string.IsNullOrWhiteSpace(item.Adress) ? "—" : item.Adress)
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    @item.CreatedAt.ToString("dd/MM/yyyy")
+                                </td>
+
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@item.PersonId"
+                                               class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+
+                                        <a asp-action="Edit" asp-route-id="@item.PersonId"
+                                               class="btn btn-icon" title="Editar">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </a>
+
+                                        <a asp-action="Delete" asp-route-id="@item.PersonId"
+                                               class="btn btn-icon btn-danger-outline" title="Eliminar">
+                                            <span class="material-symbols-outlined">block</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="table-footer">
+            <span id="filteredCount">
+                Mostrando @Model.Count() persona(s)
+            </span>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/table-search.js" asp-append-version="true"></script>
+}

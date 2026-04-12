@@ -1,0 +1,88 @@
+﻿@model SysGestionVentas.EN.Person
+
+@{
+    ViewData["Title"] = "Detalle de Persona";
+    ViewData["BreadcrumbParent"] = "Personas";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Detalle de Persona</h1>
+        <p class="page-header__subtitle"><strong>@Model.FullName</strong> — ID #@Model.PersonId</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Edit" asp-route-id="@Model.PersonId" class="btn btn-primary">
+            <span class="material-symbols-outlined">edit</span>
+            Editar
+        </a>
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
+
+<div class="row g-4" style="max-width:800px;">
+    <div class="col-12">
+        <div class="card">
+            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:14px;">
+                <div class="user-cell__avatar" style="width:48px;height:48px;font-size:1rem;">
+                    @(Model.FirstName?[0].ToString().ToUpper() ?? "?")@(Model.LastName?[0].ToString().ToUpper() ?? "")
+                </div>
+                <div>
+                    <div style="font-size:1rem;font-weight:700;color:var(--clr-text);">@Model.FullName</div>
+                    <div style="font-size:.8rem;color:var(--clr-text-muted);">ID #@Model.PersonId</div>
+                </div>
+                @if (Model.Status?.Name == "Activo" || Model.StatusId == 1)
+                {
+                    <span class="badge badge-vendedor ms-auto"><span class="status-dot status-dot--active"></span>&nbsp;@(Model.Status?.Name ?? "Activo")</span>
+                }
+                else
+                {
+                    <span class="badge badge-neutral ms-auto"><span class="status-dot status-dot--inactive"></span>&nbsp;@(Model.Status?.Name ?? "Inactivo")</span>
+                }
+            </div>
+            <div style="padding:22px;">
+                <dl class="row mb-0" style="font-size:.87rem;">
+                    <dt class="col-sm-3" style="font-weight:600;color:var(--clr-text-muted);">Nombre</dt>
+                    <dd class="col-sm-9" style="font-weight:700;">@Model.FirstName</dd>
+
+                    <dt class="col-sm-3" style="font-weight:600;color:var(--clr-text-muted);">Apellido</dt>
+                    <dd class="col-sm-9" style="font-weight:700;">@Model.LastName</dd>
+
+                    <dt class="col-sm-3" style="font-weight:600;color:var(--clr-text-muted);">DUI</dt>
+                    <dd class="col-sm-9">
+                        @if (!string.IsNullOrEmpty(Model.Dui))
+                        {
+                            <code style="background:var(--clr-surface-alt);padding:2px 8px;border-radius:var(--radius-sm);font-size:.82rem;">@Model.Dui</code>
+                        }
+                        else
+                        {
+
+                            <span style="color:var(--clr-text-subtle);">—</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-3" style="font-weight:600;color:var(--clr-text-muted);">Teléfono</dt>
+                    <dd class="col-sm-9">@(Model.PhoneNumber ?? "—")</dd>
+
+                    <dt class="col-sm-3" style="font-weight:600;color:var(--clr-text-muted);">Dirección</dt>
+                    <dd class="col-sm-9">@(Model.Adress ?? "—")</dd>
+
+                    <dt class="col-sm-3" style="font-weight:600;color:var(--clr-text-muted);">Registrado</dt>
+                    <dd class="col-sm-9">@Model.CreatedAt.ToString("dd MMMM yyyy, HH:mm")</dd>
+                </dl>
+            </div>
+            <div style="padding:14px 22px;border-top:1px solid var(--clr-border);display:flex;gap:10px;">
+                <a asp-action="Edit" asp-route-id="@Model.PersonId" class="btn btn-primary btn-sm">
+                    <span class="material-symbols-outlined">edit</span>
+                    Editar
+                </a>
+                <a asp-action="Index" class="btn btn-light btn-sm">
+                    <span class="material-symbols-outlined">list</span>
+                    Ver listado
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

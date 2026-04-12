@@ -1,0 +1,115 @@
+﻿@model SysGestionVentas.EN.Document
+@{
+    ViewData["Title"] = "Nuevo Documento";
+}
+
+<div class="page-container" style="max-width:720px">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">
+                <span class="material-symbols-outlined">add_circle</span>
+                Nuevo Documento
+            </h1>
+            <p class="page-header__subtitle">
+                Complete los datos del encabezado del documento.
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+
+    <div class="card p-4">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="alert-custom alert-danger-custom mb-3">
+            </div>
+
+            @* Tipo y número *@
+            <div class="form-section">
+                <div class="form-section__header">
+                    <span class="material-symbols-outlined form-section__icon">
+                        receipt_long
+                    </span>
+                    <span class="form-section__title">Identificación</span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label asp-for="DocTypeId" class="form-label">Tipo de Documento</label>
+                        <select asp-for="DocTypeId" asp-items="ViewBag.DocTypeList"
+                                class="form-select">
+                            <option value="">— Seleccione —</option>
+                        </select>
+                        <span asp-validation-for="DocTypeId" class="text-danger"></span>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label asp-for="DocNumber" class="form-label">Número de Documento</label>
+                        <input asp-for="DocNumber" class="form-control"
+                               placeholder="Ej: FAC-2025-001" />
+                        <span asp-validation-for="DocNumber" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            @* Fecha y persona *@
+            <div class="form-section">
+                <div class="form-section__header">
+                    <span class="material-symbols-outlined form-section__icon">
+                        person
+                    </span>
+                    <span class="form-section__title">Cliente y Fecha</span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label asp-for="PersonId" class="form-label">Cliente / Persona</label>
+                        <select asp-for="PersonId" asp-items="ViewBag.PersonList"
+                                class="form-select">
+                            <option value="">— Seleccione —</option>
+                        </select>
+                        <span asp-validation-for="PersonId" class="text-danger"></span>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label asp-for="IssueDate" class="form-label">Fecha de Emisión</label>
+                        <input asp-for="IssueDate" class="form-control" type="date" />
+                        <span asp-validation-for="IssueDate" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            @* Estado *@
+            <div class="form-section">
+                <div class="form-section__header">
+                    <span class="material-symbols-outlined form-section__icon">
+                        toggle_on
+                    </span>
+                    <span class="form-section__title">Estado</span>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label asp-for="StatusId" class="form-label">Estado del Documento</label>
+                    <select asp-for="StatusId" asp-items="ViewBag.StatusList"
+                            class="form-select">
+                        <option value="">— Seleccione —</option>
+                    </select>
+                    <span asp-validation-for="StatusId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-actions form-actions--end">
+                <a asp-action="Index" class="btn btn-light">Cancelar</a>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span class="material-symbols-outlined">save</span>
+                    Guardar documento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

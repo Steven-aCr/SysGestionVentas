@@ -1,0 +1,136 @@
+﻿@model SysGestionVentas.EN.Person
+
+@{
+    ViewData["Title"] = "Nueva Persona";
+    ViewData["BreadcrumbParent"] = "Personas";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Nueva Persona</h1>
+        <p class="page-header__subtitle">Registre los datos personales de una persona en el sistema.</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div style="padding:18px 22px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
+                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:20px;">person</span>
+                <span style="font-size:.95rem;font-weight:700;color:var(--clr-text);">Datos Personales</span>
+            </div>
+            <div style="padding:24px;">
+                <form asp-action="Create" class="needs-validation" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="alert-custom alert-danger-custom mb-4" role="alert"></div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <span class="material-symbols-outlined">badge</span>
+                            Identificación
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="FirstName" class="form-label">Primer Nombre <span style="color:var(--clr-danger)">*</span></label>
+                                <input asp-for="FirstName" class="form-control" placeholder="Ej: Juan" required />
+                                <span asp-validation-for="FirstName" class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="LastName" class="form-label">Primer Apellido <span style="color:var(--clr-danger)">*</span></label>
+                                <input asp-for="LastName" class="form-control" placeholder="Ej: Pérez" required />
+                                <span asp-validation-for="LastName" class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Dui" class="form-label">DUI</label>
+                                <input asp-for="Dui" class="form-control" placeholder="12345678-9" />
+                                <span asp-validation-for="Dui" class="text-danger" style="font-size:.78rem;"></span>
+                                <small style="color:var(--clr-text-subtle);">Formato: 12345678-9</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="PhoneNumber" class="form-label">Teléfono <span style="color:var(--clr-danger)">*</span></label>
+                                <input asp-for="PhoneNumber" class="form-control" placeholder="Ej: 7777-8888" required />
+                                <span asp-validation-for="PhoneNumber" class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <span class="material-symbols-outlined">location_on</span>
+                            Dirección
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Adress" class="form-label">Dirección de Residencia <span style="color:var(--clr-danger)">*</span></label>
+                            <textarea asp-for="Adress" class="form-control" rows="2" placeholder="Colonia, calle, número de casa…" style="resize:vertical;" required></textarea>
+                            <span asp-validation-for="Adress" class="text-danger" style="font-size:.78rem;"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-section" style="margin-bottom:0;">
+                        <div class="form-section-title">
+                            <span class="material-symbols-outlined">toggle_on</span>
+                            Estado
+                        </div>
+                        <div>
+                            <label asp-for="StatusId" class="form-label">Estado <span style="color:var(--clr-danger)">*</span></label>
+                            <select asp-for="StatusId" asp-items="ViewBag.StatusId" class="form-select" required>
+                                <option value="">— Seleccione —</option>
+                            </select>
+                            <span asp-validation-for="StatusId" class="text-danger" style="font-size:.78rem;"></span>
+                        </div>
+                    </div>
+
+                    <hr style="border-color:var(--clr-border);margin:24px 0;" />
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-symbols-outlined">save</span>
+                            Guardar Persona
+                        </button>
+                        <a asp-action="Index" class="btn btn-light">
+                            <span class="material-symbols-outlined">close</span>
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div style="position:sticky;top:calc(var(--topbar-h) + 16px);">
+            <div class="card">
+                <div style="padding:14px 18px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:10px;">
+                    <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:18px;">info</span>
+                    <span style="font-size:.88rem;font-weight:700;color:var(--clr-text);">Guía</span>
+                </div>
+                <div style="padding:18px;">
+                    <ul class="list-unstyled mb-0" style="font-size:.82rem;color:var(--clr-text-muted);display:flex;flex-direction:column;gap:10px;">
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined" style="font-size:16px;color:var(--clr-primary);flex-shrink:0;margin-top:1px;">check_circle</span>
+                            El DUI y teléfono deben ser <strong>únicos</strong>.
+                        </li>
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined" style="font-size:16px;color:var(--clr-primary);flex-shrink:0;margin-top:1px;">check_circle</span>
+                            Formato de DUI: <code style="background:var(--clr-surface-alt);padding:1px 5px;border-radius:3px;">12345678-9</code>
+                        </li>
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined" style="font-size:16px;color:var(--clr-primary);flex-shrink:0;margin-top:1px;">check_circle</span>
+                            Una persona puede estar asociada a usuarios, clientes o empleados.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

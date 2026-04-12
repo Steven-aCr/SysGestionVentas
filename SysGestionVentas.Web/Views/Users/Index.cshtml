@@ -1,0 +1,217 @@
+﻿@model List<SysGestionVentas.EN.User>
+
+@{
+    ViewData["Title"] = "Control de Acceso";
+    ViewData["BreadcrumbParent"] = "Seguridad";
+
+    var activeTab = ViewData["ActiveTab"]?.ToString() ?? "all";
+    var search = ViewData["Search"]?.ToString() ?? string.Empty;
+    var countAll = (int)(ViewData["CountAll"] ?? 0);
+    var countInactive = (int)(ViewData["CountInactive"] ?? 0);
+    var countCliente = (int)(ViewData["CountCliente"] ?? 0);
+    var countVendedor = (int)(ViewData["CountVendedor"] ?? 0);
+}
+
+<div class="page-content">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">Control de Acceso</h1>
+            <p class="page-header__subtitle">Gestiona roles y permisos de usuarios del sistema</p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <span class="material-symbols-outlined">person_add</span>
+                Crear Nuevo Usuario
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+        <a class="tabs__link @(activeTab == "all" ? "active" : "")"
+               asp-action="Index" asp-route-tab="all" asp-route-search="@search">
+            Todos los usuarios
+            <span class="tabs__badge">@countAll</span>
+        </a>
+        <a class="tabs__link @(activeTab == "Vendedor" ? "active" : "")"
+               asp-action="Index" asp-route-tab="Vendedor" asp-route-search="@search">
+            Empleados
+            <span class="tabs__badge">@countVendedor</span>
+        </a>
+        <a class="tabs__link @(activeTab == "Cliente" ? "active" : "")"
+               asp-action="Index" asp-route-tab="Cliente" asp-route-search="@search">
+            Clientes
+            <span class="tabs__badge">@countCliente</span>
+        </a>
+        <a class="tabs__link @(activeTab == "inactive" ? "active" : "")"
+               asp-action="Index" asp-route-tab="inactive" asp-route-search="@search">
+            Inactivos
+            <span class="tabs__badge">@countInactive</span>
+        </a>
+    </nav>
+
+    <!-- Card -->
+    <div class="table-card">
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+            <form asp-action="Index" method="get"
+                  style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;">
+                <input type="hidden" name="tab" value="@activeTab" />
+
+                <div class="search-box">
+                    <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                    <input type="text" name="search" value="@search"
+                           placeholder="Buscar usuarios, roles…" autocomplete="off" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-symbols-outlined">search</span>
+                    Buscar
+                </button>
+
+                @if (!string.IsNullOrWhiteSpace(search))
+                {
+                    <a asp-action="Index" asp-route-tab="@activeTab" class="btn btn-light">
+                        <span class="material-symbols-outlined">close</span>
+                        Limpiar
+                    </a>
+                }
+            </form>
+
+            <span style="font-size:.8rem; color:var(--clr-text-muted);">
+                @Model.Count registro(s)
+            </span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Tipo</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">manage_accounts</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">
+                                        No se encontraron usuarios
+                                        @if (activeTab == "inactive")
+                                        {
+                                            <text> inactivos</text>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(search))
+                                        {
+                                            <text> con el término "<strong>@search</strong>"</text>
+                                        }
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var user in Model)
+                        {
+                            var isActive = user.Status?.Name?.Equals("Activo", StringComparison.OrdinalIgnoreCase) ?? false;
+                            var fullName = user.Person?.FullName ?? user.UserName ?? "?";
+                            var initials = string.Concat(
+                                fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                        .Take(2).Select(w => w[0].ToString().ToUpper()));
+                            var rolName = user.Rol?.Name ?? string.Empty;
+
+                            var tipoLabel = rolName switch
+                            {
+                                "Administrador" or "Vendedor" or "Gerente" => "Empleado",
+                                "Cliente" => "Cliente",
+                                _ => "—"
+                            };
+
+                            var badgeClass = rolName switch
+                            {
+                                "Administrador" => "badge-admin",
+                                "Gerente" => "badge-manager",
+                                "Vendedor" => "badge-vendedor",
+                                "Cliente" => "badge-cliente",
+                                _ => "badge-neutral"
+                            };
+
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-cell__avatar">@initials</div>
+                                        <div>
+                                            <div class="user-cell__name">@fullName</div>
+                                            <div class="user-cell__meta">@(user.Email ?? string.Empty)</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="color:var(--clr-text-muted);">@tipoLabel</td>
+                                <td>
+                                    <span class="badge @badgeClass">
+                                        @(string.IsNullOrEmpty(rolName) ? "Sin rol" : rolName)
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="status">
+                                        <span class="status-dot @(isActive ? "status-dot--active" : "status-dot--inactive")"></span>
+                                        <span>@(user.Status?.Name ?? "—")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@user.UserId"
+                                               class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@user.UserId"
+                                               class="btn btn-icon" title="Editar usuario">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </a>
+                                        @if (isActive)
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@user.UserId"
+                                                   class="btn btn-icon btn-danger-outline" title="Desactivar usuario">
+                                                <span class="material-symbols-outlined">block</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="table-footer">
+            <span>
+                Mostrando <strong>@Model.Count</strong>
+                @(activeTab == "inactive" ? "usuario(s) inactivo(s)" :
+                  activeTab == "Vendedor" ? "empleado(s)" :
+                  activeTab == "Cliente" ? "cliente(s)" :
+                  "usuario(s) en total")
+            </span>
+            <span>
+                Última auditoría de seguridad:
+                <strong style="color:var(--clr-text-muted);">en curso</strong>
+            </span>
+        </div>
+
+    </div>
+</div>
