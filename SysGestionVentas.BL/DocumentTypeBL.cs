@@ -1,150 +1,105 @@
 ﻿using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
-namespace BDGestionVentas.BL
+namespace SysGestionVentas.BL
 {
-    /// <summary>
-    /// Capa de lógica de negocio para la entidad <see cref="DocumentType"/>.
-    /// Actúa como intermediario entre la capa de presentación y la capa DAL,
-    /// delegando las operaciones CRUD a <see cref="DocumentTypeDAL"/>.
-    /// Esta entidad define los tipos de documentos del sistema
-    /// (facturas, notas de crédito, cotizaciones, etc.) y requiere
-    /// que el campo <c>Name</c> sea único.
-    /// </summary>
     public class DocumentTypeBL
     {
+        #region "Métodos Privados"
+
+        /// <summary>
+        /// Valida las propiedades de un objeto <see cref="DocumentType"/> utilizando los
+        /// <see cref="ValidationAttribute"/> definidos en la entidad (DataAnnotations).
+        /// </summary>
+        /// <param name="pDocType">Objeto <see cref="DocumentType"/> a validar.</param>
+        /// <exception cref="ValidationException">
+        /// Se lanza si alguna propiedad no cumple con las anotaciones de validación.
+        /// El mensaje contiene la descripción del primer error encontrado.
+        /// </exception>
+        private static void ValidarEntidad(DocumentType pDocType)
+        {
+            var contexto = new ValidationContext(pDocType);
+            var resultados = new List<ValidationResult>();
+
+            bool esValido = Validator.TryValidateObject(pDocType, contexto, resultados, validateAllProperties: true);
+
+            if (!esValido)
+                throw new ValidationException(resultados[0].ErrorMessage);
+        }
+
+        #endregion
+
         #region "CRUD"
 
         /// <summary>
-        /// Guarda un nuevo tipo de documento en la base de datos de forma asíncrona,
-        /// invocando la lógica de validación definida en <see cref="DocumentTypeDAL.GuardarAsync"/>.
+        /// Valida y registra un nuevo tipo de documento en el sistema.
+        /// Verifica unicidad del nombre en la capa DAL.
         /// </summary>
-        /// <param name="pDocType">
-        /// Objeto <see cref="DocumentType"/> con los datos del nuevo tipo de documento.
-        /// El campo <c>Name</c> es requerido y debe ser único.
-        /// El campo <c>Description</c> es opcional.
-        /// </param>
-        /// <returns>
-        /// Número de filas afectadas en la base de datos.
-        /// Retorna <c>1</c> si el tipo de documento fue guardado correctamente,
-        /// <c>0</c> si ocurrió algún error.
-        /// </returns>
+        /// <param name="pDocType">Objeto <see cref="DocumentType"/> con los datos a guardar.</param>
+        /// <returns>Número de filas afectadas. Retorna <c>1</c> si se guardó correctamente.</returns>
+        /// <exception cref="ValidationException">Se lanza si los datos no pasan la validación de la entidad.</exception>
         /// <exception cref="Exception">
-        /// Se lanza si el <c>Name</c> del tipo de documento ya existe, o si ocurre
-        /// cualquier error durante la operación.
+        /// Se lanza si el nombre ya existe o si ocurre un error en base de datos.
         /// </exception>
-        public async Task<int> GuardarAsync(DocumentType pDocType)
+        public static async Task<int> GuardarAsync(DocumentType pDocType)
         {
+            ValidarEntidad(pDocType);
             return await DocumentTypeDAL.GuardarAsync(pDocType);
         }
 
         /// <summary>
-        /// Modifica los datos de un tipo de documento existente de forma asíncrona,
-        /// invocando la lógica de actualización definida en <see cref="DocumentTypeDAL.ModificarAsync"/>.
+        /// Valida y modifica los datos de un tipo de documento existente en el sistema.
+        /// Verifica unicidad del nombre en la capa DAL.
         /// </summary>
         /// <param name="pDocType">
-        /// Objeto <see cref="DocumentType"/> con los datos actualizados.
-        /// El campo <c>DocTypeId</c> es requerido para identificar el registro a modificar.
+        /// Objeto <see cref="DocumentType"/> con el <c>DocTypeId</c> del registro a modificar
+        /// y los nuevos valores a actualizar.
         /// </param>
-        /// <returns>
-        /// Número de filas afectadas en la base de datos.
-        /// Retorna <c>1</c> si la modificación fue exitosa, <c>0</c> si ocurrió algún error.
-        /// </returns>
+        /// <returns>Número de filas afectadas. Retorna <c>1</c> si se modificó correctamente.</returns>
+        /// <exception cref="ValidationException">Se lanza si los datos no pasan la validación de la entidad.</exception>
         /// <exception cref="Exception">
-        /// Se lanza si el <c>Name</c> ya está en uso por otro tipo de documento, o si
-        /// ocurre cualquier error durante la operación.
+        /// Se lanza si el registro no existe, si el nombre está duplicado,
+        /// o si ocurre un error en base de datos.
         /// </exception>
-        public async Task<int> ModificarAsync(DocumentType pDocType)
+        public static async Task<int> ModificarAsync(DocumentType pDocType)
         {
+            if (pDocType.DocTypeId <= 0)
+                throw new Exception("El ID de tipo de documento no es válido.");
+
+            ValidarEntidad(pDocType);
             return await DocumentTypeDAL.ModificarAsync(pDocType);
         }
 
         /// <summary>
-        /// Elimina un tipo de documento de la base de datos de forma asíncrona,
-        /// invocando la lógica de eliminación definida en <see cref="DocumentTypeDAL.EliminarAsync"/>.
+        /// Obtiene un tipo de documento específico por su identificador.
         /// </summary>
-        /// <param name="pDocType">
-        /// Objeto <see cref="DocumentType"/> que debe contener el <c>DocTypeId</c>
-        /// del tipo de documento a eliminar.
-        /// </param>
-        /// <returns>
-        /// Número de filas afectadas en la base de datos.
-        /// Retorna <c>1</c> si la eliminación fue exitosa, <c>0</c> si ocurrió algún error.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Se lanza si ocurre cualquier error durante la operación de eliminación.
-        /// Tener en cuenta que si el tipo de documento tiene registros relacionados
-        /// en la tabla <c>Document</c>, la base de datos rechazará la eliminación
-        /// por integridad referencial.
-        /// </exception>
-        public async Task<int> EliminarAsync(DocumentType pDocType)
+        /// <remarks>
+        /// <see cref="DocumentType"/> no implementa eliminación lógica propia dado que su estado
+        /// se controla mediante el campo <c>StatusId</c> gestionado directamente en el DAL.
+        /// Para desactivar un tipo de documento, utilice <see cref="ModificarAsync"/> ajustando
+        /// el <c>StatusId</c> al estado inactivo correspondiente.
+        /// </remarks>
+        /// <param name="pDocType">Objeto <see cref="DocumentType"/> con el <c>DocTypeId</c> a buscar.</param>
+        /// <returns>El objeto <see cref="DocumentType"/> encontrado, o <c>null</c> si no existe.</returns>
+        /// <exception cref="Exception">Se lanza si el ID no es válido o si ocurre un error en base de datos.</exception>
+        public static async Task<DocumentType?> ObtenerPorIdAsync(DocumentType pDocType)
         {
-            return await DocumentTypeDAL.EliminarAsync(pDocType);
-        }
+            if (pDocType.DocTypeId <= 0)
+                throw new Exception("El ID de tipo de documento no es válido.");
 
-        /// <summary>
-        /// Obtiene la lista completa de tipos de documento registrados en la base de datos
-        /// de forma asíncrona. Esta entidad no tiene relaciones de navegación,
-        /// por lo que no se aplica ningún <c>Include</c>.
-        /// </summary>
-        /// <param name="pDocType">
-        /// Objeto <see cref="DocumentType"/> utilizado como parámetro de entrada.
-        /// En esta versión no se aplican filtros; se retornan todos los registros.
-        /// </param>
-        /// <returns>
-        /// Lista de objetos <see cref="DocumentType"/>.
-        /// Retorna una lista vacía si no hay registros o si ocurre un error.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Se lanza si ocurre cualquier error durante la consulta.
-        /// </exception>
-        public async Task<List<DocumentType>> ObtenerTodosAsync(DocumentType pDocType)
-        {
-            return await DocumentTypeDAL.ObtenerTodosAsync(pDocType);
-        }
-
-        /// <summary>
-        /// Obtiene un tipo de documento específico de la base de datos de forma asíncrona,
-        /// buscándolo por su <c>DocTypeId</c>.
-        /// </summary>
-        /// <param name="pDocType">
-        /// Objeto <see cref="DocumentType"/> que debe contener el <c>DocTypeId</c>
-        /// del tipo de documento a buscar.
-        /// </param>
-        /// <returns>
-        /// Objeto <see cref="DocumentType"/> si fue encontrado;
-        /// un objeto vacío si no existe el registro.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Se lanza si ocurre cualquier error durante la consulta.
-        /// </exception>
-        public async Task<DocumentType> ObtenerPorIdAsync(DocumentType pDocType)
-        {
             return await DocumentTypeDAL.ObtenerPorIdAsync(pDocType);
         }
 
-        public async Task<IEnumerable> GetAllAsync()
+        /// <summary>
+        /// Obtiene una lista de tipos de documento aplicando filtros opcionales.
+        /// </summary>
+        /// <param name="pDocType">Objeto <see cref="DocumentType"/> usado como filtro de búsqueda.</param>
+        /// <returns>Lista de objetos <see cref="DocumentType"/> ordenados por nombre de forma ascendente.</returns>
+        /// <exception cref="Exception">Se lanza si ocurre un error en base de datos.</exception>
+        public static async Task<List<DocumentType>> ObtenerTodosAsync(DocumentType pDocType)
         {
-            throw new NotImplementedException();
-        }
-
-        public async Task EliminarAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<string?> ObtenerTodosAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<string?> ObtenerPorIdAsync(int value)
-        {
-            throw new NotImplementedException();
+            return await DocumentTypeDAL.ObtenerTodosAsync(pDocType);
         }
 
         #endregion

@@ -241,5 +241,19 @@ namespace SysGestionVentas.DAL
         }
 
         #endregion
+
+        /// <summary>
+        /// Registra un nuevo detalle de documento utilizando un contexto de base de datos externo,
+        /// permitiendo que la operación participe en una transacción coordinada con otras entidades.
+        /// No llama a <c>SaveChangesAsync</c>; esa responsabilidad recae en el llamador.
+        /// </summary>
+        /// <param name="pDocumentDetail">Objeto <see cref="DocumentDetail"/> con los datos del detalle a guardar.</param>
+        /// <param name="pDbContexto">Contexto de base de datos activo proporcionado externamente.</param>
+        /// <exception cref="Exception">Se lanza si ocurre un error durante la operación.</exception>
+        public static async Task GuardarEnTransaccionAsync(DocumentDetail pDocumentDetail, DbContexto pDbContexto)
+        {
+            pDbContexto.DocumentDetail.Add(pDocumentDetail);
+            await Task.CompletedTask;
+        }
     }
 }

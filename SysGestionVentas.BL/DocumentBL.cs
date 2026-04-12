@@ -5,6 +5,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SysGestionVentas.BL
 {
+    /// <summary>
+    /// Capa de lógica de negocio para la entidad <see cref="Document"/>.
+    /// Orquesta validaciones, reglas del ciclo de vida documental y delega
+    /// la persistencia a <see cref="DocumentDAL"/>.
+    /// </summary>
     public class DocumentBL
     {
         #region "Métodos Privados"
@@ -15,16 +20,13 @@ namespace SysGestionVentas.BL
         /// </summary>
         /// <param name="pDocument">Objeto <see cref="Document"/> a validar.</param>
         /// <exception cref="ValidationException">
-        /// Se lanza si alguna propiedad no cumple con las anotaciones de validación definidas en la entidad.
-        /// El mensaje de la excepción contiene la descripción del primer error encontrado.
+        /// Se lanza si alguna propiedad no cumple con las anotaciones de validación.
         /// </exception>
         private static void ValidarEntidad(Document pDocument)
         {
             var contexto = new ValidationContext(pDocument);
             var resultados = new List<ValidationResult>();
-
             bool esValido = Validator.TryValidateObject(pDocument, contexto, resultados, validateAllProperties: true);
-
             if (!esValido)
                 throw new ValidationException(resultados[0].ErrorMessage);
         }
@@ -36,16 +38,10 @@ namespace SysGestionVentas.BL
         /// <summary>
         /// Valida y registra un nuevo documento en el sistema.
         /// </summary>
-        /// <param name="pDocument">
-        /// Objeto <see cref="Document"/> con los datos del documento a registrar.
-        /// Los campos <c>DocTypeId</c>, <c>DocNumber</c>, <c>IssueDate</c> y <c>PersonId</c>
-        /// son obligatorios.
-        /// </param>
-        /// <returns>
-        /// Número de filas afectadas. Retorna <c>1</c> si se guardó correctamente, <c>0</c> si falló.
-        /// </returns>
+        /// <param name="pDocument">Objeto <see cref="Document"/> con los datos a guardar.</param>
+        /// <returns>Número de filas afectadas. Retorna <c>1</c> si se guardó correctamente.</returns>
         /// <exception cref="ValidationException">Se lanza si los datos no pasan la validación de la entidad.</exception>
-        /// <exception cref="Exception">Se lanza si ocurre un error durante la operación en base de datos.</exception>
+        /// <exception cref="Exception">Se lanza si ocurre un error en base de datos.</exception>
         public static async Task<int> GuardarAsync(Document pDocument)
         {
             ValidarEntidad(pDocument);
@@ -53,54 +49,54 @@ namespace SysGestionVentas.BL
         }
 
         /// <summary>
-        /// Valida y modifica los datos de un documento existente en el sistema.
+        /// Valida y modifica los datos editables de un documento existente.
+        /// Los campos <c>DocNumber</c>, <c>DocTypeId</c> y <c>CreatedByUser</c>
+        /// no son modificables tras la emisión del documento.
         /// </summary>
         /// <param name="pDocument">
         /// Objeto <see cref="Document"/> con el <c>DocumentId</c> del registro a modificar
         /// y los nuevos valores a actualizar.
         /// </param>
-        /// <returns>
-        /// Número de filas afectadas. Retorna <c>1</c> si se modificó correctamente, <c>0</c> si falló.
-        /// </returns>
+        /// <returns>Número de filas afectadas. Retorna <c>1</c> si se modificó correctamente.</returns>
         /// <exception cref="ValidationException">Se lanza si los datos no pasan la validación de la entidad.</exception>
         /// <exception cref="Exception">Se lanza si el documento no existe o si ocurre un error en base de datos.</exception>
         public static async Task<int> ModificarAsync(Document pDocument)
         {
+            if (pDocument.DocumentId <= 0)
+                throw new Exception("El ID de documento no es válido.");
+
             ValidarEntidad(pDocument);
             return await DocumentDAL.ModificarAsync(pDocument);
         }
 
         /// <summary>
-        /// Realiza la eliminación lógica de un documento, cambiando su estado en el sistema.
+        /// Realiza la eliminación lógica (anulación) de un documento, cambiando su estado.
         /// No elimina el registro físicamente de la base de datos.
         /// </summary>
         /// <param name="pDocument">
         /// Objeto <see cref="Document"/> con el <c>DocumentId</c> del registro
-        /// y el <c>StatusId</c> correspondiente al estado inactivo.
+        /// y el <c>StatusId</c> correspondiente al estado "Anulado".
         /// </param>
-        /// <returns>
-        /// Número de filas afectadas. Retorna <c>1</c> si se cambió el estado correctamente, <c>0</c> si falló.
-        /// </returns>
-        /// <exception cref="Exception">Se lanza si el ID no es válido o si ocurre un error en base de datos.</exception>
+        /// <returns>Número de filas afectadas. Retorna <c>1</c> si se anuló correctamente.</returns>
+        /// <exception cref="Exception">Se lanza si el ID no es válido, el documento no existe, o si ocurre un error en base de datos.</exception>
         public static async Task<int> EliminarAsync(Document pDocument)
         {
             if (pDocument.DocumentId <= 0)
                 throw new Exception("El ID de documento no es válido.");
 
             if (pDocument.StatusId <= 0)
-                throw new Exception("Debe especificar un estado válido para la eliminación lógica.");
+                throw new Exception("Debe especificar un estado válido para la anulación del documento.");
 
             return await DocumentDAL.EliminarAsync(pDocument);
         }
 
         /// <summary>
-        /// Obtiene un documento específico por su identificador, incluyendo
-        /// sus relaciones con <see cref="DocumentType"/> y <see cref="Person"/>.
+        /// Obtiene un documento específico por su identificador, incluyendo sus relaciones
+        /// con <see cref="DocumentType"/>, <see cref="Person"/>, <see cref="Status"/>
+        /// y el <see cref="User"/> que lo creó.
         /// </summary>
         /// <param name="pDocument">Objeto <see cref="Document"/> con el <c>DocumentId</c> a buscar.</param>
-        /// <returns>
-        /// El objeto <see cref="Document"/> encontrado, o <c>null</c> si no existe.
-        /// </returns>
+        /// <returns>El objeto <see cref="Document"/> encontrado, o <c>null</c> si no existe.</returns>
         /// <exception cref="Exception">Se lanza si el ID no es válido o si ocurre un error en base de datos.</exception>
         public static async Task<Document?> ObtenerPorIdAsync(Document pDocument)
         {
@@ -112,20 +108,9 @@ namespace SysGestionVentas.BL
 
         /// <summary>
         /// Obtiene una lista de documentos aplicando filtros opcionales.
-        /// Los parámetros con valor <c>null</c> o <c>0</c> son ignorados en el filtro.
         /// </summary>
-        /// <param name="pDocument">
-        /// Objeto <see cref="Document"/> usado como filtro de búsqueda:
-        /// <list type="bullet">
-        ///   <item><description><c>DocNumber</c>: filtra por coincidencia parcial en el número (null = sin filtro).</description></item>
-        ///   <item><description><c>DocTypeId</c>: filtra por tipo de documento (0 = sin filtro).</description></item>
-        ///   <item><description><c>PersonId</c>: filtra por persona asociada (0 = sin filtro).</description></item>
-        /// </list>
-        /// </param>
-        /// <returns>
-        /// Lista de objetos <see cref="Document"/> que cumplen los filtros indicados,
-        /// ordenados por fecha de emisión de forma ascendente.
-        /// </returns>
+        /// <param name="pDocument">Objeto <see cref="Document"/> usado como filtro de búsqueda.</param>
+        /// <returns>Lista de objetos <see cref="Document"/> ordenados por fecha de emisión descendente.</returns>
         /// <exception cref="Exception">Se lanza si ocurre un error en base de datos.</exception>
         public static async Task<List<Document>> ObtenerTodosAsync(Document pDocument)
         {
@@ -138,11 +123,9 @@ namespace SysGestionVentas.BL
 
         /// <summary>
         /// Realiza una búsqueda avanzada de documentos con soporte para paginación.
-        /// Valida que los parámetros de paginación sean coherentes antes de ejecutar la consulta.
         /// </summary>
         /// <param name="pPagedQuery">
-        /// Objeto <see cref="PagedQuery{Document}"/> que define los filtros, el tamaño de página
-        /// y el número de página. No puede ser <c>null</c>.
+        /// Objeto <see cref="PagedQuery{Document}"/> con los filtros y parámetros de paginación.
         /// </param>
         /// <returns>
         /// Objeto <see cref="PagedResult{Document}"/> con la lista de documentos encontrados

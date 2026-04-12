@@ -1,78 +1,113 @@
 ﻿@model SysGestionVentas.EN.User
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Detalle de Usuario";
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>User</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UserName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.UserName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Email)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Email)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PasswordHash)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.PasswordHash)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedAt)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CreatedAt)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TempPasswordHash)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TempPasswordHash)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TempPasswordExpiry)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.TempPasswordExpiry)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.MustChangePassword)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.MustChangePassword)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Rol)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Rol.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Person)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Person.Adress)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Status.Name)
-        </dd>
-    </dl>
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Detalle de Usuario</h1>
+        <p class="page-header__subtitle">@Model.Person?.FullName — @Model.UserName</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-primary">
+            <span class="material-symbols-outlined">edit</span>
+            Editar
+        </a>
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.UserId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <!-- Tarjeta identidad -->
+        <div class="card mb-4">
+            <div style="padding:28px 24px;text-align:center;border-bottom:1px solid var(--clr-border);">
+                <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--clr-primary),var(--clr-primary-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;margin:0 auto 14px;">
+                    @(Model.Person?.FirstName?[0].ToString().ToUpper() ?? "U")@(Model.Person?.LastName?[0].ToString().ToUpper() ?? "")
+                </div>
+                <div style="font-size:1.05rem;font-weight:700;color:var(--clr-text);">@Model.Person?.FullName</div>
+                <div style="font-size:.83rem;color:var(--clr-text-muted);margin-top:4px;">@Model.Email</div>
+                <div class="mt-2">
+                    <span class="badge @(Model.Rol?.Name == "Administrador" ? "badge-admin" : Model.Rol?.Name == "Vendedor" ? "badge-vendedor" : "badge-cliente")">
+                        @(Model.Rol?.Name ?? "—")
+                    </span>
+                </div>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px;border-bottom:1px solid var(--clr-border);font-size:.85rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Estado</span>
+                    <div class="status">
+                        <span class="status-dot @(Model.Status?.Name == "Activo" ? "status-dot--active" : "status-dot--inactive")"></span>
+                        <span>@(Model.Status?.Name ?? "—")</span>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 20px;font-size:.85rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Registrado</span>
+                    <span style="color:var(--clr-text-muted);">@Model.CreatedAt.ToString("dd/MM/yyyy")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <!-- Datos personales -->
+        <div class="card mb-4">
+            <div style="padding:14px 20px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:8px;">
+                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:18px;">person</span>
+                <span style="font-size:.9rem;font-weight:700;">Datos Personales</span>
+            </div>
+            <div>
+                @{
+                    var fields = new[]
+                    {
+                        ("Nombre",    Model.Person?.FirstName ?? "—"),
+                        ("Apellido",  Model.Person?.LastName  ?? "—"),
+                        ("DUI",       Model.Person?.Dui       ?? "—"),
+                        ("Teléfono",  Model.Person?.PhoneNumber ?? "—"),
+                        ("Dirección", Model.Person?.Adress    ?? "—"),
+                    };
+                }
+                @foreach (var (label, value) in fields)
+                {
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 20px;border-bottom:1px solid var(--clr-border);font-size:.85rem;">
+                        <span style="font-weight:600;color:var(--clr-text-muted);">@label</span>
+                        <span>@value</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Acceso -->
+        <div class="card">
+            <div style="padding:14px 20px;border-bottom:1px solid var(--clr-border);display:flex;align-items:center;gap:8px;">
+                <span class="material-symbols-outlined" style="color:var(--clr-primary);font-size:18px;">key</span>
+                <span style="font-size:.9rem;font-weight:700;">Datos de Acceso</span>
+            </div>
+            <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 20px;border-bottom:1px solid var(--clr-border);font-size:.85rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Usuario</span>
+                    <strong>@Model.UserName</strong>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 20px;font-size:.85rem;">
+                    <span style="font-weight:600;color:var(--clr-text-muted);">Correo</span>
+                    <span>@Model.Email</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-3 mt-3">
+            <a asp-action="Edit" asp-route-id="@Model.UserId" class="btn btn-primary">
+                <span class="material-symbols-outlined">edit</span>
+                Editar Usuario
+            </a>
+            <a asp-action="Delete" asp-route-id="@Model.UserId" class="btn btn-danger-outline">
+                <span class="material-symbols-outlined">block</span>
+                Desactivar
+            </a>
+        </div>
+    </div>
 </div>

@@ -1,0 +1,71 @@
+﻿@model SysGestionVentas.EN.Document
+@{
+    ViewData["Title"] = $"Anular Documento #{Model.DocNumber}";
+}
+
+<div class="page-container" style="max-width:560px">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title" style="color:var(--clr-danger)">
+                <span class="material-symbols-outlined">cancel</span>
+                Anular Documento
+            </h1>
+            <p class="page-header__subtitle">
+                Esta acción cambiará el estado del documento a "Anulado".
+            </p>
+        </div>
+    </div>
+
+    <div class="card p-4">
+        <div class="alert-custom alert-warning-custom mb-4">
+            <span class="material-symbols-outlined">warning</span>
+            <span>
+                Los movimientos de inventario ya generados <strong>no</strong> se revierten
+                automáticamente al anular el documento. Revise el inventario si es necesario.
+            </span>
+        </div>
+
+        <dl class="row mb-4" style="font-size:.875rem;row-gap:.5rem">
+            <dt class="col-5" style="color:var(--clr-text-muted)">Número</dt>
+            <dd class="col-7 fw-600">@Model.DocNumber</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Tipo</dt>
+            <dd class="col-7">@(Model.DocumentType?.Name ?? "—")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Fecha emisión</dt>
+            <dd class="col-7">@Model.IssueDate.ToString("dd/MM/yyyy")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Cliente</dt>
+            <dd class="col-7">@(Model.Person?.FullName ?? "—")</dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Total</dt>
+            <dd class="col-7 fw-600" style="color:var(--clr-primary)">
+                $@Model.TotalAmount.ToString("N2")
+            </dd>
+
+            <dt class="col-5" style="color:var(--clr-text-muted)">Estado actual</dt>
+            <dd class="col-7">
+                <span class="status">
+                    <span class="status-dot status-dot--active"></span>
+                    @(Model.Status?.Name ?? "—")
+                </span>
+            </dd>
+        </dl>
+
+        <form asp-action="Delete" asp-route-id="@Model.DocumentId" method="post">
+            @Html.AntiForgeryToken()
+            <div class="form-actions form-actions--end">
+                <a asp-action="Details" asp-route-id="@Model.DocumentId"
+                       class="btn btn-light">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn btn-danger-outline"
+                        style="background:var(--clr-danger);color:#fff;border-color:var(--clr-danger)">
+                    <span class="material-symbols-outlined">cancel</span>
+                    Confirmar anulación
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

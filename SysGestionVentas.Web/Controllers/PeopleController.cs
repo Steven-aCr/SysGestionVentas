@@ -1,150 +1,171 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace SysGestionVentas.Web.Controllers
 {
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+    [Authorize(Roles = "Administrador")]
     public class PeopleController : Controller
     {
-        // GET: Suppliers
-        public async Task<IActionResult> Index()
+        private readonly DbContexto _context;
+
+        public PeopleController(DbContexto context)
         {
-            try
-            {
-                var suppliers = await SupplierDAL.ObtenerTodosAsync(new Supplier());
-                return View(suppliers);
-            }
-            catch (Exception ex)
-            {
-                TempData["Error"] = ex.Message;
-                return View(new List<Supplier>());
-            }
+            _context = context;
         }
 
-        // GET: Suppliers/Details/5
+        // GET: People
+        public async Task<IActionResult> Index()
+        {
+            var dbContexto = _context.Person.Include(p => p.Status);
+            return View(await dbContexto.ToListAsync());
+        }
+
+        // GET: People/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
+            {
                 return NotFound();
-            try
-            {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
-                    return NotFound();
-                return View(supplier);
             }
-            catch (Exception ex)
+
+            var person = await _context.Person
+                .Include(p => p.Status)
+                .FirstOrDefaultAsync(m => m.PersonId == id);
+            if (person == null)
             {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
+
+            return View(person);
         }
 
-        // GET: Suppliers/Create
+        // GET: People/Create
         public IActionResult Create()
         {
+            ViewData["StatusId"] = new SelectList(_context.Status, "StatusId", "Name");
             return View();
         }
 
-        // POST: Suppliers/Create
+        // POST: People/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Supplier pSupplier)
+        public async Task<IActionResult> Create([Bind("PersonId,FirstName,LastName,Adress,PhoneNumber,Dui,CreatedAt,StatusId")] Person person)
         {
-            if (!ModelState.IsValid)
-                return View(pSupplier);
-            try
+            if (ModelState.IsValid)
             {
-                await SupplierDAL.GuardarAsync(pSupplier);
-                TempData["Success"] = "Proveedor creado correctamente.";
+                _context.Add(person);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return View(pSupplier);
-            }
+            ViewData["StatusId"] = new SelectList(_context.Status, "StatusId", "Name", person.StatusId);
+            return View(person);
         }
 
-        // GET: Suppliers/Edit/5
+        // GET: People/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
+            {
                 return NotFound();
-            try
-            {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
-                    return NotFound();
-                return View(supplier);
             }
-            catch (Exception ex)
+
+            var person = await _context.Person.FindAsync(id);
+            if (person == null)
             {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
+            ViewData["StatusId"] = new SelectList(_context.Status, "StatusId", "Name", person.StatusId);
+            return View(person);
         }
 
-        // POST: Suppliers/Edit/5
+        // POST: People/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Supplier pSupplier)
+        public async Task<IActionResult> Edit(int id, [Bind("PersonId,FirstName,LastName,Adress,PhoneNumber,Dui,CreatedAt,StatusId")] Person person)
         {
-            if (id != pSupplier.SupplierId)
-                return NotFound();
-            if (!ModelState.IsValid)
-                return View(pSupplier);
-            try
+            if (id != person.PersonId)
             {
-                await SupplierDAL.ModificarAsync(pSupplier);
-                TempData["Success"] = "Proveedor modificado correctamente.";
+                return NotFound();
+            }
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(person);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!PersonExists(person.PersonId))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
                 return RedirectToAction(nameof(Index));
             }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return View(pSupplier);
-            }
+            ViewData["StatusId"] = new SelectList(_context.Status, "StatusId", "Name", person.StatusId);
+            return View(person);
         }
 
-        // GET: Suppliers/Delete/5
+        // GET: People/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
+            {
                 return NotFound();
-            try
-            {
-                var supplier = await SupplierDAL.ObtenerPorIdAsync(new Supplier { SupplierId = id.Value });
-                if (supplier == null)
-                    return NotFound();
-                return View(supplier);
             }
-            catch (Exception ex)
+
+            var person = await _context.Person
+                .Include(p => p.Status)
+                .FirstOrDefaultAsync(m => m.PersonId == id);
+            if (person == null)
             {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
+                return NotFound();
             }
+
+            return View(person);
         }
 
-        // POST: Suppliers/Delete/5
+        // POST: People/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            try
+            var person = await _context.Person.FindAsync(id);
+            if (person != null)
             {
-                await SupplierDAL.EliminarAsync(new Supplier { SupplierId = id });
-                TempData["Success"] = "Proveedor eliminado correctamente.";
-                return RedirectToAction(nameof(Index));
+                _context.Person.Remove(person);
             }
-            catch (Exception ex)
-            {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Index));
-            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        private bool PersonExists(int id)
+        {
+            return _context.Person.Any(e => e.PersonId == id);
+        }
+
+        private async Task CargarListasAsync()
+        {
+            ViewBag.StatusList = new SelectList(
+                await StatusDAL.ObtenerPorTiposAsync(new List<int> { 1 }, pIsActive: true),
+                "StatusId", "Name");
         }
     }
 }
-

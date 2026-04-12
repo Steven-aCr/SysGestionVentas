@@ -1,53 +1,135 @@
 ﻿@model IEnumerable<SysGestionVentas.EN.Permission>
 
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Permisos";
+    ViewData["BreadcrumbParent"] = "Seguridad";
 }
 
-<h1>Index</h1>
+<div class="page-content">
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedAt)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsActive)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedAt)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsActive)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.PermissionId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.PermissionId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.PermissionId">Delete</a>
-            </td>
-        </tr>
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">Permisos</h1>
+            <p class="page-header__subtitle">Gestiona los permisos del sistema</p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <span class="material-symbols-outlined">add</span>
+                Nuevo Permiso
+            </a>
+        </div>
+    </div>
+
+    <!-- Card -->
+    <div class="table-card">
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+            <div class="search-box">
+                <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                <input type="text"
+                       class="table-search__input"
+                       data-table="permissionTable"
+                       data-count="filteredCount"
+                       placeholder="Buscar por nombre o descripción..." />
+            </div>
+
+            <span style="font-size:.8rem; color:var(--clr-text-muted);" id="recordCount">
+                @Model.Count() registro(s)
+            </span>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table" id="permissionTable">
+                <thead>
+                    <tr>
+                        <th>Permiso</th>
+                        <th>Descripción</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">vpn_key_off</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">
+                                        No hay permisos registrados
+                                    </p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            var isActive = item.IsActive;
+
+                            <tr>
+                                <td>
+                                    <strong>@item.Name</strong>
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    @(string.IsNullOrWhiteSpace(item.Description) ? "—" : item.Description)
+                                </td>
+
+                                <td style="color:var(--clr-text-muted);">
+                                    @item.CreatedAt.ToString("dd/MM/yyyy")
+                                </td>
+
+                                <td>
+                                    <div class="status">
+                                        <span class="status-dot @(isActive ? "status-dot--active" : "status-dot--inactive")"></span>
+                                        <span>@(isActive ? "Activo" : "Inactivo")</span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@item.PermissionId"
+                                               class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+
+                                        <a asp-action="Edit" asp-route-id="@item.PermissionId"
+                                               class="btn btn-icon" title="Editar">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </a>
+
+                                        <a asp-action="Delete" asp-route-id="@item.PermissionId"
+                                               class="btn btn-icon btn-danger-outline" title="Desactivar">
+                                            <span class="material-symbols-outlined">block</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="table-footer">
+            <span id="filteredCount">
+                Mostrando @Model.Count() permiso(s)
+            </span>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/table-search.js" asp-append-version="true"></script>
 }
-    </tbody>
-</table>

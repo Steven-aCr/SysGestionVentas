@@ -1,143 +1,119 @@
 ﻿using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
-namespace BDGestionVentas.BL
+namespace SysGestionVentas.BL
 {
-    /// <summary>
-    /// Capa de lógica de negocio para la entidad <see cref="Category"/>.
-    /// Actúa como intermediario entre la capa de presentación y la capa DAL,
-    /// delegando las operaciones CRUD a <see cref="CategoryDAL"/>.
-    /// Las categorías permiten clasificar los productos del sistema y están
-    /// asociadas a un estado y al usuario que las creó.
-    /// </summary>
     public class CategoryBL
     {
+        #region "Métodos Privados"
+
+        /// <summary>
+        /// Valida las propiedades de un objeto <see cref="Category"/> utilizando los
+        /// <see cref="ValidationAttribute"/> definidos en la entidad (DataAnnotations).
+        /// </summary>
+        /// <param name="pCategory">Objeto <see cref="Category"/> a validar.</param>
+        /// <exception cref="ValidationException">
+        /// Se lanza si alguna propiedad no cumple con las anotaciones de validación.
+        /// El mensaje contiene la descripción del primer error encontrado.
+        /// </exception>
+        private static void ValidarEntidad(Category pCategory)
+        {
+            var contexto = new ValidationContext(pCategory);
+            var resultados = new List<ValidationResult>();
+
+            bool esValido = Validator.TryValidateObject(pCategory, contexto, resultados, validateAllProperties: true);
+
+            if (!esValido)
+                throw new ValidationException(resultados[0].ErrorMessage);
+        }
+
+        #endregion
+
         #region "CRUD"
 
         /// <summary>
-        /// Guarda una nueva categoría en la base de datos de forma asíncrona,
-        /// invocando la lógica de validación definida en <see cref="CategoryDAL.GuardarAsync"/>.
+        /// Valida y registra una nueva categoría en el sistema.
         /// </summary>
-        /// <param name="pCategory">
-        /// Objeto <see cref="Category"/> con los datos de la nueva categoría.
-        /// Los campos requeridos son: <c>Name</c>, <c>StatusId</c>
-        /// y <c>CreatedByUser</c>. El campo <c>Description</c> es opcional.
-        /// </param>
-        /// <returns>
-        /// Número de filas afectadas en la base de datos.
-        /// Retorna <c>1</c> si la categoría fue guardada correctamente,
-        /// <c>0</c> si ocurrió algún error.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Se lanza si el <c>Name</c> de la categoría ya existe, o si ocurre
-        /// cualquier error durante la operación.
-        /// </exception>
-        public async Task<int> GuardarAsync(Category pCategory)
+        /// <param name="pCategory">Objeto <see cref="Category"/> con los datos a guardar.</param>
+        /// <returns>Número de filas afectadas. Retorna <c>1</c> si se guardó correctamente.</returns>
+        /// <exception cref="ValidationException">Se lanza si los datos no pasan la validación de la entidad.</exception>
+        /// <exception cref="Exception">Se lanza si ocurre un error en base de datos.</exception>
+        public static async Task<int> GuardarAsync(Category pCategory)
         {
+            ValidarEntidad(pCategory);
             return await CategoryDAL.GuardarAsync(pCategory);
         }
 
         /// <summary>
-        /// Modifica los datos de una categoría existente de forma asíncrona,
-        /// invocando la lógica de actualización definida en <see cref="CategoryDAL.ModificarAsync"/>.
+        /// Valida y modifica los datos de una categoría existente en el sistema.
         /// </summary>
         /// <param name="pCategory">
-        /// Objeto <see cref="Category"/> con los datos actualizados.
-        /// El campo <c>CategoryId</c> es requerido para identificar el registro a modificar.
+        /// Objeto <see cref="Category"/> con el <c>CategoryId</c> del registro a modificar
+        /// y los nuevos valores a actualizar.
         /// </param>
-        /// <returns>
-        /// Número de filas afectadas en la base de datos.
-        /// Retorna <c>1</c> si la modificación fue exitosa, <c>0</c> si ocurrió algún error.
-        /// </returns>
+        /// <returns>Número de filas afectadas. Retorna <c>1</c> si se modificó correctamente.</returns>
+        /// <exception cref="ValidationException">Se lanza si los datos no pasan la validación de la entidad.</exception>
         /// <exception cref="Exception">
-        /// Se lanza si el <c>Name</c> ya está en uso por otra categoría,
-        /// o si ocurre cualquier error durante la operación.
+        /// Se lanza si la categoría no existe o si ocurre un error en base de datos.
         /// </exception>
-        public async Task<int> ModificarAsync(Category pCategory)
+        public static async Task<int> ModificarAsync(Category pCategory)
         {
+            if (pCategory.CategoryId <= 0)
+                throw new Exception("El ID de categoría no es válido.");
+
+            ValidarEntidad(pCategory);
             return await CategoryDAL.ModificarAsync(pCategory);
         }
 
         /// <summary>
-        /// Elimina una categoría de la base de datos de forma asíncrona,
-        /// invocando la lógica de eliminación definida en <see cref="CategoryDAL.EliminarAsync"/>.
+        /// Realiza la eliminación lógica de una categoría cambiando su estado en el sistema.
+        /// No elimina el registro físicamente de la base de datos.
         /// </summary>
         /// <param name="pCategory">
-        /// Objeto <see cref="Category"/> que debe contener el <c>CategoryId</c>
-        /// de la categoría a eliminar.
+        /// Objeto <see cref="Category"/> con el <c>CategoryId</c> del registro
+        /// y el <c>StatusId</c> correspondiente al estado inactivo.
         /// </param>
-        /// <returns>
-        /// Número de filas afectadas en la base de datos.
-        /// Retorna <c>1</c> si la eliminación fue exitosa, <c>0</c> si ocurrió algún error.
-        /// </returns>
+        /// <returns>Número de filas afectadas. Retorna <c>1</c> si se cambió el estado correctamente.</returns>
         /// <exception cref="Exception">
-        /// Se lanza si ocurre cualquier error durante la operación de eliminación.
-        /// Tener en cuenta que si la categoría tiene productos asociados en
-        /// <c>ProductList</c>, la base de datos rechazará la eliminación
-        /// por integridad referencial.
+        /// Se lanza si el ID no es válido, si la categoría no existe,
+        /// o si ocurre un error en base de datos.
         /// </exception>
-        public async Task<int> EliminarAsync(Category pCategory)
+        public static async Task<int> EliminarAsync(Category pCategory)
         {
+            if (pCategory.CategoryId <= 0)
+                throw new Exception("El ID de categoría no es válido.");
+
+            if (pCategory.StatusId <= 0)
+                throw new Exception("Debe especificar un estado válido para la eliminación lógica.");
+
             return await CategoryDAL.EliminarAsync(pCategory);
         }
 
         /// <summary>
-        /// Obtiene la lista completa de categorías registradas en la base de datos
-        /// de forma asíncrona, incluyendo los datos relacionados de <see cref="SysStatus"/>.
+        /// Obtiene una categoría específica por su identificador, incluyendo
+        /// sus relaciones con <see cref="Status"/> y el <see cref="User"/> creador.
         /// </summary>
-        /// <param name="pCategory">
-        /// Objeto <see cref="Category"/> utilizado como parámetro de entrada.
-        /// En esta versión no se aplican filtros; se retornan todos los registros.
-        /// </param>
-        /// <returns>
-        /// Lista de objetos <see cref="Category"/> con sus relaciones cargadas.
-        /// Retorna una lista vacía si no hay registros o si ocurre un error.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Se lanza si ocurre cualquier error durante la consulta.
-        /// </exception>
-        public async Task<List<Category>> ObtenerTodosAsync(Category pCategory)
+        /// <param name="pCategory">Objeto <see cref="Category"/> con el <c>CategoryId</c> a buscar.</param>
+        /// <returns>El objeto <see cref="Category"/> encontrado, o <c>null</c> si no existe.</returns>
+        /// <exception cref="Exception">Se lanza si el ID no es válido o si ocurre un error en base de datos.</exception>
+        public static async Task<Category?> ObtenerPorIdAsync(Category pCategory)
         {
-            return await CategoryDAL.ObtenerTodosAsync(pCategory);
-        }
+            if (pCategory.CategoryId <= 0)
+                throw new Exception("El ID de categoría no es válido.");
 
-        /// <summary>
-        /// Obtiene una categoría específica de la base de datos de forma asíncrona,
-        /// buscándola por su <c>CategoryId</c>, incluyendo los datos relacionados
-        /// de <see cref="SysStatus"/>.
-        /// </summary>
-        /// <param name="pCategory">
-        /// Objeto <see cref="Category"/> que debe contener el <c>CategoryId</c>
-        /// de la categoría a buscar.
-        /// </param>
-        /// <returns>
-        /// Objeto <see cref="Category"/> con sus relaciones cargadas si fue encontrado;
-        /// un objeto vacío si no existe el registro.
-        /// </returns>
-        /// <exception cref="Exception">
-        /// Se lanza si ocurre cualquier error durante la consulta.
-        /// </exception>
-        public async Task<Category> ObtenerPorIdAsync(Category pCategory)
-        {
             return await CategoryDAL.ObtenerPorIdAsync(pCategory);
         }
 
-        public async Task EliminarAsync(int id)
+        /// <summary>
+        /// Obtiene una lista de categorías aplicando filtros opcionales.
+        /// </summary>
+        /// <param name="pCategory">Objeto <see cref="Category"/> usado como filtro de búsqueda.</param>
+        /// <returns>Lista de objetos <see cref="Category"/> ordenados por nombre de forma ascendente.</returns>
+        /// <exception cref="Exception">Se lanza si ocurre un error en base de datos.</exception>
+        public static async Task<List<Category>> ObtenerTodosAsync(Category pCategory)
         {
-            throw new NotImplementedException();
-        }
-
-        public async Task<string?> ObtenerPorIdAsync(int value)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<string?> ObtenerTodosAsync()
-        {
-            throw new NotImplementedException();
+            return await CategoryDAL.ObtenerTodosAsync(pCategory);
         }
 
         #endregion

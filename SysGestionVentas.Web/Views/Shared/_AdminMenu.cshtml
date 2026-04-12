@@ -1,0 +1,278 @@
+﻿@* =========================
+   _AdminMenu.cshtml
+========================= *@
+
+@using System.Security.Claims
+
+@{
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+
+    var inventarioOpen =
+        ctrl == "Products" ||
+        ctrl == "Categories" ||
+        ctrl == "Inventories" ||
+        ctrl == "InventoryMovements" ||
+        ctrl == "Suppliers";
+
+    var seguridadOpen =
+        ctrl == "Users" ||
+        ctrl == "Rol" ||
+        ctrl == "Permissions";
+
+    var empresaOpen =
+        ctrl == "People" ||
+        ctrl == "Employees" ||
+        ctrl == "Clients";
+
+    var catalogosOpen =
+        ctrl == "Status" ||
+        ctrl == "StatusTypes";
+
+    var ventasActivo =
+        ctrl == "Documents" ||
+        ctrl == "DocumentDetails" ||
+        ctrl == "Ventas";
+
+    var fullName = User.FindFirst("FullName")?.Value
+                   ?? User.Identity?.Name
+                   ?? "Administrador";
+
+    var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "Administrador";
+
+    var initials = string.Concat(
+        fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Take(2)
+                .Select(x => x[0].ToString().ToUpper())
+    );
+}
+
+<aside class="sidebar" id="appSidebar" role="navigation" aria-label="Menú de administración">
+
+    @* BRAND — fija *@
+    <div class="sidebar__brand-wrapper">
+        <a asp-controller="Home"
+               asp-action="Index"
+               class="sidebar__brand">
+
+            <span class="sidebar__brand-icon">
+                <span class="material-symbols-outlined">storefront</span>
+            </span>
+
+            <div class="sidebar__brand-content">
+                <span class="sidebar__brand-name">SysGestionVentas</span>
+                <span class="sidebar__brand-subtitle">Panel de Administración</span>
+            </div>
+        </a>
+    </div>
+
+    @* NAV — scroll independiente *@
+    <nav class="sidebar__nav" aria-label="Navegación principal">
+
+        <!-- PRINCIPAL -->
+        <span class="sidebar__section-label">Principal</span>
+
+        <a asp-controller="Home"
+               asp-action="Index"
+               class="sidebar__item @(ctrl == "Home" ? "sidebar__item--active" : "")">
+            <span class="material-symbols-outlined sidebar__item-icon">dashboard</span>
+            <span class="sidebar__item-label">Dashboard</span>
+        </a>
+
+        <!-- VENTAS -->
+        <span class="sidebar__section-label">Ventas</span>
+
+        <a asp-controller="Ventas"
+               asp-action="Dashboard"
+               class="sidebar__item @(ctrl == "Ventas" ? "sidebar__item--active" : "")">
+            <span class="material-symbols-outlined sidebar__item-icon">point_of_sale</span>
+            <span class="sidebar__item-label">Panel de Ventas</span>
+        </a>
+
+        <a asp-controller="Documents"
+               asp-action="Index"
+               class="sidebar__item @(ventasActivo ? "sidebar__item--active" : "")">
+            <span class="material-symbols-outlined sidebar__item-icon">receipt_long</span>
+            <span class="sidebar__item-label">Documentos</span>
+        </a>
+
+        <!-- INVENTARIO -->
+        <span class="sidebar__section-label">Productos e Inventario</span>
+
+        <button type="button"
+                class="sidebar__item sidebar__item--toggle @(inventarioOpen ? "sidebar__item--open" : "")"
+                data-submenu="submenu-inventario"
+                aria-expanded="@(inventarioOpen.ToString().ToLower())">
+            <span class="material-symbols-outlined sidebar__item-icon">inventory_2</span>
+            <span class="sidebar__item-label">Inventario</span>
+            <span class="material-symbols-outlined sidebar__item-chevron">expand_more</span>
+        </button>
+
+        <div id="submenu-inventario"
+             class="sidebar__submenu @(inventarioOpen ? "sidebar__submenu--open" : "")">
+
+            <a asp-controller="Products" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Products" ? "sidebar__subitem--active" : "")">
+                Productos
+            </a>
+            <a asp-controller="Categories" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Categories" ? "sidebar__subitem--active" : "")">
+                Categorías
+            </a>
+            <a asp-controller="Inventories" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Inventories" ? "sidebar__subitem--active" : "")">
+                Inventario
+            </a>
+            <a asp-controller="InventoryMovements" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "InventoryMovements" ? "sidebar__subitem--active" : "")">
+                Movimientos
+            </a>
+            <a asp-controller="Suppliers" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Suppliers" ? "sidebar__subitem--active" : "")">
+                Proveedores
+            </a>
+        </div>
+
+        <!-- SEGURIDAD -->
+        <span class="sidebar__section-label">Seguridad</span>
+
+        <button type="button"
+                class="sidebar__item sidebar__item--toggle @(seguridadOpen ? "sidebar__item--open" : "")"
+                data-submenu="submenu-seguridad"
+                aria-expanded="@(seguridadOpen.ToString().ToLower())">
+            <span class="material-symbols-outlined sidebar__item-icon">admin_panel_settings</span>
+            <span class="sidebar__item-label">Seguridad</span>
+            <span class="material-symbols-outlined sidebar__item-chevron">expand_more</span>
+        </button>
+
+        <div id="submenu-seguridad"
+             class="sidebar__submenu @(seguridadOpen ? "sidebar__submenu--open" : "")">
+
+            <a asp-controller="Users" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Users" ? "sidebar__subitem--active" : "")">
+                Usuarios
+            </a>
+            <a asp-controller="Rol" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Rol" ? "sidebar__subitem--active" : "")">
+                Roles
+            </a>
+            <a asp-controller="Permissions" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Permissions" ? "sidebar__subitem--active" : "")">
+                Permisos
+            </a>
+        </div>
+
+        <!-- EMPRESA -->
+        <span class="sidebar__section-label">Empresa</span>
+
+        <button type="button"
+                class="sidebar__item sidebar__item--toggle @(empresaOpen ? "sidebar__item--open" : "")"
+                data-submenu="submenu-empresa"
+                aria-expanded="@(empresaOpen.ToString().ToLower())">
+            <span class="material-symbols-outlined sidebar__item-icon">group</span>
+            <span class="sidebar__item-label">Personas y Empresa</span>
+            <span class="material-symbols-outlined sidebar__item-chevron">expand_more</span>
+        </button>
+
+        <div id="submenu-empresa"
+             class="sidebar__submenu @(empresaOpen ? "sidebar__submenu--open" : "")">
+
+            <a asp-controller="People" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "People" ? "sidebar__subitem--active" : "")">
+                Personas
+            </a>
+            <a asp-controller="Employees" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Employees" ? "sidebar__subitem--active" : "")">
+                Empleados
+            </a>
+            <a asp-controller="Clients" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Clients" ? "sidebar__subitem--active" : "")">
+                Clientes
+            </a>
+        </div>
+
+        <!-- CATÁLOGOS -->
+        <span class="sidebar__section-label">Catálogos</span>
+
+        <button type="button"
+                class="sidebar__item sidebar__item--toggle @(catalogosOpen ? "sidebar__item--open" : "")"
+                data-submenu="submenu-catalogos"
+                aria-expanded="@(catalogosOpen.ToString().ToLower())">
+            <span class="material-symbols-outlined sidebar__item-icon">category</span>
+            <span class="sidebar__item-label">Catálogos</span>
+            <span class="material-symbols-outlined sidebar__item-chevron">expand_more</span>
+        </button>
+
+        <div id="submenu-catalogos"
+             class="sidebar__submenu @(catalogosOpen ? "sidebar__submenu--open" : "")">
+
+            <a asp-controller="Status" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "Status" ? "sidebar__subitem--active" : "")">
+                Estados
+            </a>
+            <a asp-controller="StatusTypes" asp-action="Index"
+                   class="sidebar__subitem @(ctrl == "StatusTypes" ? "sidebar__subitem--active" : "")">
+                Tipos de Estado
+            </a>
+        </div>
+
+    </nav>
+
+    <div class="sidebar__footer">
+
+        <a asp-controller="Account"
+               asp-action="Profile"
+               class="sidebar__profile-link @(ctrl == "Account" ? "sidebar__profile-link--active" : "")">
+            <div class="sidebar__user-avatar">
+                @(fullName.Substring(0, 1).ToUpper())
+            </div>
+
+            <div class="sidebar__user-info">
+                <div class="sidebar__user-name">@fullName</div>
+                <div class="sidebar__user-role">@userRole</div>
+            </div>
+
+            <span class="material-symbols-outlined sidebar__profile-icon">
+                manage_accounts
+            </span>
+        </a>
+
+        <form asp-controller="Auth"
+              asp-action="Logout"
+              method="post"
+              class="sidebar__logout-form">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="sidebar__logout-btn">
+                <span class="material-symbols-outlined" style="font-size:20px">logout</span>
+                Cerrar sesión
+            </button>
+        </form>
+
+    </div>
+
+</aside>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const toggles = document.querySelectorAll(".sidebar__item--toggle");
+
+        toggles.forEach(function (toggle) {
+
+            toggle.addEventListener("click", function () {
+
+                const submenuId = this.dataset.submenu;
+                const submenu = document.getElementById(submenuId);
+
+                if (!submenu) return;
+
+                const isOpen = submenu.classList.contains("sidebar__submenu--open");
+
+                submenu.classList.toggle("sidebar__submenu--open");
+                this.classList.toggle("sidebar__item--open");
+                this.setAttribute("aria-expanded", (!isOpen).toString());
+            });
+
+        });
+
+    });
+</script>

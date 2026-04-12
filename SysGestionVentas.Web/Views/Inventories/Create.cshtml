@@ -1,0 +1,275 @@
+﻿@model SysGestionVentas.EN.Inventory
+
+@{
+    ViewData["Title"] = "Nuevo Registro de Inventario";
+    ViewData["BreadcrumbParent"] = "Inventario";
+}
+
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Nuevo Registro de Inventario</h1>
+        <p class="page-header__subtitle">Complete los datos para registrar el inventario de un producto.</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver al listado
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <!-- ── FORMULARIO ─────────────────────────────────── -->
+    <div class="col-lg-8">
+        <div class="card">
+
+            <div style="padding:18px 22px; border-bottom:1px solid var(--clr-border);
+                display:flex; align-items:center; gap:10px;">
+                <span class="material-symbols-outlined"
+                      style="color:var(--clr-primary); font-size:20px;">inventory_2</span>
+                <span style="font-size:.95rem; font-weight:700; color:var(--clr-text);">
+                    Datos del Inventario
+                </span>
+            </div>
+
+            <div style="padding:24px;">
+                <form asp-action="Create" class="needs-validation" novalidate>
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="alert-custom alert-danger-custom mb-4"
+                         role="alert"
+                         style="display:none;"></div>
+
+                    <!-- Sección: Producto -->
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <span class="material-symbols-outlined">package_2</span>
+                            Producto Asociado
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ProductId" class="form-label">
+                                Producto <span style="color:var(--clr-danger);">*</span>
+                            </label>
+                            <select asp-for="ProductId"
+                                    asp-items="ViewBag.ProductList"
+                                    class="form-select"
+                                    required>
+                                <option value="">— Seleccione un producto —</option>
+                            </select>
+                            <span asp-validation-for="ProductId"
+                                  class="text-danger" style="font-size:.78rem;"></span>
+                            <small style="color:var(--clr-text-subtle);">
+                                Cada producto puede tener un único registro de inventario.
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Sección: Precios -->
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <span class="material-symbols-outlined">payments</span>
+                            Precios
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="PurchasePrice" class="form-label">
+                                    @Html.DisplayNameFor(m => m.PurchasePrice)
+                                    <span style="color:var(--clr-danger);">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"
+                                          style="background:var(--clr-surface-alt);
+                                    border-color:var(--clr-border);
+                                    font-weight:600;
+                                    color:var(--clr-text-muted);">$</span>
+                                    <input asp-for="PurchasePrice"
+                                           class="form-control"
+                                           type="number" step="0.01" min="0.01"
+                                           placeholder="0.00"
+                                           data-type="currency"
+                                           required />
+                                </div>
+                                <span asp-validation-for="PurchasePrice"
+                                      class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="SalePrice" class="form-label">
+                                    @Html.DisplayNameFor(m => m.SalePrice)
+                                    <span style="color:var(--clr-danger);">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text"
+                                          style="background:var(--clr-surface-alt);
+                                    border-color:var(--clr-border);
+                                    font-weight:600;
+                                    color:var(--clr-text-muted);">$</span>
+                                    <input asp-for="SalePrice"
+                                           class="form-control"
+                                           type="number" step="0.01" min="0.01"
+                                           placeholder="0.00"
+                                           data-type="currency"
+                                           required />
+                                </div>
+                                <span asp-validation-for="SalePrice"
+                                      class="text-danger" style="font-size:.78rem;"></span>
+                                <small style="color:var(--clr-text-subtle);">
+                                    Debe ser ≥ al precio de compra.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección: Stock -->
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <span class="material-symbols-outlined">stacked_bar_chart</span>
+                            Control de Stock
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="MinimumStock" class="form-label">
+                                    @Html.DisplayNameFor(m => m.MinimumStock)
+                                    <span style="color:var(--clr-danger);">*</span>
+                                </label>
+                                <input asp-for="MinimumStock"
+                                       class="form-control"
+                                       type="number" min="0"
+                                       placeholder="Ej: 10"
+                                       data-type="integer"
+                                       required />
+                                <span asp-validation-for="MinimumStock"
+                                      class="text-danger" style="font-size:.78rem;"></span>
+                                <small style="color:var(--clr-text-subtle);">
+                                    Alerta cuando el stock baje de este nivel.
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="CurrentStock" class="form-label">
+                                    @Html.DisplayNameFor(m => m.CurrentStock)
+                                    <span style="color:var(--clr-danger);">*</span>
+                                </label>
+                                <input asp-for="CurrentStock"
+                                       class="form-control"
+                                       type="number" min="0"
+                                       placeholder="Ej: 100"
+                                       data-type="integer"
+                                       required />
+                                <span asp-validation-for="CurrentStock"
+                                      class="text-danger" style="font-size:.78rem;"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección: Estado -->
+                    <div class="form-section" style="margin-bottom:0;">
+                        <div class="form-section-title">
+                            <span class="material-symbols-outlined">toggle_on</span>
+                            Estado del Registro
+                        </div>
+
+                        <div>
+                            <label asp-for="StatusId" class="form-label">
+                                Estado <span style="color:var(--clr-danger);">*</span>
+                            </label>
+                            <select asp-for="StatusId"
+                                    asp-items="ViewBag.StatusList"
+                                    class="form-select"
+                                    required>
+                                <option value="">— Seleccione un estado —</option>
+                            </select>
+                            <span asp-validation-for="StatusId"
+                                  class="text-danger" style="font-size:.78rem;"></span>
+                        </div>
+                    </div>
+
+                    <hr style="border-color:var(--clr-border); margin:24px 0;" />
+
+                    <!-- Botones -->
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <button type="submit" class="btn btn-primary">
+                            <span class="material-symbols-outlined">save</span>
+                            Guardar Inventario
+                        </button>
+                        <a asp-action="Index" class="btn btn-light">
+                            <span class="material-symbols-outlined">close</span>
+                            Cancelar
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── PANEL LATERAL ──────────────────────────────── -->
+    <div class="col-lg-4">
+        <div style="position:sticky; top:calc(var(--topbar-h) + 16px);">
+
+            <!-- Guía rápida -->
+            <div class="card mb-3">
+                <div style="padding:14px 18px; border-bottom:1px solid var(--clr-border);
+                    display:flex; align-items:center; gap:10px;">
+                    <span class="material-symbols-outlined"
+                          style="color:var(--clr-primary); font-size:18px;">info</span>
+                    <span style="font-size:.88rem; font-weight:700; color:var(--clr-text);">
+                        Guía Rápida
+                    </span>
+                </div>
+                <div style="padding:18px;">
+                    <ul class="list-unstyled mb-0"
+                        style="font-size:.82rem; color:var(--clr-text-muted);
+                        display:flex; flex-direction:column; gap:10px;">
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined"
+                                  style="font-size:16px; color:var(--clr-primary);
+                            flex-shrink:0; margin-top:1px;">check_circle</span>
+                            Cada producto tiene <strong>un único</strong> registro de inventario.
+                        </li>
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined"
+                                  style="font-size:16px; color:var(--clr-primary);
+                            flex-shrink:0; margin-top:1px;">check_circle</span>
+                            El precio de venta debe ser <strong>≥ precio de compra</strong>.
+                        </li>
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined"
+                                  style="font-size:16px; color:var(--clr-primary);
+                            flex-shrink:0; margin-top:1px;">check_circle</span>
+                            El stock mínimo dispara <strong>alertas</strong> al alcanzarse.
+                        </li>
+                        <li class="d-flex gap-2">
+                            <span class="material-symbols-outlined"
+                                  style="font-size:16px; color:var(--clr-primary);
+                            flex-shrink:0; margin-top:1px;">check_circle</span>
+                            Use <em>Movimientos</em> para ajustar el stock después.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Nota de precios -->
+            <div class="alert-custom alert-success-custom"
+                 style="border-radius:var(--radius-lg);">
+                <span class="material-symbols-outlined" style="flex-shrink:0;">price_check</span>
+                <div style="font-size:.81rem;">
+                    <strong>Regla de precios:</strong><br>
+                    Precio de venta ≥ Precio de compra,<br>
+                    garantizado por la base de datos.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

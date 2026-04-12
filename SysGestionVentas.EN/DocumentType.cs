@@ -20,5 +20,9 @@ namespace SysGestionVentas.EN
         [ForeignKey("Status")]
         public int StatusId { get; set; }
         public Status? Status { get; set; }
+
+        [ForeignKey("DefaultMovementType")]
+        public int? DefaultMovementTypeId { get; set; }
+        public MovementType? DefaultMovementType { get; set; }
     }
 }

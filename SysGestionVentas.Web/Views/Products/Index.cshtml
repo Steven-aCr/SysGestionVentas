@@ -1,0 +1,257 @@
+﻿@model SysGestionVentas.EN.Pagination.PagedResult<SysGestionVentas.EN.ProductList>
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Productos";
+    ViewData["BreadcrumbParent"] = "Catálogo";
+
+    var busqueda = ViewBag.Busqueda as string ?? string.Empty;
+    var statusId = (int)(ViewBag.StatusId ?? 0);
+    var categoryId = (int)(ViewBag.CategoryId ?? 0);
+    int page = Model.CurrentPage;
+    int totalPages = Model.TotalPages;
+}
+
+<div class="page-content">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">
+                <span class="material-symbols-outlined">inventory_2</span>
+                Productos
+            </h1>
+            <p class="page-header__subtitle">Catálogo completo de productos del sistema</p>
+        </div>
+        <div class="page-header__actions">
+            @if (User.IsInRole("Administrador"))
+            {
+                <a asp-action="Create" class="btn btn-primary">
+                    <span class="material-symbols-outlined">add</span>
+                    Nuevo Producto
+                </a>
+            }
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-custom alert-success-custom mb-3">
+            <span class="material-symbols-outlined">check_circle</span>
+            @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert-custom alert-danger-custom mb-3">
+            <span class="material-symbols-outlined">error</span>
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="table-card">
+
+        <div class="table-toolbar">
+            <form asp-action="Index" method="get"
+                  style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;">
+
+                <div class="search-box">
+                    <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                    <input type="text" name="busqueda" value="@busqueda"
+                           placeholder="Nombre o código de barras…" autocomplete="off" />
+                </div>
+
+                <select name="categoryId" class="form-select" style="min-width:180px; font-size:.84rem;">
+                    <option value="0">— Todas las categorías —</option>
+                    @foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.CategoryList)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                    }
+                </select>
+
+                <select name="statusId" class="form-select" style="min-width:150px; font-size:.84rem;">
+                    <option value="0">— Todos los estados —</option>
+                    @foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.StatusList)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                    }
+                </select>
+
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-symbols-outlined">search</span> Buscar
+                </button>
+
+                @if (!string.IsNullOrWhiteSpace(busqueda) || statusId > 0 || categoryId > 0)
+                {
+                    <a asp-action="Index" class="btn btn-light">
+                        <span class="material-symbols-outlined">close</span> Limpiar
+                    </a>
+                }
+            </form>
+            <span style="font-size:.8rem; color:var(--clr-text-muted);">@Model.TotalCount registro(s)</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th>Código de barras</th>
+                        <th>Stock actual</th>
+                        <th>Precio venta</th>
+                        <th>Estado</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">inventory_2</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">No se encontraron productos con los filtros aplicados.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var prod in Model.Items)
+                        {
+                            var isActive = prod.Status?.Name?.Equals("Activo", StringComparison.OrdinalIgnoreCase) ?? false;
+                            var stockLow = prod.Inventory != null &&
+                                            prod.Inventory.CurrentStock <= prod.Inventory.MinimumStock;
+
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-cell__avatar" style="border-radius:var(--radius-sm);">
+                                            @if (!string.IsNullOrEmpty(prod.ImageUrl))
+                                            {
+                                                <img src="@prod.ImageUrl" alt="img"
+                                                     style="width:38px;height:38px;object-fit:cover;border-radius:var(--radius-sm);" />
+                                            }
+                                            else
+                                            {
+                                                <span class="material-symbols-outlined" style="font-size:18px;">inventory_2</span>
+                                            }
+                                        </div>
+                                        <div>
+                                            <div class="user-cell__name">@(prod.Name ?? "—")</div>
+                                            <div class="user-cell__meta">@(prod.Description ?? string.Empty)</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-neutral">@(prod.Category?.Name ?? "—")</span>
+                                </td>
+                                <td style="color:var(--clr-text-muted); font-size:.83rem; font-family:monospace;">
+                                    @(prod.Barcode ?? "—")
+                                </td>
+                                <td>
+                                    @if (prod.Inventory != null)
+                                    {
+                                        <span class="@(stockLow ? "badge badge-cliente" : "")">
+                                            @prod.Inventory.CurrentStock
+                                            @if (stockLow)
+                                            {
+                                                <text> ⚠</text>
+                                            }
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:var(--clr-text-subtle);">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (prod.Inventory != null)
+                                    {
+                                        <strong>$@prod.Inventory.SalePrice.ToString("0.00")</strong>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:var(--clr-text-subtle);">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="status">
+                                        <span class="status-dot @(isActive ? "status-dot--active" : "status-dot--inactive")"></span>
+                                        <span>@(prod.Status?.Name ?? "—")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@prod.ProductId" class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+                                        @if (User.IsInRole("Administrador"))
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@prod.ProductId" class="btn btn-icon" title="Editar producto">
+                                                <span class="material-symbols-outlined">edit</span>
+                                            </a>
+                                            @if (isActive)
+                                            {
+                                                <a asp-action="Delete" asp-route-id="@prod.ProductId"
+                                                       class="btn btn-icon btn-danger-outline" title="Desactivar producto">
+                                                    <span class="material-symbols-outlined">block</span>
+                                                </a>
+                                            }
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <span>
+                Mostrando <strong>@Model.FirstItemIndex–@Model.LastItemIndex</strong>
+                de <strong>@Model.TotalCount</strong> producto(s)
+            </span>
+
+            @if (totalPages > 1)
+            {
+                <nav>
+                    <ul class="pagination pagination-sm mb-0" style="gap:4px;">
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index"
+                                   asp-route-page="@(page - 1)"
+                                   asp-route-busqueda="@busqueda"
+                                   asp-route-statusId="@statusId"
+                                   asp-route-categoryId="@categoryId">
+                                <span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span>
+                            </a>
+                        </li>
+                        @for (int i = 1; i <= totalPages; i++)
+                        {
+                            <li class="page-item @(i == page ? "active" : "")">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-busqueda="@busqueda"
+                                   asp-route-statusId="@statusId"
+                                   asp-route-categoryId="@categoryId">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                            <a class="page-link" asp-action="Index"
+                                   asp-route-page="@(page + 1)"
+                                   asp-route-busqueda="@busqueda"
+                                   asp-route-statusId="@statusId"
+                                   asp-route-categoryId="@categoryId">
+                                <span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        </div>
+    </div>
+</div>

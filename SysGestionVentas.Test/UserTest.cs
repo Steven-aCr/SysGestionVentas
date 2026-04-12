@@ -77,7 +77,7 @@ namespace SysGestionVentas.Test
         public async Task GuardarAsync_Usuario()
         {
             var nuevoUsuario = TestData.CrearUsuarioNuevo("juan.perez", "juan@test.com");
-            int result = await UsersDAL.GuardarAsync(nuevoUsuario);
+            int result = await UserDAL.GuardarAsync(nuevoUsuario);
             Assert.Equal(1, result);
         }
 
@@ -87,7 +87,7 @@ namespace SysGestionVentas.Test
             var nuevoUsuario = TestData.CrearUsuarioNuevo("maria.lopez", "maria@test.com");
             string passwordPlano = nuevoUsuario.PasswordHash!;
 
-            await UsersDAL.GuardarAsync(nuevoUsuario);
+            await UserDAL.GuardarAsync(nuevoUsuario);
 
             using var db = CrearContexto();
             var guardado = await db.User.FirstAsync(u => u.Email == "maria@test.com");
@@ -103,7 +103,7 @@ namespace SysGestionVentas.Test
                 email: "diferente@test.com");
 
             var ex = await Assert.ThrowsAsync<Exception>(
-                () => UsersDAL.GuardarAsync(duplicado));
+                () => UserDAL.GuardarAsync(duplicado));
 
             Assert.Contains("nombre de usuario", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -116,23 +116,11 @@ namespace SysGestionVentas.Test
                 email: TestData.EMAIL_ACTIVO);
 
             var ex = await Assert.ThrowsAsync<Exception>(
-                () => UsersDAL.GuardarAsync(duplicado));
+                () => UserDAL.GuardarAsync(duplicado));
 
             Assert.Contains("correo", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
-
-        [Fact]
-        public async Task GuardarAsync_MustChangePassword()
-        {
-            var nuevoUsuario = TestData.CrearUsuarioNuevo("ana.garcia", "ana@test.com");
-            nuevoUsuario.MustChangePassword = true;
-
-            await UsersDAL.GuardarAsync(nuevoUsuario);
-
-            using var db = CrearContexto();
-            var guardado = await db.User.FirstAsync(u => u.Email == "ana@test.com");
-            Assert.False(guardado.MustChangePassword);
-        }
+        
 
         #endregion
 
@@ -151,7 +139,7 @@ namespace SysGestionVentas.Test
                 StatusId = TestData.STATUS_ACTIVO_ID,
             };
 
-            int result = await UsersDAL.ModificarAsync(usuarioModificado);
+            int result = await UserDAL.ModificarAsync(usuarioModificado);
 
             Assert.Equal(1, result);
             using var db = CrearContexto();
@@ -166,7 +154,7 @@ namespace SysGestionVentas.Test
             var usuarioInexistente = new User { UserId = 9999, UserName = "x", Email = "x@x.com" };
 
             var ex = await Assert.ThrowsAsync<Exception>(
-                () => UsersDAL.ModificarAsync(usuarioInexistente));
+                () => UserDAL.ModificarAsync(usuarioInexistente));
 
             Assert.Contains("9999", ex.Message);
         }
@@ -185,7 +173,7 @@ namespace SysGestionVentas.Test
             };
 
             var ex = await Assert.ThrowsAsync<Exception>(
-                () => UsersDAL.ModificarAsync(conflicto));
+                () => UserDAL.ModificarAsync(conflicto));
 
             Assert.Contains("nombre de usuario", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -203,7 +191,7 @@ namespace SysGestionVentas.Test
                 StatusId = TestData.STATUS_INACTIVO_ID,
             };
 
-            int result = await UsersDAL.EliminarAsync(solicitud);
+            int result = await UserDAL.EliminarAsync(solicitud);
 
             Assert.Equal(1, result);
             using var db = CrearContexto();
@@ -217,7 +205,7 @@ namespace SysGestionVentas.Test
         {
             var solicitud = new User { UserId = 9999, StatusId = TestData.STATUS_INACTIVO_ID };
 
-            await Assert.ThrowsAsync<Exception>(() => UsersDAL.EliminarAsync(solicitud));
+            await Assert.ThrowsAsync<Exception>(() => UserDAL.EliminarAsync(solicitud));
         }
 
         #endregion
@@ -228,7 +216,7 @@ namespace SysGestionVentas.Test
         public async Task ObtenerPorIdAsync_Usuario()
         {
             var solicitud = new User { UserId = 1 };
-            var usuario = await UsersDAL.ObtenerPorIdAsync(solicitud);
+            var usuario = await UserDAL.ObtenerPorIdAsync(solicitud);
 
             Assert.NotNull(usuario);
             Assert.Equal(1, usuario.UserId);
@@ -240,7 +228,7 @@ namespace SysGestionVentas.Test
         public async Task ObtenerPorIdAsync_UsuarioInexistente()
         {
             var solicitud = new User { UserId = 9999 };
-            var usuario = await UsersDAL.ObtenerPorIdAsync(solicitud);
+            var usuario = await UserDAL.ObtenerPorIdAsync(solicitud);
 
             Assert.Null(usuario);
         }
@@ -253,7 +241,7 @@ namespace SysGestionVentas.Test
         public async Task ObtenerTodosAsync_Usuario()
         {
             var filtro = new User();
-            var lista = await UsersDAL.ObtenerTodosAsync(filtro);
+            var lista = await UserDAL.ObtenerTodosAsync(filtro);
 
             Assert.Equal(4, lista.Count);
         }
@@ -262,7 +250,7 @@ namespace SysGestionVentas.Test
         public async Task ObtenerTodosAsync_StatusActivo()
         {
             var filtro = new User { StatusId = TestData.STATUS_ACTIVO_ID };
-            var lista = await UsersDAL.ObtenerTodosAsync(filtro);
+            var lista = await UserDAL.ObtenerTodosAsync(filtro);
 
             Assert.All(lista, u => Assert.Equal(TestData.STATUS_ACTIVO_ID, u.StatusId));
             Assert.Equal(3, lista.Count);
@@ -272,7 +260,7 @@ namespace SysGestionVentas.Test
         public async Task ObtenerTodosAsync_FiltroUserName()
         {
             var filtro = new User { UserName = "usuario" };
-            var lista = await UsersDAL.ObtenerTodosAsync(filtro);
+            var lista = await UserDAL.ObtenerTodosAsync(filtro);
 
             Assert.True(lista.Count >= 1);
             Assert.All(lista, u => Assert.Contains("usuario", u.UserName!, StringComparison.OrdinalIgnoreCase));
@@ -282,7 +270,7 @@ namespace SysGestionVentas.Test
         public async Task ObtenerTodosAsync_OrdenPorUserName()
         {
             var filtro = new User();
-            var lista = await UsersDAL.ObtenerTodosAsync(filtro);
+            var lista = await UserDAL.ObtenerTodosAsync(filtro);
 
             var nombres = lista.Select(u => u.UserName).ToList();
             var ordenados = nombres.OrderBy(n => n).ToList();
@@ -303,7 +291,7 @@ namespace SysGestionVentas.Test
                 PageSize = 10,
             };
 
-            var resultado = await UsersDAL.BuscarAsync(query);
+            var resultado = await UserDAL.BuscarAsync(query);
 
             Assert.Equal(4, resultado.TotalCount);
             Assert.Equal(1, resultado.CurrentPage);
@@ -319,7 +307,7 @@ namespace SysGestionVentas.Test
                 PageSize = 2,
             };
 
-            var resultado = await UsersDAL.BuscarAsync(query);
+            var resultado = await UserDAL.BuscarAsync(query);
 
             Assert.Equal(2, resultado.Items.Count);
             Assert.Equal(4, resultado.TotalCount);
@@ -335,7 +323,7 @@ namespace SysGestionVentas.Test
                 PageSize = 10,
             };
 
-            var resultado = await UsersDAL.BuscarAsync(query);
+            var resultado = await UserDAL.BuscarAsync(query);
 
             Assert.Equal(1, resultado.TotalCount);
             Assert.All(resultado.Items,
@@ -353,7 +341,7 @@ namespace SysGestionVentas.Test
                 Top = 1,
             };
 
-            var resultado = await UsersDAL.BuscarAsync(query);
+            var resultado = await UserDAL.BuscarAsync(query);
 
             Assert.Single(resultado.Items);
             Assert.Equal(4, resultado.TotalCount);
@@ -371,7 +359,7 @@ namespace SysGestionVentas.Test
                 ToDate = DateTime.UtcNow.AddHours(1),
             };
 
-            var resultado = await UsersDAL.BuscarAsync(query);
+            var resultado = await UserDAL.BuscarAsync(query);
 
             Assert.Equal(4, resultado.TotalCount);
         }
@@ -386,7 +374,7 @@ namespace SysGestionVentas.Test
                 PageSize = 2,
             };
 
-            var resultado = await UsersDAL.BuscarAsync(query);
+            var resultado = await UserDAL.BuscarAsync(query);
 
             Assert.Equal(2, resultado.TotalPages);
             Assert.True(resultado.HasNextPage);
@@ -402,7 +390,7 @@ namespace SysGestionVentas.Test
         [Fact]
         public async Task LogingAsync_Usuario()
         {
-            var usuario = await UsersDAL.LogingAsync(
+            var usuario = await UserDAL.LogingAsync(
                 TestData.EMAIL_ACTIVO,
                 TestData.PASSWORD_PLANO);
 
@@ -414,7 +402,7 @@ namespace SysGestionVentas.Test
         public async Task LogingAsync_PasswordIncorrecta()
         {
             var ex = await Assert.ThrowsAsync<Exception>(
-                () => UsersDAL.LogingAsync(TestData.EMAIL_ACTIVO, "WrongPass999"));
+                () => UserDAL.LogingAsync(TestData.EMAIL_ACTIVO, "WrongPass999"));
 
             Assert.Contains("incorrecta", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -423,7 +411,7 @@ namespace SysGestionVentas.Test
         public async Task LogingAsync_EmailInexistente()
         {
             var ex = await Assert.ThrowsAsync<Exception>(
-                () => UsersDAL.LogingAsync("noexiste@test.com", TestData.PASSWORD_PLANO));
+                () => UserDAL.LogingAsync("noexiste@test.com", TestData.PASSWORD_PLANO));
 
             Assert.NotNull(ex);
         }
@@ -431,7 +419,7 @@ namespace SysGestionVentas.Test
         [Fact]
         public async Task LogingAsync_PasswordTemporalVigente()
         {
-            var usuario = await UsersDAL.LogingAsync("temp@test.com", "TempPass99");
+            var usuario = await UserDAL.LogingAsync("temp@test.com", "TempPass99");
 
             Assert.NotNull(usuario);
             using var db = CrearContexto();
@@ -443,7 +431,7 @@ namespace SysGestionVentas.Test
         [Fact]
         public async Task LogingAsync_PasswordTemporalVencida()
         {
-            var usuario = await UsersDAL.LogingAsync(
+            var usuario = await UserDAL.LogingAsync(
                 "tempvencida@test.com",
                 TestData.PASSWORD_PLANO);
 
@@ -457,12 +445,11 @@ namespace SysGestionVentas.Test
         [Fact]
         public async Task GenerarTempAsync()
         {
-            string tempPassword = await UsersDAL.GenerarTempAsync(1);
+            string tempPassword = await UserDAL.GenerarTempAsync(1);
 
             Assert.False(string.IsNullOrWhiteSpace(tempPassword));
             using var db = CrearContexto();
             var usuario = await db.User.FindAsync(1);
-            Assert.True(usuario!.MustChangePassword);
             Assert.NotNull(usuario.TempPasswordHash);
             Assert.Equal(TestData.Sha256(tempPassword), usuario.TempPasswordHash);
         }
@@ -470,7 +457,7 @@ namespace SysGestionVentas.Test
         [Fact]
         public async Task GenerarTempAsync_Expiracion()
         {
-            await UsersDAL.GenerarTempAsync(1);
+            await UserDAL.GenerarTempAsync(1);
 
             using var db = CrearContexto();
             var usuario = await db.User.FindAsync(1);
@@ -482,14 +469,14 @@ namespace SysGestionVentas.Test
         [Fact]
         public async Task GenerarTempAsync_UsuarioInexistente()
         {
-            await Assert.ThrowsAsync<Exception>(() => UsersDAL.GenerarTempAsync(9999));
+            await Assert.ThrowsAsync<Exception>(() => UserDAL.GenerarTempAsync(9999));
         }
 
         [Fact]
         public async Task GenerarTempAsync_UsuarioSuspendido()
         {
             var ex = await Assert.ThrowsAsync<Exception>(
-                () => UsersDAL.GenerarTempAsync(90));
+                () => UserDAL.GenerarTempAsync(90));
 
             Assert.Contains("inactivo", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -504,12 +491,11 @@ namespace SysGestionVentas.Test
             string nuevaPassword = "NuevoPass456";
             int userId = 91;
 
-            int result = await UsersDAL.ChangePasswordAsync(userId, nuevaPassword);
+            int result = await UserDAL.ChangePasswordAsync(userId, nuevaPassword);
 
             Assert.Equal(1, result);
             using var db = CrearContexto();
             var usuario = await db.User.FindAsync(userId);
-            Assert.False(usuario!.MustChangePassword);
             Assert.Equal(TestData.Sha256(nuevaPassword), usuario.PasswordHash);
         }
 
@@ -517,7 +503,7 @@ namespace SysGestionVentas.Test
         public async Task ChangePasswordAsync_SinMustChange()
         {
             var ex = await Assert.ThrowsAsync<Exception>(
-                () => UsersDAL.ChangePasswordAsync(1, "NuevoPass456"));
+                () => UserDAL.ChangePasswordAsync(1, "NuevoPass456"));
 
             Assert.Contains("obligatorio", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
@@ -526,7 +512,7 @@ namespace SysGestionVentas.Test
         public async Task ChangePasswordAsync_UsuarioInexistente()
         {
             await Assert.ThrowsAsync<Exception>(
-                () => UsersDAL.ChangePasswordAsync(9999, "NuevoPass456"));
+                () => UserDAL.ChangePasswordAsync(9999, "NuevoPass456"));
         }
 
         #endregion

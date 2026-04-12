@@ -1,6 +1,8 @@
-﻿using SysGestionVentas.DAL;
+﻿using Microsoft.Identity.Client;
+using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
 using SysGestionVentas.EN.Pagination;
+using SysGestionVentas.EN.ViewModels;
 using System.ComponentModel.DataAnnotations;
 
 namespace SysGestionVentas.BL
@@ -34,6 +36,132 @@ namespace SysGestionVentas.BL
         #region "CRUD"
 
         /// <summary>
+        /// Crea de forma atómica una <see cref="Person"/>, su <see cref="User"/> asociado
+        /// y, cuando el rol corresponde a Vendedor (<c>RolId == CreateUserModel.RolVendedorId</c>),
+        /// también el registro de <see cref="Employee"/> vinculado.
+        /// Si cualquiera de las operaciones falla, la transacción completa se revierte
+        /// garantizando la integridad de los datos.
+        /// </summary>
+        /// <param name="pModel">
+        /// ViewModel con los datos combinados capturados desde el formulario de registro.
+        /// Los campos de empleado (<c>EmployeeCode</c>, <c>HireDate</c>, <c>Salary</c>)
+        /// son obligatorios cuando <c>RolId == CreateUserModel.RolVendedorId</c>.
+        /// </param>
+        /// <returns>
+        /// Número de filas afectadas. Retorna <c>2</c> para usuario + persona,
+        /// o <c>3</c> cuando además se crea el registro de empleado.
+        /// </returns>
+        /// <exception cref="Exception">
+        /// Se lanza si ocurre un error durante la transacción o si hay duplicados
+        /// de DUI, teléfono, nombre de usuario, correo electrónico o código de empleado.
+        /// </exception>
+        public static async Task<int> CrearConPersonaAsync(CreateUserModel pModel)
+        {
+            // ── Validaciones comunes ──────────────────────────────────────────
+            if (string.IsNullOrWhiteSpace(pModel.UserName))
+                throw new Exception("El nombre de usuario es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(pModel.Email))
+                throw new Exception("El correo electrónico es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(pModel.Password))
+                throw new Exception("La contraseña es obligatoria.");
+
+            if (pModel.Password.Length < 8)
+                throw new Exception("La contraseña debe tener al menos 8 caracteres.");
+
+            // ── Validaciones adicionales para rol Vendedor ────────────────────
+            bool esVendedor = pModel.RolId == CreateUserModel.RolVendedorId;
+
+            // ── Determinar si el rol requiere registro de empleado ────────────
+            bool esEmpleado = pModel.RolId == CreateUserModel.RolAdministradorId
+                           || pModel.RolId == CreateUserModel.RolVendedorId;
+
+            // ── Validaciones adicionales cuando aplica datos laborales ────────
+            if (esEmpleado)
+            {
+                if (string.IsNullOrWhiteSpace(pModel.EmployeeCode))
+                    throw new Exception("El código de empleado es obligatorio para este rol.");
+
+                if (pModel.HireDate == null)
+                    throw new Exception("La fecha de contratación es obligatoria para este rol.");
+
+                if (pModel.HireDate.Value.Date > DateTime.UtcNow.Date)
+                    throw new Exception("La fecha de contratación no puede ser una fecha futura.");
+
+                if (pModel.Salary == null || pModel.Salary <= 0)
+                    throw new Exception("El salario debe ser mayor a $0.00 para este rol.");
+            }
+
+            int result = 0;
+
+            using (var dbContexto = new DbContexto())
+            using (var transaction = await dbContexto.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    // 1 — Crear y persistir la Persona
+                    var person = new Person
+                    {
+                        FirstName = pModel.FirstName,
+                        LastName = pModel.LastName,
+                        Adress = pModel.Adress,
+                        PhoneNumber = pModel.PhoneNumber,
+                        Dui = pModel.Dui,
+                        StatusId = pModel.StatusId
+                    };
+
+                    await PersonDAL.GuardarEnTransaccionAsync(person, dbContexto);
+                    await dbContexto.SaveChangesAsync(); // genera el PersonId
+
+                    // 2 — Crear el Usuario relacionado con la Persona
+                    var user = new User
+                    {
+                        UserName = pModel.UserName,
+                        Email = pModel.Email,
+                        PasswordHash = pModel.Password, // se encripta dentro del DAL
+                        RolId = pModel.RolId,
+                        StatusId = pModel.StatusId,
+                        PersonId = person.PersonId
+                    };
+
+                    await UserDAL.GuardarEnTransaccionAsync(user, dbContexto);
+                    await dbContexto.SaveChangesAsync(); // genera el UserId
+
+                    // 3 — Si el rol requiere empleado, crear también el registro de Employee
+                    if (esEmpleado)
+                    {
+                        var employee = new Employee
+                        {
+                            EmployeeCode = pModel.EmployeeCode!,
+                            HireDate = pModel.HireDate!.Value,
+                            Salary = pModel.Salary!.Value,
+                            DepartmentId = pModel.DepartmentId,
+                            UserId = user.UserId,
+                            PersonId = person.PersonId,
+                            StatusId = pModel.StatusId
+                        };
+
+                        if (await EmployeeDAL.ExisteEmployeeCode(employee, dbContexto))
+                            throw new Exception("El código de empleado ya existe.");
+
+                        dbContexto.Employee.Add(employee);
+                    }
+
+                    result = await dbContexto.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    throw new Exception(ex.Message);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Valida y registra un nuevo usuario en el sistema.
         /// Aplica las validaciones de estructura definidas en la entidad antes de persistir.
         /// La contraseña es encriptada en la capa DAL antes de almacenarse.
@@ -51,7 +179,7 @@ namespace SysGestionVentas.BL
         public static async Task<int> GuardarAsync(User pUser)
         {
             ValidarEntidad(pUser);
-            return await UsersDAL.GuardarAsync(pUser);
+            return await UserDAL.GuardarAsync(pUser);
         }
 
         /// <summary>
@@ -71,7 +199,7 @@ namespace SysGestionVentas.BL
         public static async Task<int> ModificarAsync(User pUser)
         {
             ValidarEntidad(pUser);
-            return await UsersDAL.ModificarAsync(pUser);
+            return await UserDAL.ModificarAsync(pUser);
         }
 
         /// <summary>
@@ -94,7 +222,7 @@ namespace SysGestionVentas.BL
             if (pUser.StatusId <= 0)
                 throw new Exception("Debe especificar un estado válido para la eliminación lógica.");
 
-            return await UsersDAL.EliminarAsync(pUser);
+            return await UserDAL.EliminarAsync(pUser);
         }
 
         /// <summary>
@@ -111,7 +239,7 @@ namespace SysGestionVentas.BL
             if (pUser.UserId <= 0)
                 throw new Exception("El ID de usuario no es válido.");
 
-            return await UsersDAL.ObtenerPorIdAsync(pUser);
+            return await UserDAL.ObtenerPorIdAsync(pUser);
         }
 
         /// <summary>
@@ -133,7 +261,7 @@ namespace SysGestionVentas.BL
         /// <exception cref="Exception">Se lanza si ocurre un error en base de datos.</exception>
         public static async Task<List<User>> ObtenerTodosAsync(User pUser)
         {
-            return await UsersDAL.ObtenerTodosAsync(pUser);
+            return await UserDAL.ObtenerTodosAsync(pUser);
         }
 
         #endregion
@@ -165,7 +293,7 @@ namespace SysGestionVentas.BL
             if (pPagedQuery.PageSize <= 0)
                 throw new Exception("El tamaño de página debe ser mayor a 0.");
 
-            return await UsersDAL.BuscarAsync(pPagedQuery);
+            return await UserDAL.BuscarAsync(pPagedQuery);
         }
 
         #endregion
@@ -194,7 +322,7 @@ namespace SysGestionVentas.BL
             if (string.IsNullOrWhiteSpace(pPassword))
                 throw new Exception("La contraseña es obligatoria.");
 
-            return await UsersDAL.LogingAsync(pEmail, pPassword);
+            return await UserDAL.LogingAsync(pEmail, pPassword);
         }
 
         /// <summary>
@@ -221,7 +349,7 @@ namespace SysGestionVentas.BL
             if (pNewPassword.Length < 8)
                 throw new Exception("La contraseña debe tener al menos 8 caracteres.");
 
-            return await UsersDAL.ChangePasswordAsync(pUserId, pNewPassword);
+            return await UserDAL.ChangePasswordAsync(pUserId, pNewPassword);
         }
 
         /// <summary>
@@ -243,9 +371,75 @@ namespace SysGestionVentas.BL
             if (pUserId <= 0)
                 throw new Exception("El ID de usuario no es válido.");
 
-            return await UsersDAL.GenerarTempAsync(pUserId);
+            return await UserDAL.GenerarTempAsync(pUserId);
         }
+        #endregion
 
+        #region "Métodos Específicos de Negocio"
+        /// <summary>
+        /// Actualiza de forma atómica los datos personales y de acceso del usuario autenticado.
+        /// Si se proporcionan campos de contraseña, valida la actual antes de aplicar el cambio.
+        /// <see cref="Person"/> y <see cref="User"/> se actualizan en una sola transacción.
+        /// </summary>
+        /// <param name="pModel">
+        /// ViewModel con los datos del perfil. Si <c>NewPassword</c> está vacío,
+        /// la contraseña actual se conserva sin modificaciones.
+        /// </param>
+        /// <returns>Número de filas afectadas.</returns>
+        /// <exception cref="Exception">
+        /// Se lanza si la contraseña actual es incorrecta, si hay duplicados de DUI,
+        /// teléfono o correo, o si ocurre un error en base de datos.
+        /// </exception>
+        public static async Task<int> ActualizarPerfilAsync(EditProfileModel pModel)
+        {
+            int result = 0;
+
+            using var dbContexto = new DbContexto();
+            using var transaction = await dbContexto.Database.BeginTransactionAsync();
+
+            try
+            {
+                // 1 — Actualizar datos personales
+                var person = new Person
+                {
+                    PersonId = pModel.PersonId,
+                    FirstName = pModel.FirstName,
+                    LastName = pModel.LastName,
+                    Adress = pModel.Adress,
+                    PhoneNumber = pModel.PhoneNumber,
+                    Dui = pModel.Dui
+                };
+                await PersonDAL.ModificarEnTransaccionAsync(person, dbContexto);
+
+                // 2 — Actualizar datos de acceso del usuario
+                var user = await UserDAL.ObtenerEnTransaccionAsync(pModel.UserId, dbContexto);
+                if (user == null)
+                    throw new Exception("No se encontró el usuario.");
+
+                user.Email = pModel.Email;
+
+                // 3 — Cambio de contraseña opcional
+                if (!string.IsNullOrWhiteSpace(pModel.NewPassword))
+                {
+                    await UserDAL.ValidarContrasenaActualAsync(
+                        pModel.UserId, pModel.CurrentPassword!, dbContexto);
+
+                    user.PasswordHash = UserDAL.EncriptarSHA256Publico(pModel.NewPassword);
+                }
+
+                UserDAL.ModificarEnTransaccion(user, dbContexto);
+                result = await dbContexto.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                throw new Exception(ex.Message);
+            }
+
+            return result;
+        }
         #endregion
     }
 }

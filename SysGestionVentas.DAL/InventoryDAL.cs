@@ -243,6 +243,34 @@ namespace SysGestionVentas.DAL
 
         #endregion
 
+        /// <summary>
+        /// Obtiene un registro de inventario por el identificador de su producto asociado,
+        /// utilizando un contexto de base de datos externo para participar en transacciones coordinadas.
+        /// </summary>
+        /// <param name="pProductId">Identificador del producto cuyo inventario se desea obtener.</param>
+        /// <param name="pDbContexto">Contexto de base de datos activo proporcionado externamente.</param>
+        /// <returns>
+        /// El objeto <see cref="Inventory"/> encontrado, o <c>null</c> si no existe.
+        /// </returns>
+        /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
+        public static async Task<Inventory?> ObtenerPorProductoEnTransaccionAsync(
+            int pProductId, DbContexto pDbContexto)
+        {
+            return await pDbContexto.Inventory
+                .FirstOrDefaultAsync(i => i.ProductId == pProductId);
+        }
+
+        /// <summary>
+        /// Actualiza el stock de un registro de inventario dentro de una transacción activa.
+        /// No llama a <c>SaveChangesAsync</c>; esa responsabilidad recae en el llamador.
+        /// </summary>
+        /// <param name="pInventory">Objeto <see cref="Inventory"/> con el stock actualizado.</param>
+        /// <param name="pDbContexto">Contexto de base de datos activo con transacción abierta.</param>
+        public static void ActualizarStockEnTransaccion(Inventory pInventory, DbContexto pDbContexto)
+        {
+            pDbContexto.Inventory.Update(pInventory);
+        }
+
         #region "Búsqueda Avanzada con Paginación"
 
         /// <summary>

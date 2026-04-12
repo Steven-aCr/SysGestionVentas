@@ -1,0 +1,224 @@
+﻿@model SysGestionVentas.EN.Pagination.PagedResult<SysGestionVentas.EN.InventoryMovement>
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Movimientos de Inventario";
+    int page = Model.CurrentPage;
+    int totalPages = Model.TotalPages;
+    var invId = Context.Request.Query["inventoryId"].ToString();
+    var movId = Context.Request.Query["movementTypeId"].ToString();
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">Movimientos de Inventario</h1>
+        <p class="page-header__subtitle">Historial de entradas, salidas y ajustes de stock</p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Create" class="btn btn-primary">
+            <span class="material-symbols-outlined">add</span>
+            Registrar Movimiento
+        </a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert-custom alert-success-custom mb-3">
+        <span class="material-symbols-outlined">check_circle</span>
+        @TempData["Success"]
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert-custom alert-danger-custom mb-3">
+        <span class="material-symbols-outlined">error</span>
+        @TempData["Error"]
+    </div>
+}
+
+<div class="table-card">
+
+    <div class="table-toolbar">
+        <form method="get" asp-action="Index" class="d-flex gap-2 flex-wrap align-items-center">
+            
+            <select name="inventoryId" class="form-select" style="min-width:200px;font-size:.84rem;">
+                <option value="0">— Todos los productos —</option>
+                @foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.InventoryList)
+                {
+                    <option value="@item.Value" selected="@(item.Selected)">
+                        @item.Text
+                    </option>
+                }
+            </select>
+
+            <select name="movementTypeId" class="form-select" style="min-width:160px;font-size:.84rem;">
+                <option value="0">— Todos los tipos —</option>
+                @foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.MovementTypeList)
+                {
+                    <option value="@item.Value" selected="@(item.Selected)">
+                        @item.Text
+                    </option>
+                }
+            </select>
+
+            <button type="submit" class="btn btn-primary" style="height:38px;" title="Filtrar">
+                <span class="material-symbols-outlined" style="font-size:18px;">filter_list</span>
+            </button>
+
+            <a asp-action="Index" class="btn btn-light" style="height:38px;" title="Limpiar filtros">
+                <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
+            </a>
+        </form>
+
+        <span style="font-size:.8rem;color:var(--clr-text-muted);">
+            @Model.TotalCount registro(s)
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" id="movTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Producto</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                    <th>Costo Unit.</th>
+                    <th>Total</th>
+                    <th>Registrado por</th>
+                    <th>Fecha</th>
+                    <th style="text-align:right;">Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="9">
+                            <div class="empty-state">
+                                <div class="empty-state__icon">
+                                    <span class="material-symbols-outlined">swap_vert</span>
+                                </div>
+                                <div class="empty-state__title">Sin movimientos</div>
+                                <p class="empty-state__text">No hay movimientos con los filtros aplicados.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Items)
+                    {
+                        var tipo = item.MovementType?.Name ?? "—";
+                        var producto = item.Inventory?.Product?.Name ?? $"Inv. #{item.InventoryId}";
+                        var usuario = item.CreatedBy?.UserName ?? "—";
+                        var total = item.Quantity * item.UnitCost;
+
+                        var badgeClass = tipo switch
+                        {
+                            "Entrada" => "badge-admin",
+                            "Devolución" => "badge-admin",
+                            "Salida" => "badge-danger-outline",
+                            "Transferencia" => "badge-danger-outline",
+                            "Ajuste" => "badge-cliente",
+                            _ => "badge-neutral"
+                        };
+
+                        <tr>
+                            <td style="color:var(--clr-text-muted);font-size:.8rem;">
+                                #@item.InventoryMovementId
+                            </td>
+
+                            <td>
+                                <div class="user-cell">
+                                    <div class="user-cell__avatar" style="width:32px;height:32px;font-size:.72rem;border-radius:var(--radius-sm);">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">inventory_2</span>
+                                    </div>
+                                    <div>
+                                        <div class="user-cell__name">@producto</div>
+                                        <div class="user-cell__meta">Inv. #@item.InventoryId</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="badge @badgeClass">@tipo</span>
+                            </td>
+
+                            <td><strong>@item.Quantity</strong></td>
+
+                            <td style="color:var(--clr-text-muted);">
+                                $@item.UnitCost.ToString("0.00")
+                            </td>
+
+                            <td>
+                                <strong>$@total.ToString("0.00")</strong>
+                            </td>
+
+                            <td style="color:var(--clr-text-muted);font-size:.83rem;">
+                                @usuario
+                            </td>
+
+                            <td style="color:var(--clr-text-muted);font-size:.83rem;">
+                                @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+
+                            <td>
+                                <div class="table-actions">
+                                    <a asp-action="Details" asp-route-id="@item.InventoryMovementId"
+                                           class="btn btn-icon" title="Ver detalle">
+                                        <span class="material-symbols-outlined">visibility</span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="table-footer">
+        <span>
+            Mostrando @Model.FirstItemIndex–@Model.LastItemIndex de @Model.TotalCount registro(s)
+        </span>
+
+        @if (totalPages > 1)
+        {
+            <nav>
+                <ul class="pagination pagination-sm mb-0" style="gap:4px;">
+                    <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index"
+                               asp-route-page="@(page - 1)"
+                               asp-route-inventoryId="@invId"
+                               asp-route-movementTypeId="@movId">
+                            <span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span>
+                        </a>
+                    </li>
+
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == page ? "active" : "")">
+                            <a class="page-link" asp-action="Index"
+                                   asp-route-page="@i"
+                                   asp-route-inventoryId="@invId"
+                                   asp-route-movementTypeId="@movId">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index"
+                               asp-route-page="@(page + 1)"
+                               asp-route-inventoryId="@invId"
+                               asp-route-movementTypeId="@movId">
+                            <span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+</div>

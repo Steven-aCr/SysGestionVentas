@@ -5,6 +5,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SysGestionVentas.BL
 {
+    /// <summary>
+    /// Capa de lógica de negocio para la entidad <see cref="Inventory"/>.
+    /// Orquesta validaciones de datos, reglas de negocio y delega la persistencia a <see cref="InventoryDAL"/>.
+    /// </summary>
     public class InventoryBL
     {
         #region "Métodos Privados"
@@ -15,18 +19,27 @@ namespace SysGestionVentas.BL
         /// </summary>
         /// <param name="pInventory">Objeto <see cref="Inventory"/> a validar.</param>
         /// <exception cref="ValidationException">
-        /// Se lanza si alguna propiedad no cumple con las anotaciones de validación definidas en la entidad.
-        /// El mensaje de la excepción contiene la descripción del primer error encontrado.
+        /// Se lanza si alguna propiedad no cumple con las anotaciones de validación.
         /// </exception>
         private static void ValidarEntidad(Inventory pInventory)
         {
             var contexto = new ValidationContext(pInventory);
             var resultados = new List<ValidationResult>();
-
             bool esValido = Validator.TryValidateObject(pInventory, contexto, resultados, validateAllProperties: true);
-
             if (!esValido)
                 throw new ValidationException(resultados[0].ErrorMessage);
+        }
+
+        /// <summary>
+        /// Valida que el precio de venta sea mayor o igual al precio de compra,
+        /// según la restricción de negocio definida en la base de datos.
+        /// </summary>
+        /// <param name="pInventory">Objeto <see cref="Inventory"/> con los precios a validar.</param>
+        /// <exception cref="Exception">Se lanza si el precio de venta es menor al precio de compra.</exception>
+        private static void ValidarPrecios(Inventory pInventory)
+        {
+            if (pInventory.SalePrice < pInventory.PurchasePrice)
+                throw new Exception("El precio de venta no puede ser menor al precio de compra.");
         }
 
         #endregion
@@ -34,54 +47,52 @@ namespace SysGestionVentas.BL
         #region "CRUD"
 
         /// <summary>
-        /// Valida y registra un nuevo inventario en el sistema.
+        /// Valida y registra un nuevo registro de inventario en el sistema.
+        /// Verifica que el precio de venta no sea inferior al precio de compra.
         /// </summary>
-        /// <param name="pInventory">
-        /// Objeto <see cref="Inventory"/> con los datos del inventario a registrar.
-        /// Los campos <c>PurchasePrice</c>, <c>SalePrice</c>, <c>MinimumStock</c>,
-        /// <c>CurrentStock</c> y <c>ProductId</c> son obligatorios.
-        /// </param>
-        /// <returns>
-        /// Número de filas afectadas. Retorna <c>1</c> si se guardó correctamente, <c>0</c> si falló.
-        /// </returns>
+        /// <param name="pInventory">Objeto <see cref="Inventory"/> con los datos a guardar.</param>
+        /// <returns>Número de filas afectadas. Retorna <c>1</c> si se guardó correctamente.</returns>
         /// <exception cref="ValidationException">Se lanza si los datos no pasan la validación de la entidad.</exception>
-        /// <exception cref="Exception">Se lanza si ocurre un error durante la operación en base de datos.</exception>
+        /// <exception cref="Exception">Se lanza si los precios son inconsistentes o si ocurre un error en base de datos.</exception>
         public static async Task<int> GuardarAsync(Inventory pInventory)
         {
             ValidarEntidad(pInventory);
+            ValidarPrecios(pInventory);
             return await InventoryDAL.GuardarAsync(pInventory);
         }
 
         /// <summary>
-        /// Valida y modifica los datos de un inventario existente en el sistema.
+        /// Valida y modifica los datos de un registro de inventario existente.
+        /// Verifica que el precio de venta no sea inferior al precio de compra.
+        /// No permite cambiar el producto asociado (<c>ProductId</c>).
         /// </summary>
         /// <param name="pInventory">
         /// Objeto <see cref="Inventory"/> con el <c>InventoryId</c> del registro a modificar
         /// y los nuevos valores a actualizar.
         /// </param>
-        /// <returns>
-        /// Número de filas afectadas. Retorna <c>1</c> si se modificó correctamente, <c>0</c> si falló.
-        /// </returns>
+        /// <returns>Número de filas afectadas. Retorna <c>1</c> si se modificó correctamente.</returns>
         /// <exception cref="ValidationException">Se lanza si los datos no pasan la validación de la entidad.</exception>
-        /// <exception cref="Exception">Se lanza si el inventario no existe o si ocurre un error en base de datos.</exception>
+        /// <exception cref="Exception">Se lanza si el inventario no existe, los precios son inconsistentes, o si ocurre un error en base de datos.</exception>
         public static async Task<int> ModificarAsync(Inventory pInventory)
         {
+            if (pInventory.InventoryId <= 0)
+                throw new Exception("El ID de inventario no es válido.");
+
             ValidarEntidad(pInventory);
+            ValidarPrecios(pInventory);
             return await InventoryDAL.ModificarAsync(pInventory);
         }
 
         /// <summary>
-        /// Realiza la eliminación lógica de un inventario, cambiando su estado en el sistema.
+        /// Realiza la eliminación lógica de un registro de inventario, cambiando su estado.
         /// No elimina el registro físicamente de la base de datos.
         /// </summary>
         /// <param name="pInventory">
         /// Objeto <see cref="Inventory"/> con el <c>InventoryId</c> del registro
         /// y el <c>StatusId</c> correspondiente al estado inactivo.
         /// </param>
-        /// <returns>
-        /// Número de filas afectadas. Retorna <c>1</c> si se cambió el estado correctamente, <c>0</c> si falló.
-        /// </returns>
-        /// <exception cref="Exception">Se lanza si el ID no es válido o si ocurre un error en base de datos.</exception>
+        /// <returns>Número de filas afectadas. Retorna <c>1</c> si se cambió el estado correctamente.</returns>
+        /// <exception cref="Exception">Se lanza si el ID no es válido, si el inventario no existe, o si ocurre un error en base de datos.</exception>
         public static async Task<int> EliminarAsync(Inventory pInventory)
         {
             if (pInventory.InventoryId <= 0)
@@ -94,13 +105,11 @@ namespace SysGestionVentas.BL
         }
 
         /// <summary>
-        /// Obtiene un inventario específico por su identificador, incluyendo
-        /// su relación con <see cref="ProductList"/>.
+        /// Obtiene un registro de inventario específico por su identificador,
+        /// incluyendo sus relaciones con <see cref="ProductList"/> y <see cref="Status"/>.
         /// </summary>
         /// <param name="pInventory">Objeto <see cref="Inventory"/> con el <c>InventoryId</c> a buscar.</param>
-        /// <returns>
-        /// El objeto <see cref="Inventory"/> encontrado, o <c>null</c> si no existe.
-        /// </returns>
+        /// <returns>El objeto <see cref="Inventory"/> encontrado, o <c>null</c> si no existe.</returns>
         /// <exception cref="Exception">Se lanza si el ID no es válido o si ocurre un error en base de datos.</exception>
         public static async Task<Inventory?> ObtenerPorIdAsync(Inventory pInventory)
         {
@@ -111,19 +120,10 @@ namespace SysGestionVentas.BL
         }
 
         /// <summary>
-        /// Obtiene una lista de inventarios aplicando filtros opcionales.
-        /// Los parámetros con valor <c>0</c> son ignorados en el filtro.
+        /// Obtiene una lista de registros de inventario aplicando filtros opcionales.
         /// </summary>
-        /// <param name="pInventory">
-        /// Objeto <see cref="Inventory"/> usado como filtro de búsqueda:
-        /// <list type="bullet">
-        ///   <item><description><c>ProductId</c>: filtra por producto asociado (0 = sin filtro).</description></item>
-        /// </list>
-        /// </param>
-        /// <returns>
-        /// Lista de objetos <see cref="Inventory"/> que cumplen los filtros indicados,
-        /// ordenados por producto de forma ascendente.
-        /// </returns>
+        /// <param name="pInventory">Objeto <see cref="Inventory"/> usado como filtro de búsqueda.</param>
+        /// <returns>Lista de objetos <see cref="Inventory"/> ordenados por nombre de producto.</returns>
         /// <exception cref="Exception">Se lanza si ocurre un error en base de datos.</exception>
         public static async Task<List<Inventory>> ObtenerTodosAsync(Inventory pInventory)
         {
@@ -135,15 +135,14 @@ namespace SysGestionVentas.BL
         #region "Búsqueda Avanzada con Paginación"
 
         /// <summary>
-        /// Realiza una búsqueda avanzada de inventarios con soporte para paginación.
+        /// Realiza una búsqueda avanzada de registros de inventario con soporte para paginación.
         /// Valida que los parámetros de paginación sean coherentes antes de ejecutar la consulta.
         /// </summary>
         /// <param name="pPagedQuery">
-        /// Objeto <see cref="PagedQuery{Inventory}"/> que define los filtros, el tamaño de página
-        /// y el número de página. No puede ser <c>null</c>.
+        /// Objeto <see cref="PagedQuery{Inventory}"/> con los filtros y parámetros de paginación.
         /// </param>
         /// <returns>
-        /// Objeto <see cref="PagedResult{Inventory}"/> con la lista de inventarios encontrados
+        /// Objeto <see cref="PagedResult{Inventory}"/> con la lista de registros encontrados
         /// e información de paginación.
         /// </returns>
         /// <exception cref="ArgumentNullException">Se lanza si <paramref name="pPagedQuery"/> es <c>null</c>.</exception>

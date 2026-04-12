@@ -41,6 +41,22 @@ namespace SysGestionVentas.DAL
         }
 
         /// <summary>
+        /// Registra un nuevo movimiento de inventario utilizando un contexto de base de datos externo,
+        /// permitiendo que la operación participe en una transacción coordinada con otras entidades.
+        /// No llama a <c>SaveChangesAsync</c>; esa responsabilidad recae en el llamador.
+        /// </summary>
+        /// <param name="pInventoryMovement">Objeto <see cref="InventoryMovement"/> con los datos del movimiento.</param>
+        /// <param name="pDbContexto">Contexto de base de datos activo proporcionado externamente.</param>
+        /// <exception cref="Exception">Se lanza si ocurre un error durante la operación.</exception>
+        public static async Task RegistrarMovimientoEnTransaccionAsync(
+            InventoryMovement pInventoryMovement, DbContexto pDbContexto)
+        {
+            pInventoryMovement.CreatedAt = DateTime.UtcNow;
+            pDbContexto.InventoryMovement.Add(pInventoryMovement);
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
         /// Obtiene un movimiento de inventario específico por su identificador, incluyendo
         /// sus relaciones con <see cref="MovementType"/>, <see cref="Inventory"/> y
         /// el <see cref="User"/> que lo registró.
@@ -163,6 +179,44 @@ namespace SysGestionVentas.DAL
 
         #endregion
 
+        /// <summary>
+        /// Obtiene todos los movimientos de inventario asociados a un documento específico,
+        /// navegando a través de la relación <see cref="DocumentDetail"/> → <see cref="InventoryMovement"/>.
+        /// </summary>
+        /// <param name="pDocumentId">Identificador del documento cuyos movimientos se desean consultar.</param>
+        /// <returns>
+        /// Lista de objetos <see cref="InventoryMovement"/> asociados al documento indicado,
+        /// con las propiedades de navegación <see cref="MovementType"/>, <see cref="Inventory"/>,
+        /// su <see cref="ProductList"/> y el <see cref="User"/> creador cargadas.
+        /// Retorna lista vacía si no existen movimientos.
+        /// </returns>
+        /// <exception cref="Exception">Se lanza si ocurre un error durante la consulta.</exception>
+        public static async Task<List<InventoryMovement>> ObtenerPorDocumentoAsync(int pDocumentId)
+        {
+            var result = new List<InventoryMovement>();
+            try
+            {
+                using (var dbContexto = new DbContexto())
+                {
+                    result = await dbContexto.InventoryMovement
+                        .Include(im => im.MovementType)
+                        .Include(im => im.Inventory)
+                            .ThenInclude(i => i!.Product)
+                        .Include(im => im.CreatedBy)
+                        .Include(im => im.DocumentDetail)
+                        .Where(im => im.DocumentDetail != null &&
+                                     im.DocumentDetail.DocumentId == pDocumentId)
+                        .OrderByDescending(im => im.CreatedAt)
+                        .ToListAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            return result;
+        }
+
         #region "Search"
 
         /// Método privado para QuerySelect:
@@ -182,12 +236,12 @@ namespace SysGestionVentas.DAL
                 pQuery = pQuery.Where(im => im.CreatedByUser == f.CreatedByUser);
 
             if (pPagedQuery.FromDate.HasValue)
-                pQuery = pQuery.Where(im => im.MovementDate >= pPagedQuery.FromDate.Value);
+                pQuery = pQuery.Where(im => im.CreatedAt >= pPagedQuery.FromDate.Value);
 
             if (pPagedQuery.ToDate.HasValue)
-                pQuery = pQuery.Where(im => im.MovementDate <= pPagedQuery.ToDate.Value);
+                pQuery = pQuery.Where(im => im.CreatedAt <= pPagedQuery.ToDate.Value);
 
-            return pQuery.OrderByDescending(im => im.MovementDate);
+            return pQuery.OrderByDescending(im => im.CreatedAt);
         }
 
         /// Método público para búsqueda con filtros y paginación:

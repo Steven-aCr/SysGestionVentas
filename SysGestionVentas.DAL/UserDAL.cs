@@ -6,7 +6,7 @@ using System.Text;
 
 namespace SysGestionVentas.DAL
 {
-    public class UsersDAL
+    public class UserDAL
     {
         #region "Métodos Privados"
         /// <summary>
@@ -51,7 +51,7 @@ namespace SysGestionVentas.DAL
         /// <returns><c>true</c> si el <c>UserName</c> ya existe, <c>false</c> en caso contrario.</returns>
         private static async Task<bool> ExisteUserName(User pUser, DbContexto dbContexto)
         {
-            return await dbContexto.Set<User>().AnyAsync(
+            return await dbContexto.User.AnyAsync(
                 u => u.UserName == pUser.UserName && u.UserId != pUser.UserId);
         }
 
@@ -62,9 +62,11 @@ namespace SysGestionVentas.DAL
         /// <param name="pUser">Objeto <see cref="User"/> con el <c>Email</c> a validar.</param>
         /// <param name="dbContexto">Contexto de base de datos activo.</param>
         /// <returns><c>true</c> si el <c>Email</c> ya existe, <c>false</c> en caso contrario.</returns>
-        private static async Task<bool> ExisteEmail(User pUser, DbContexto dbContexto)
+        public static async Task<bool> ExisteEmail(User pUser, DbContexto dbContexto)
         {
-            return await dbContexto.Set<User>().AnyAsync(
+            if(string.IsNullOrWhiteSpace(pUser.Email))
+                return false; // No se valida si el email es nulo o vací.
+            return await dbContexto.User.AnyAsync(
                 u => u.Email == pUser.Email && u.UserId != pUser.UserId);
         }
 
@@ -132,7 +134,6 @@ namespace SysGestionVentas.DAL
                         throw new Exception("El correo electrónico ya está registrado.");
 
                     pUser.PasswordHash = EncriptarSHA256(pUser.PasswordHash!);
-                    pUser.MustChangePassword = false;
                     pUser.CreatedAt = DateTime.UtcNow;
 
                     dbContexto.Add(pUser);
@@ -175,7 +176,7 @@ namespace SysGestionVentas.DAL
                     if (await ExisteEmail(pUser, dbContexto))
                         throw new Exception("El correo electrónico ya está registrado.");
 
-                    var user = await dbContexto.Set<User>().FirstOrDefaultAsync(
+                    var user = await dbContexto.User.FirstOrDefaultAsync(
                         u => u.UserId == pUser.UserId);
 
                     if (user == null)
@@ -220,7 +221,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    var user = await dbContexto.Set<User>().FirstOrDefaultAsync(
+                    var user = await dbContexto.User.FirstOrDefaultAsync(
                         u => u.UserId == pUser.UserId);
 
                     if (user == null)
@@ -266,12 +267,13 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    result = await dbContexto.Set<User>()
+                    result = await dbContexto.User
                         .Include(u => u.Rol)
                         .Include(u => u.Person)
                         .Include(u => u.Status)
                         .Where(u =>
                             (pUser.UserName == null || u.UserName!.Contains(pUser.UserName)) &&
+                            (pUser.Email == null || u.Email!.Contains(pUser.Email))&&
                             (pUser.RolId == 0 || u.RolId == pUser.RolId) &&
                             (pUser.StatusId == 0 || u.StatusId == pUser.StatusId)
                         )
@@ -301,7 +303,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    return await dbContexto.Set<User>()
+                    return await dbContexto.User
                         .Include(u => u.Rol)
                         .Include(u => u.Person)
                         .Include(u => u.Status)
@@ -314,6 +316,33 @@ namespace SysGestionVentas.DAL
             }
         }
 
+        /// <summary>
+        /// Registra un nuevo usuario utilizando un contexto de base de datos externo,
+        /// permitiendo que la operación participe en una transacción coordinada con otras entidades.
+        /// Valida unicidad de <c>UserName</c> y <c>Email</c> antes de guardar.
+        /// La contraseña es encriptada con SHA256 antes de agregarse al contexto.
+        /// No llama a <c>SaveChangesAsync</c>; esa responsabilidad recae en el llamador.
+        /// </summary>
+        /// <param name="pUser">Objeto <see cref="User"/> con los datos a guardar.</param>
+        /// <param name="pDbContexto">Contexto de base de datos activo proporcionado externamente.</param>
+        /// <exception cref="Exception">
+        /// Se lanza si el <c>UserName</c> o <c>Email</c> ya existen,
+        /// o si ocurre un error durante la operación.
+        /// </exception>
+        public static async Task GuardarEnTransaccionAsync(User pUser, DbContexto dbContexto)
+        {
+            if (await ExisteUserName(pUser, dbContexto))
+                throw new Exception("El nombre de usuario ya existe.");
+
+            if (await ExisteEmail(pUser, dbContexto))
+                throw new Exception("El correo electrónico ya está registrado.");
+
+            pUser.PasswordHash = EncriptarSHA256(pUser.PasswordHash!);
+            pUser.CreatedAt = DateTime.UtcNow;
+
+            dbContexto.User.Add(pUser);
+
+        }
         #endregion
 
         #region "Búsqueda Avanzada con Paginación"
@@ -330,9 +359,10 @@ namespace SysGestionVentas.DAL
         {
             try
             {
+
                 using (var dbContexto = new DbContexto())
                 {
-                    var baseQuery = dbContexto.Set<User>()
+                    var baseQuery = dbContexto.User
                         .Include(u => u.Rol)
                         .Include(u => u.Person)
                         .Include(u => u.Status)
@@ -405,16 +435,19 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    var user = await dbContexto.Set<User>()
+                    var user = await dbContexto.User
                         .Include(u => u.Status)
                         .FirstOrDefaultAsync(u => u.UserId == UserId);
+
                     if (user == null)
                         throw new Exception($"No se encontró el usuario con ID {UserId}.");
+
                     if (user.Status == null || user.Status.Name != "Activo")
-                        throw new Exception("No se puede genrear acceso temporal a un usuario inactivo.");
+                        throw new Exception("No se puede generar acceso temporal a un usuario inactivo.");
+
                     user.TempPasswordHash = EncriptarSHA256(tempPassword);
-                    user.TempPasswordExpiry = DateTime.UtcNow.AddHours(1); // La contraseña temporal es válida por 1 hora
-                    user.MustChangePassword = true; // Requiere cambio de contraseña en el próximo inicio de sesión
+                    user.TempPasswordExpiry = DateTime.UtcNow.AddHours(1);
+                    // MustChangePassword eliminado — el usuario opera normalmente con la temporal
 
                     dbContexto.Update(user);
                     await dbContexto.SaveChangesAsync();
@@ -424,8 +457,6 @@ namespace SysGestionVentas.DAL
             {
                 throw new Exception(ex.Message);
             }
-            // Para una futura implementación
-            // la contraseña temporal se enviaría al usuario por correo electrónico.
             return tempPassword;
         }
 
@@ -447,7 +478,7 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    var user = await dbContexto.Set<User>()
+                    var user = await dbContexto.User
                         .Include(u => u.Rol)
                         .Include(u => u.Person)
                         .Include(u => u.Status)
@@ -504,17 +535,13 @@ namespace SysGestionVentas.DAL
             {
                 using (var dbContexto = new DbContexto())
                 {
-                    var user = await dbContexto.Set<User>().FirstOrDefaultAsync(
+                    var user = await dbContexto.User.FirstOrDefaultAsync(
                         u => u.UserId == pUserId);
+
                     if (user == null)
                         throw new Exception($"No se encontró el usuario con ID {pUserId}.");
-                    if (!user.MustChangePassword)
-                        throw new Exception(
-                            "El usuario no tiene cambio de contraseña obligatorio.");
 
                     user.PasswordHash = EncriptarSHA256(pNewPassword);
-                    user.MustChangePassword = false; // El usuario ha cambiado su contraseña temporal, ya no es obligatorio cambiarla en el próximo inicio de sesión
-
 
                     dbContexto.Update(user);
                     result = await dbContexto.SaveChangesAsync();
@@ -528,6 +555,62 @@ namespace SysGestionVentas.DAL
             return result;
         }
 
+        #endregion
+
+        #region "Operaciones en Transacción Externa"
+        /// <summary>
+        /// Obtiene un <see cref="User"/> por su identificador dentro de una transacción activa.
+        /// </summary>
+        /// <param name="pUserId">Identificador del usuario a obtener.</param>
+        /// <param name="pDbContexto">Contexto de base de datos activo con transacción abierta.</param>
+        /// <returns>El <see cref="User"/> encontrado, o <c>null</c> si no existe.</returns>
+        public static async Task<User?> ObtenerEnTransaccionAsync(int pUserId, DbContexto pDbContexto)
+        {
+            return await pDbContexto.User
+                .FirstOrDefaultAsync(u => u.UserId == pUserId);
+        }
+
+        /// <summary>
+        /// Verifica que la contraseña actual proporcionada coincida con el hash almacenado
+        /// para el usuario indicado. Usado como paso de seguridad previo al cambio de contraseña
+        /// desde el perfil del usuario autenticado.
+        /// </summary>
+        /// <param name="pUserId">Identificador del usuario.</param>
+        /// <param name="pCurrentPassword">Contraseña actual en texto plano a verificar.</param>
+        /// <param name="pDbContexto">Contexto de base de datos activo con transacción abierta.</param>
+        /// <exception cref="Exception">Se lanza si la contraseña actual es incorrecta.</exception>
+        public static async Task ValidarContrasenaActualAsync(
+            int pUserId, string pCurrentPassword, DbContexto pDbContexto)
+        {
+            var user = await pDbContexto.User
+                .FirstOrDefaultAsync(u => u.UserId == pUserId);
+
+            if (user == null)
+                throw new Exception("No se encontró el usuario.");
+
+            if (user.PasswordHash != EncriptarSHA256(pCurrentPassword))
+                throw new Exception("La contraseña actual es incorrecta.");
+        }
+
+        /// <summary>
+        /// Modifica los datos editables de un <see cref="User"/> dentro de una
+        /// transacción activa. No llama a <c>SaveChangesAsync</c>.
+        /// </summary>
+        /// <param name="pUser">Objeto <see cref="User"/> con los nuevos valores aplicados.</param>
+        /// <param name="pDbContexto">Contexto de base de datos activo con transacción abierta.</param>
+        public static void ModificarEnTransaccion(User pUser, DbContexto pDbContexto)
+        {
+            pDbContexto.Update(pUser);
+        }
+
+        /// <summary>
+        /// Expone el método de encriptación SHA256 para uso interno entre capas
+        /// cuando se requiere generar un hash fuera del contexto de GuardarAsync.
+        /// </summary>
+        /// <param name="pInput">Texto plano a encriptar.</param>
+        /// <returns>Hash SHA256 en formato hexadecimal.</returns>
+        public static string EncriptarSHA256Publico(string pInput)
+            => EncriptarSHA256(pInput);
         #endregion
     }
 }

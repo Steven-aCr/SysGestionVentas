@@ -36,7 +36,6 @@ namespace SysGestionVentas.EN
         [StringLength(255)]
         public string? TempPasswordHash { get; set; }
         public DateTime? TempPasswordExpiry { get; set; }
-        public bool MustChangePassword { get; set; } = false;
 
         // Relaciones con otras entidades
 

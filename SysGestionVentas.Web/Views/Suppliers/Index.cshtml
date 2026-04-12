@@ -1,0 +1,163 @@
+﻿@model SysGestionVentas.EN.Pagination.PagedResult<SysGestionVentas.EN.Supplier>
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Proveedores";
+    ViewData["BreadcrumbParent"] = "Compras";
+
+    var busqueda = ViewBag.Busqueda as string ?? string.Empty;
+    var statusId = (int)(ViewBag.StatusId ?? 0);
+}
+
+<div class="page-content">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-header__title">
+                <span class="material-symbols-outlined">local_shipping</span>
+                Proveedores
+            </h1>
+            <p class="page-header__subtitle">Empresas y contactos que abastecen productos al negocio</p>
+        </div>
+        <div class="page-header__actions">
+            <a asp-action="Create" class="btn btn-primary">
+                <span class="material-symbols-outlined">add</span>
+                Nuevo Proveedor
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-custom alert-success-custom mb-3">
+            <span class="material-symbols-outlined">check_circle</span>
+            @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert-custom alert-danger-custom mb-3">
+            <span class="material-symbols-outlined">error</span>
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="table-card">
+
+        <div class="table-toolbar">
+            <form asp-action="Index" method="get"
+                  style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;">
+
+                <div class="search-box">
+                    <span class="material-symbols-outlined" style="font-size:18px; color:var(--clr-text-subtle);">search</span>
+                    <input type="text" name="busqueda" value="@busqueda"
+                           placeholder="Empresa, NIT…" autocomplete="off" />
+                </div>
+
+                <select name="statusId" class="form-select" style="min-width:150px; font-size:.84rem;">
+                    <option value="0">— Todos los estados —</option>
+                    @foreach (SelectListItem item in (IEnumerable<SelectListItem>)ViewBag.StatusList)
+                    {
+                        <option value="@item.Value" selected="@item.Selected">@item.Text</option>
+                    }
+                </select>
+
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-symbols-outlined">search</span> Buscar
+                </button>
+
+                @if (!string.IsNullOrWhiteSpace(busqueda) || statusId > 0)
+                {
+                    <a asp-action="Index" class="btn btn-light">
+                        <span class="material-symbols-outlined">close</span> Limpiar
+                    </a>
+                }
+            </form>
+            <span style="font-size:.8rem; color:var(--clr-text-muted);">@Model.TotalCount registro(s)</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Empresa</th>
+                        <th>Contacto</th>
+                        <th>NIT</th>
+                        <th>NRC</th>
+                        <th>Estado</th>
+                        <th style="text-align:right;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <div class="empty-state__icon">
+                                        <span class="material-symbols-outlined">local_shipping</span>
+                                    </div>
+                                    <div class="empty-state__title">Sin resultados</div>
+                                    <p class="empty-state__text">No se encontraron proveedores con los filtros aplicados.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var sup in Model.Items)
+                        {
+                            var isActive = sup.Status?.Name?.Equals("Activo", StringComparison.OrdinalIgnoreCase) ?? false;
+                            var company = sup.CompanyName ?? "—";
+                            var initials = company.Length >= 2 ? company.Substring(0, 2).ToUpper() : company.ToUpper();
+
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="user-cell__avatar" style="border-radius:var(--radius-sm);">@initials</div>
+                                        <div>
+                                            <div class="user-cell__name">@company</div>
+                                            <div class="user-cell__meta">@(sup.Description ?? string.Empty)</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="color:var(--clr-text-muted);">
+                                    @(sup.Person?.FullName ?? "—")
+                                </td>
+                                <td style="color:var(--clr-text-muted); font-size:.83rem;">@(sup.Nit ?? "—")</td>
+                                <td style="color:var(--clr-text-muted); font-size:.83rem;">@(sup.Nrc ?? "—")</td>
+                                <td>
+                                    <div class="status">
+                                        <span class="status-dot @(isActive ? "status-dot--active" : "status-dot--inactive")"></span>
+                                        <span>@(sup.Status?.Name ?? "—")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a asp-action="Details" asp-route-id="@sup.SupplierId" class="btn btn-icon" title="Ver detalle">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@sup.SupplierId" class="btn btn-icon" title="Editar proveedor">
+                                            <span class="material-symbols-outlined">edit</span>
+                                        </a>
+                                        @if (isActive)
+                                        {
+                                            <a asp-action="Delete" asp-route-id="@sup.SupplierId"
+                                                   class="btn btn-icon btn-danger-outline" title="Desactivar proveedor">
+                                                <span class="material-symbols-outlined">block</span>
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-footer">
+            <span>Mostrando <strong>@Model.TotalCount</strong> proveedor(es)</span>
+        </div>
+    </div>
+</div>

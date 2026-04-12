@@ -1,0 +1,127 @@
+﻿@model SysGestionVentas.EN.ViewModels.EditProfileModel
+
+@{
+    ViewData["Title"] = "Mi Perfil";
+    ViewData["BreadcrumbParent"] = "Mi Cuenta";
+    ViewData["BreadcrumbCurrent"] = "Perfil";
+}
+
+<div class="page-content">
+
+    <div class="page-header">
+        <div class="page-header__info">
+            <h1 class="page-header__title">Mi Perfil</h1>
+            <p class="page-header__subtitle mb-0">Administra tu información personal y contraseña de acceso</p>
+        </div>
+        <div class="page-header__actions">
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-danger">
+                    <span class="material-symbols-outlined">logout</span>
+                    Cerrar sesión
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card" style="max-width:800px;">
+        <div class="card-body p-4">
+
+            <form asp-action="Perfil" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly"
+                     class="validation-summary-errors"></div>
+
+                <!-- DATOS PERSONALES -->
+                <div class="form-section">
+                    <div class="form-section__header">
+                        <span class="material-symbols-outlined form-section__icon">person</span>
+                        <span class="form-section__title">Datos Personales</span>
+                    </div>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label asp-for="FirstName" class="form-label"></label>
+                            <input asp-for="FirstName" class="form-control" />
+                            <span asp-validation-for="FirstName" class="field-validation-error"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="LastName" class="form-label"></label>
+                            <input asp-for="LastName" class="form-control" />
+                            <span asp-validation-for="LastName" class="field-validation-error"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Adress" class="form-label"></label>
+                            <input asp-for="Adress" class="form-control" />
+                            <span asp-validation-for="Adress" class="field-validation-error"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="PhoneNumber" class="form-label"></label>
+                            <input asp-for="PhoneNumber" class="form-control" />
+                            <span asp-validation-for="PhoneNumber" class="field-validation-error"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Dui" class="form-label"></label>
+                            <input asp-for="Dui" class="form-control" />
+                            <span asp-validation-for="Dui" class="field-validation-error"></span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ACCESO -->
+                <div class="form-section">
+                    <div class="form-section__header">
+                        <span class="material-symbols-outlined form-section__icon">lock</span>
+                        <span class="form-section__title">Credenciales</span>
+                    </div>
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email" class="field-validation-error"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="CurrentPassword" class="form-label"></label>
+                            <input asp-for="CurrentPassword" type="password" class="form-control" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="NewPassword" class="form-label"></label>
+                            <input asp-for="NewPassword" type="password" class="form-control" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="ConfirmNewPassword" class="form-label"></label>
+                            <input asp-for="ConfirmNewPassword" type="password" class="form-control" />
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="form-actions form-actions--end">
+                    <button type="submit" class="btn btn-primary">
+                        Guardar cambios
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
