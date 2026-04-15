@@ -6,6 +6,7 @@ using SysGestionVentas.BL;
 using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
 using SysGestionVentas.EN.Pagination;
+using SysGestionVentas.EN.ViewModels;
 using System.Security.Claims;
 
 namespace SysGestionVentas.Web.Controllers
@@ -76,6 +77,7 @@ namespace SysGestionVentas.Web.Controllers
             }
         }
 
+        // GET: Documents/Movimientos/5
         /// <summary>
         /// Obtiene en formato JSON los movimientos de inventario asociados a un documento,
         /// para su consumo desde la vista de detalle vía fetch.
@@ -112,62 +114,138 @@ namespace SysGestionVentas.Web.Controllers
 
         // GET: Documents/Create
         /// <summary>
-        /// Muestra el formulario para registrar un nuevo documento.
-        /// El usuario creador se asigna automáticamente desde la sesión.
+        /// Muestra el formulario unificado para registrar un nuevo documento.
+        /// El formulario incluye la sección de datos del nuevo cliente
+        /// (que se registrará como <see cref="Person"/> y <see cref="Client"/>
+        /// en la misma transacción).
         /// </summary>
         public async Task<IActionResult> Create()
         {
             await CargarListasAsync();
-            return View(new Document { IssueDate = DateTime.Today });
+            return View(new CreateDocumentModel { IssueDate = DateTime.Today });
         }
 
         // POST: Documents/Create
         /// <summary>
-        /// Procesa el registro de un nuevo documento.
-        /// Asigna automáticamente el usuario autenticado como <c>CreatedByUser</c>.
+        /// Confirma y persiste en una única transacción atómica:
+        /// <list type="number">
+        ///   <item>La <see cref="Person"/> y el <see cref="Client"/> del nuevo cliente.</item>
+        ///   <item>El encabezado del <see cref="Document"/>.</item>
+        ///   <item>Las líneas de <see cref="DocumentDetail"/> con cálculo de montos.</item>
+        ///   <item>Los <see cref="InventoryMovement"/> con actualización de stock.</item>
+        ///   <item>El total acumulado del documento.</item>
+        /// </list>
+        /// Requiere al menos una línea de detalle válida para proceder.
+        /// Los campos de datos del cliente (<c>FirstName</c>, <c>LastName</c>, etc.)
+        /// son obligatorios y se validan en la capa BL/DAL.
         /// </summary>
-        /// <param name="pDocument">Entidad <see cref="Document"/> con los datos del formulario.</param>
+        /// <param name="pModel">ViewModel con datos del cliente, encabezado y colección de detalles.</param>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(
-            [Bind("DocTypeId,DocNumber,IssueDate,PersonId,StatusId")]
-            Document pDocument)
+        public async Task<IActionResult> Create(CreateDocumentModel pModel)
         {
+            // 1 — Asignar usuario autenticado
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (!int.TryParse(userIdClaim, out int userId) || userId <= 0)
             {
-                ModelState.AddModelError(string.Empty, "No se pudo identificar al usuario autenticado.");
+                ModelState.AddModelError(string.Empty,
+                    "No se pudo identificar al usuario autenticado.");
                 await CargarListasAsync();
-                return View(pDocument);
+                return View(pModel);
             }
 
-            pDocument.CreatedByUser = userId;
-            pDocument.TotalAmount = 0;
+            pModel.CreatedByUser = userId;
+
+            // 2 — Validar que exista al menos un detalle
+            if (pModel.Detalles == null || pModel.Detalles.Count == 0)
+            {
+                ModelState.AddModelError(string.Empty,
+                    "Debe agregar al menos un producto antes de confirmar.");
+                await CargarListasAsync();
+                return View(pModel);
+            }
+
+            // 3 — Ignorar errores de ModelState para los detalles (vienen de inputs hidden
+            //     y sus valores ya están validados en el JS antes del submit).
+            foreach (var key in ModelState.Keys
+                .Where(k => k.StartsWith("Detalles["))
+                .ToList())
+            {
+                ModelState.Remove(key);
+            }
+
+            // 4 — PersonId no viene del formulario: remover de la validación de modelo
+            ModelState.Remove(nameof(CreateDocumentModel.PersonId));
 
             if (!ModelState.IsValid)
             {
                 await CargarListasAsync();
-                return View(pDocument);
+                return View(pModel);
             }
 
             try
             {
-                await DocumentBL.GuardarAsync(pDocument);
-                TempData["Success"] = "Documento registrado correctamente.";
-                return RedirectToAction(nameof(Details), new { id = pDocument.DocumentId });
+                var document = await DocumentBL.CrearConDetallesAsync(pModel);
+                TempData["Success"] =
+                    $"Documento {document.DocNumber} registrado correctamente.";
+                return RedirectToAction(nameof(Details), new { id = document.DocumentId });
             }
             catch (Exception ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
                 await CargarListasAsync();
-                return View(pDocument);
+                return View(pModel);
+            }
+        }
+
+        // GET: Documents/GetProductInfo?productId=5
+        /// <summary>
+        /// Endpoint AJAX que devuelve el precio de venta y el stock disponible
+        /// de un producto para autocompletar la línea de detalle en el formulario dinámico.
+        /// </summary>
+        /// <param name="productId">Identificador del producto a consultar.</param>
+        /// <returns>
+        /// JSON con <c>success</c>, <c>salePrice</c> y <c>currentStock</c> si el producto
+        /// tiene inventario activo registrado; o <c>success: false</c> con un <c>message</c>
+        /// descriptivo en caso contrario.
+        /// </returns>
+        [HttpGet]
+        public async Task<IActionResult> GetProductInfo(int productId)
+        {
+            if (productId <= 0)
+                return Json(new { success = false, message = "ID de producto no válido." });
+
+            try
+            {
+                var inventories = await InventoryDAL.ObtenerTodosAsync(
+                    new Inventory { ProductId = productId, StatusId = 1 });
+
+                var inv = inventories.FirstOrDefault();
+
+                if (inv == null)
+                    return Json(new
+                    {
+                        success = false,
+                        message = "Este producto no tiene inventario activo registrado."
+                    });
+
+                return Json(new
+                {
+                    success = true,
+                    salePrice = inv.SalePrice,
+                    currentStock = inv.CurrentStock
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
             }
         }
 
         // GET: Documents/Edit/5
         /// <summary>
-        /// Muestra el formulario para editar un documento existente.
-        /// Solo documentos en estado "Emitido" o "Pendiente" pueden editarse.
+        /// Muestra el formulario para editar los datos de cabecera de un documento existente.
+        /// No permite modificar las líneas de detalle desde esta acción.
         /// </summary>
         /// <param name="id">Identificador del documento a editar.</param>
         public async Task<IActionResult> Edit(int? id)
@@ -191,7 +269,7 @@ namespace SysGestionVentas.Web.Controllers
 
         // POST: Documents/Edit/5
         /// <summary>
-        /// Procesa la modificación de un documento existente.
+        /// Procesa la modificación de la cabecera de un documento existente.
         /// No permite cambiar <c>DocNumber</c>, <c>DocTypeId</c> ni <c>CreatedByUser</c>.
         /// </summary>
         /// <param name="id">Identificador del documento proveniente de la ruta.</param>
@@ -227,6 +305,7 @@ namespace SysGestionVentas.Web.Controllers
         // GET: Documents/Delete/5
         /// <summary>
         /// Muestra la confirmación para anular un documento (eliminación lógica).
+        /// Solo accesible por el rol Administrador.
         /// </summary>
         /// <param name="id">Identificador del documento a anular.</param>
         [Authorize(Roles = "Administrador")]
@@ -260,7 +339,6 @@ namespace SysGestionVentas.Web.Controllers
         {
             try
             {
-                // StatusId = 5 corresponde al estado "Anulado" según el seed data del script SQL.
                 await DocumentBL.EliminarAsync(new Document { DocumentId = id, StatusId = 5 });
                 TempData["Success"] = "Documento anulado correctamente.";
                 return RedirectToAction(nameof(Index));
@@ -275,8 +353,10 @@ namespace SysGestionVentas.Web.Controllers
         // ── Métodos Privados ─────────────────────────────────────────────────────
 
         /// <summary>
-        /// Carga las listas de tipos de documento, personas y estados
-        /// necesarias para los controles desplegables de las vistas Create y Edit.
+        /// Carga todas las listas desplegables necesarias para las vistas Create y Edit:
+        /// tipos de documento, estados y productos con inventario activo.
+        /// La lista de personas ya no es necesaria en Create porque el cliente
+        /// se crea directamente desde el formulario.
         /// </summary>
         private async Task CargarListasAsync()
         {
@@ -284,13 +364,24 @@ namespace SysGestionVentas.Web.Controllers
                 await DocumentTypeDAL.ObtenerTodosAsync(new DocumentType()),
                 "DocTypeId", "Name");
 
-            ViewBag.PersonList = new SelectList(
-                await PersonDAL.ObtenerTodosAsync(new Person { StatusId = 1 }),
-                "PersonId", "FullName");
-
             ViewBag.StatusList = new SelectList(
                 await StatusDAL.ObtenerPorTiposAsync(new List<int> { 3 }, pIsActive: true),
                 "StatusId", "Name");
+
+            // Lista de productos para el selector del modal.
+            // Se filtra por inventarios activos (StatusId = 1) para evitar mostrar
+            // productos sin stock o desactivados.
+            var inventarios = await InventoryDAL.ObtenerTodosAsync(
+                new Inventory { StatusId = 1 });
+
+            ViewBag.ProductList = inventarios
+                .Where(i => i.Product != null)
+                .Select(i => new SelectListItem
+                {
+                    Value = i.ProductId.ToString(),
+                    Text = i.Product!.Name
+                })
+                .ToList();
         }
 
         /// <summary>

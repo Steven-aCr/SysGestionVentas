@@ -121,6 +121,6 @@ namespace SysGestionVentas.EN.ViewModels
         /// Identificador del rol Vendedor en el sistema.
         /// Se utiliza para determinar si deben persistirse los datos de empleado.
         /// </summary>
-        public const int RolVendedorId = 2;
+        public const int RolVendedorId = 3;
     }
 }

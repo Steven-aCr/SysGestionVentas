@@ -201,13 +201,6 @@
                                                 visibility
                                             </span>
                                         </a>
-                                        <a asp-action="Edit" asp-route-id="@doc.DocumentId"
-                                           class="btn-icon" title="Editar"
-                                           data-bs-toggle="tooltip">
-                                            <span class="material-symbols-outlined" style="font-size:18px">
-                                                edit
-                                            </span>
-                                        </a>
                                         @if (User.IsInRole("Administrador"))
                                         {
                                             <a asp-action="Delete" asp-route-id="@doc.DocumentId"

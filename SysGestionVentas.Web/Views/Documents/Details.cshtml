@@ -37,21 +37,6 @@
             </p>
         </div>
         <div class="page-header__actions">
-            @if (isEditable)
-            {
-                <a asp-controller="DocumentDetails"
-                       asp-action="Create"
-                       asp-route-documentId="@Model.DocumentId"
-                       class="btn btn-primary">
-                    <span class="material-symbols-outlined">add</span>
-                    Agregar línea
-                </a>
-                <a asp-action="Edit" asp-route-id="@Model.DocumentId"
-                       class="btn btn-light">
-                    <span class="material-symbols-outlined">edit</span>
-                    Editar
-                </a>
-            }
             @if (User.IsInRole("Administrador") && isEditable)
             {
                 <a asp-action="Delete" asp-route-id="@Model.DocumentId"
@@ -219,16 +204,6 @@
                                     <p class="empty-state__text">
                                         Este documento aún no tiene productos agregados.
                                     </p>
-                                    @if (isEditable)
-                                    {
-                                        <a asp-controller="DocumentDetails"
-                                               asp-action="Create"
-                                               asp-route-documentId="@Model.DocumentId"
-                                               class="btn btn-primary mt-2">
-                                            <span class="material-symbols-outlined">add</span>
-                                            Agregar primera línea
-                                        </a>
-                                    }
                                 </div>
                             </td>
                         </tr>
@@ -267,15 +242,6 @@
                                                 <span class="material-symbols-outlined"
                                                       style="font-size:18px">
                                                     visibility
-                                                </span>
-                                            </a>
-                                            <a asp-controller="DocumentDetails"
-                                                   asp-action="Edit"
-                                                   asp-route-id="@det.DocDetailId"
-                                                   class="btn-icon" title="Editar">
-                                                <span class="material-symbols-outlined"
-                                                      style="font-size:18px">
-                                                    edit
                                                 </span>
                                             </a>
                                             <a asp-controller="DocumentDetails"
@@ -338,51 +304,3 @@
     </div>
 
 </div>
-
-@section Scripts {
-    <script>
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
-            document.querySelectorAll('.tabs__link').forEach(l => l.classList.remove('active'));
-
-            document.getElementById('tab-' + tab).style.display = '';
-            document.getElementById('tab-' + tab + '-btn').classList.add('active');
-
-            if (tab === 'movimientos') {
-                cargarMovimientos(@Model.DocumentId);
-            }
-        }
-
-        async function cargarMovimientos(docId) {
-            const tbody = document.getElementById('movimientosBody');
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:20px;color:var(--clr-text-muted)">
-                <span class="spinner-border spinner-border-sm me-2"></span>Cargando…</td></tr>`;
-
-            try {
-                const res  = await fetch(`/Documents/Movimientos?id=${docId}`);
-                const data = await res.json();
-
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="text-center"
-                        style="padding:30px;color:var(--clr-text-muted)">
-                        Sin movimientos registrados.</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = data.map(m => `
-                    <tr>
-                        <td><span class="badge badge-neutral">${m.movementType ?? '—'}</span></td>
-                        <td style="font-weight:600">${m.product ?? '—'}</td>
-                        <td class="text-end">${m.quantity}</td>
-                        <td class="text-end">$${(m.unitCost ?? 0).toFixed(2)}</td>
-                        <td style="font-size:.825rem;color:var(--clr-text-muted)">${m.createdBy ?? '—'}</td>
-                        <td style="font-size:.8rem;color:var(--clr-text-muted)">${m.notes ?? '—'}</td>
-                    </tr>`).join('');
-            } catch {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center"
-                    style="color:var(--clr-danger);padding:20px">
-                    Error al cargar los movimientos.</td></tr>`;
-            }
-        }
-    </script>
-}

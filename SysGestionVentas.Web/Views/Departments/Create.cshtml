@@ -1,47 +1,123 @@
 ﻿@model SysGestionVentas.EN.Department
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Crear Departamento";
+    ViewData["BreadcrumbParent"] = "Departamentos";
+    ViewData["BreadcrumbCurrent"] = "Crear Departamento";
 }
 
-<h1>Create</h1>
+<div class="page-header">
+    <div>
+        <h1 class="page-header__title">
+            <span class="material-symbols-outlined"
+                  style="font-size:1.3rem;color:var(--clr-primary);vertical-align:middle;">
+                corporate_fare
+            </span>
+            Crear Departamento
+        </h1>
+        <p class="page-header__subtitle">
+            Registra un nuevo departamento en el sistema.
+        </p>
+    </div>
+    <div class="page-header__actions">
+        <a asp-action="Index" class="btn btn-light">
+            <span class="material-symbols-outlined">arrow_back</span>
+            Volver
+        </a>
+    </div>
+</div>
 
-<h4>Department</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
+<div class="card" style="max-width:640px;">
+    <div class="card-body p-4">
+
+        <form asp-action="Create" autocomplete="off" novalidate>
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly"
+                 class="alert-custom alert-danger-custom mb-4">
+                <span class="material-symbols-outlined flex-shrink-0"
+                      style="font-size:18px;">error</span>
+                <div></div>
             </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
+
+            @* ══════════════════════════════════════════
+               SECCIÓN — DATOS DEL DEPARTAMENTO
+               ══════════════════════════════════════════ *@
+            <div class="form-section mb-4">
+                <div class="form-section__header">
+                    <span class="material-symbols-outlined form-section__icon">
+                        info
+                    </span>
+                    <h6 class="form-section__title mb-0">Información General</h6>
+                </div>
+
+                <div class="row g-3 mt-1">
+
+                    @* Nombre *@
+                    <div class="col-12">
+                        <label asp-for="Name" class="form-label">
+                            Nombre <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-icon-group input-icon-group--left">
+                            <span class="input-icon input-icon--left material-symbols-outlined">
+                                label
+                            </span>
+                            <input asp-for="Name"
+                                   class="form-control"
+                                   placeholder="Ej. Recursos Humanos"
+                                   autofocus />
+                        </div>
+                        <span asp-validation-for="Name" class="field-validation-error"></span>
+                    </div>
+
+                    @* Descripción *@
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label">
+                            Descripción
+                        </label>
+                        <textarea asp-for="Description"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Descripción opcional del departamento"
+                                  style="resize:vertical;"></textarea>
+                        <span asp-validation-for="Description"
+                              class="field-validation-error"></span>
+                    </div>
+
+                    @* Estado *@
+                    <div class="col-md-6">
+                        <label asp-for="StatusId" class="form-label">
+                            Estado <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="StatusId"
+                                class="form-select"
+                                asp-items="ViewBag.StatusList">
+                            <option value="">— Seleccione un estado —</option>
+                        </select>
+                        <span asp-validation-for="StatusId"
+                              class="field-validation-error"></span>
+                    </div>
+
+                </div>
             </div>
-            <div class="form-group">
-                <label asp-for="CreatedAt" class="control-label"></label>
-                <input asp-for="CreatedAt" class="form-control" />
-                <span asp-validation-for="CreatedAt" class="text-danger"></span>
+
+            @* ══════════════════════════════════════════
+               ACCIONES
+               ══════════════════════════════════════════ *@
+            <div class="form-actions form-actions--end">
+                <a asp-action="Index" class="btn btn-light">Cancelar</a>
+                <button type="submit" class="btn btn-primary">
+                    <span class="material-symbols-outlined">save</span>
+                    Guardar Departamento
+                </button>
             </div>
-            <div class="form-group">
-                <label asp-for="StatusId" class="control-label"></label>
-                <select asp-for="StatusId" class ="form-control" asp-items="ViewBag.StatusId"></select>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
+
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

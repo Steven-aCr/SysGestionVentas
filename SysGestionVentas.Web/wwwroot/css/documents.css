@@ -1,0 +1,220 @@
+﻿/* =============================================================
+   SysGestionVentas — documents.css
+   Módulo: Formularios de Documentos (Facturas, Compras, etc.)
+   ============================================================= */
+
+/* =============================================================
+   GRID DE FORMULARIO
+   ============================================================= */
+.doc-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.doc-form-grid--3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* =============================================================
+   CARD DE LÍNEAS (DETALLE DE DOCUMENTO)
+   ============================================================= */
+.lines-card {
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.lines-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--clr-border);
+    background: var(--clr-surface-alt);
+}
+
+.lines-card__title {
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--clr-text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .lines-card__title .material-symbols-outlined {
+        font-size: 20px;
+        color: var(--clr-primary);
+    }
+
+/* =============================================================
+   TABLA DE LÍNEAS
+   ============================================================= */
+.lines-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .lines-table th {
+        padding: 11px 16px;
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        color: var(--clr-text-muted);
+        background: var(--clr-surface-alt);
+        border-bottom: 1px solid var(--clr-border);
+        text-align: left;
+    }
+
+    .lines-table td {
+        padding: 13px 16px;
+        font-size: .875rem;
+        color: var(--clr-text);
+        border-bottom: 1px solid var(--clr-border);
+        vertical-align: middle;
+    }
+
+    .lines-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .lines-table tbody tr:hover td {
+        background: var(--clr-surface-alt);
+    }
+
+/* =============================================================
+   FOOTER (TOTAL GENERAL)
+   ============================================================= */
+.lines-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--clr-border);
+    background: var(--clr-surface-alt);
+}
+
+.lines-footer__label {
+    font-size: .85rem;
+    font-weight: 600;
+    color: var(--clr-text-muted);
+}
+
+.lines-footer__total {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--clr-primary);
+}
+
+/* =============================================================
+   ESTADO VACÍO
+   ============================================================= */
+.lines-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px;
+    gap: 12px;
+    color: var(--clr-text-muted);
+}
+
+    .lines-empty .material-symbols-outlined {
+        font-size: 48px;
+        color: var(--clr-border);
+    }
+
+.lines-empty__title {
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.lines-empty__sub {
+    font-size: .8rem;
+    color: var(--clr-text-subtle);
+}
+
+/* =============================================================
+   MODALES (AGREGAR / EDITAR LÍNEAS)
+   ============================================================= */
+.modal-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.modal-field-row--3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* Banner total en modal */
+.modal-total-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--clr-primary-soft);
+    border: 1px solid var(--clr-primary-light);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    margin-top: 4px;
+}
+
+.modal-total-banner__label {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--clr-primary-dark);
+}
+
+.modal-total-banner__value {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--clr-primary);
+}
+
+/* =============================================================
+   BADGES DE STOCK
+   ============================================================= */
+.stock-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .78rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.stock-badge--ok {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.stock-badge--low {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.stock-badge--zero {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* =============================================================
+   RESPONSIVE
+   ============================================================= */
+@media (max-width: 768px) {
+    .doc-form-grid,
+    .doc-form-grid--3 {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-field-row,
+    .modal-field-row--3 {
+        grid-template-columns: 1fr;
+    }
+}

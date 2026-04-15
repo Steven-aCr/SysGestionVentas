@@ -1,115 +1,301 @@
-﻿@model SysGestionVentas.EN.Document
+﻿@model SysGestionVentas.EN.ViewModels.CreateDocumentModel
 @{
     ViewData["Title"] = "Nuevo Documento";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="page-container" style="max-width:720px">
+<div class="page-container">
 
     <div class="page-header">
         <div>
             <h1 class="page-header__title">
-                <span class="material-symbols-outlined">add_circle</span>
+                <span class="material-symbols-outlined" style="color:var(--clr-primary)">
+                    receipt_long
+                </span>
                 Nuevo Documento
             </h1>
             <p class="page-header__subtitle">
-                Complete los datos del encabezado del documento.
+                Registra el cliente, el encabezado y las líneas de detalle en una sola operación.
             </p>
         </div>
-        <a asp-action="Index" class="btn btn-light">
-            <span class="material-symbols-outlined">arrow_back</span>
-            Volver
-        </a>
+        <div class="page-header__actions">
+            <a asp-action="Index" class="btn btn-light">
+                <span class="material-symbols-outlined" style="font-size:17px">arrow_back</span>
+                Volver
+            </a>
+        </div>
     </div>
 
-    <div class="card p-4">
-        <form asp-action="Create" method="post">
-            @Html.AntiForgeryToken()
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert-custom alert-danger-custom mb-3">
+            <span class="material-symbols-outlined">error</span>
+            <div>
+                @Html.ValidationSummary(false, null, new { @class = "mb-0" })
+            </div>
+        </div>
+    }
 
-            <div asp-validation-summary="ModelOnly" class="alert-custom alert-danger-custom mb-3">
+    <form id="documentForm" asp-action="Create" method="post" novalidate>
+        @Html.AntiForgeryToken()
+
+        <div id="hiddenInputs"></div>
+
+        <div class="row g-4">
+
+            <div class="col-lg-5">
+
+                <div class="card p-4 mb-4">
+                    <div class="form-section-header">
+                        <span class="material-symbols-outlined form-section__icon">person_add</span>
+                        <h6 class="form-section-title mb-0">Datos del cliente</h6>
+                    </div>
+                    <p class="text-muted" style="font-size:.8rem;margin-top:-4px;margin-bottom:16px;">
+                        Se registrará como nuevo cliente en el sistema.
+                    </p>
+
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label asp-for="FirstName" class="form-label"></label>
+                            <input asp-for="FirstName" class="form-control"
+                                   placeholder="Ej. Juan" autocomplete="off" />
+                            <span asp-validation-for="FirstName" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label asp-for="LastName" class="form-label"></label>
+                            <input asp-for="LastName" class="form-control"
+                                   placeholder="Ej. García" autocomplete="off" />
+                            <span asp-validation-for="LastName" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Adress" class="form-label"></label>
+                            <input asp-for="Adress" class="form-control"
+                                   placeholder="Calle, colonia, municipio…" autocomplete="off" />
+                            <span asp-validation-for="Adress" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label asp-for="PhoneNumber" class="form-label"></label>
+                            <input asp-for="PhoneNumber" class="form-control"
+                                   placeholder="1234-5678" autocomplete="off" />
+                            <span asp-validation-for="PhoneNumber" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label asp-for="Dui" class="form-label">
+                                DUI <span class="text-muted">(opcional)</span>
+                            </label>
+                            <input asp-for="Dui" class="form-control"
+                                   placeholder="12345678-9" autocomplete="off" />
+                            <span asp-validation-for="Dui" class="field-validation-error"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-4">
+                    <div class="form-section-header">
+                        <span class="material-symbols-outlined form-section__icon">article</span>
+                        <h6 class="form-section-title mb-0">Encabezado del documento</h6>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <label asp-for="DocTypeId" class="form-label"></label>
+                            <select asp-for="DocTypeId" asp-items="ViewBag.DocTypeList"
+                                    class="form-select">
+                                <option value="">— Seleccione tipo —</option>
+                            </select>
+                            <span asp-validation-for="DocTypeId" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-sm-7">
+                            <label asp-for="DocNumber" class="form-label"></label>
+                            <input asp-for="DocNumber" class="form-control"
+                                   placeholder="Ej. FAC-0001" autocomplete="off" />
+                            <span asp-validation-for="DocNumber" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-sm-5">
+                            <label asp-for="IssueDate" class="form-label"></label>
+                            <input asp-for="IssueDate" type="date" class="form-control" />
+                            <span asp-validation-for="IssueDate" class="field-validation-error"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="StatusId" class="form-label"></label>
+                            <select asp-for="StatusId" asp-items="ViewBag.StatusList"
+                                    class="form-select">
+                                <option value="">— Seleccione estado —</option>
+                            </select>
+                            <span asp-validation-for="StatusId" class="field-validation-error"></span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            @* Tipo y número *@
-            <div class="form-section">
-                <div class="form-section__header">
-                    <span class="material-symbols-outlined form-section__icon">
-                        receipt_long
-                    </span>
-                    <span class="form-section__title">Identificación</span>
+            <div class="col-lg-7">
+                <div class="table-card">
+                    <div class="table-toolbar">
+                        <div>
+                            <span style="font-size:.9rem;font-weight:700;color:var(--clr-text);">
+                                Líneas de detalle
+                            </span>
+                        </div>
+                        <button type="button" id="btnAgregarLinea" class="btn btn-primary">
+                            <span class="material-symbols-outlined" style="font-size:17px">add</span>
+                            Agregar producto
+                        </button>
+                    </div>
+
+                    <div id="emptyLines" class="empty-state">
+                        <div class="empty-state__icon">
+                            <span class="material-symbols-outlined">inventory_2</span>
+                        </div>
+                        <p class="empty-state__title">Sin productos</p>
+                        <p class="empty-state__text">
+                            Haz clic en "Agregar producto" para añadir líneas al documento.
+                        </p>
+                    </div>
+
+                    <div id="linesContainer" style="display:none;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cant.</th>
+                                    <th>Precio</th>
+                                    <th>Descuento</th>
+                                    <th>IVA</th>
+                                    <th>Total línea</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="linesBody"></tbody>
+                        </table>
+
+                        <div class="table-footer">
+                            <span></span>
+                            <span>
+                                <strong>Total documento:</strong>&nbsp;
+                                <span id="grandTotal"
+                                      style="font-size:1.1rem;font-weight:800;color:var(--clr-primary);">
+                                    $0.00
+                                </span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
+
+                <div class="form-actions form-actions--end mt-4">
+                    <a asp-action="Index" class="btn btn-light">Cancelar</a>
+                    <button type="submit" id="submitBtn" class="btn btn-primary">
+                        <span class="material-symbols-outlined" style="font-size:17px">save</span>
+                        Guardar documento
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="modal fade" id="modalProducto" tabindex="-1"
+     aria-labelledby="modalProductoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalProductoLabel">
+                    <span class="material-symbols-outlined"
+                          style="font-size:20px;vertical-align:middle;color:var(--clr-primary);">
+                        add_shopping_cart
+                    </span>
+                    Agregar producto
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="stockError" class="alert-custom alert-danger-custom mb-3"
+                     style="display:none;">
+                </div>
+
                 <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <label asp-for="DocTypeId" class="form-label">Tipo de Documento</label>
-                        <select asp-for="DocTypeId" asp-items="ViewBag.DocTypeList"
-                                class="form-select">
-                            <option value="">— Seleccione —</option>
+
+                    <div class="col-12">
+                        <label class="form-label" for="modal_ProductId">Producto</label>
+                        <select id="modal_ProductId" class="form-select">
+                            <option value="">— Seleccione un producto —</option>
+                            @if (ViewBag.ProductList != null)
+                            {
+                                foreach (var item in (IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>)ViewBag.ProductList)
+                                {
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            }
                         </select>
-                        <span asp-validation-for="DocTypeId" class="text-danger"></span>
                     </div>
-                    <div class="col-12 col-md-6">
-                        <label asp-for="DocNumber" class="form-label">Número de Documento</label>
-                        <input asp-for="DocNumber" class="form-control"
-                               placeholder="Ej: FAC-2025-001" />
-                        <span asp-validation-for="DocNumber" class="text-danger"></span>
+
+                    <div class="col-12" id="stockInfo" style="display:none;">
+                        <div class="alert-custom alert-warning-custom">
+                            <span class="material-symbols-outlined" style="font-size:18px;">inventory</span>
+                            <span>Stock disponible: <strong id="stockValue">0</strong> unidades</span>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label class="form-label" for="modal_Quantity">Cantidad</label>
+                        <input type="number" id="modal_Quantity" class="form-control"
+                               value="1" min="1" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="modal_UnitPrice">Precio unitario ($)</label>
+                        <input type="number" id="modal_UnitPrice" class="form-control"
+                               step="0.01" min="0.01" placeholder="0.00" readonly />
+                    </div>
+
+                    <div class="col-sm-6">
+                        <label class="form-label" for="modal_Discount">Descuento ($)</label>
+                        <input type="number" id="modal_Discount" class="form-control"
+                               value="0" step="0.01" min="0" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label" for="modal_Tax">IVA (%)</label>
+                        <input type="number" id="modal_Tax" class="form-control"
+                               value="13" step="0.01" min="0" max="100" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label" for="modal_LineTotal">Total línea ($)</label>
+                        <input type="text" id="modal_LineTotal" class="form-control"
+                               value="0.00" readonly
+                               style="font-weight:700;color:var(--clr-primary);
+                        background:var(--clr-surface-alt);" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label" for="modal_Notes">
+                            Notas <span class="text-muted">(opcional)</span>
+                        </label>
+                        <textarea id="modal_Notes" class="form-control" rows="2"
+                                  maxlength="255" placeholder="Observaciones de la línea…"></textarea>
                     </div>
                 </div>
+
             </div>
 
-            @* Fecha y persona *@
-            <div class="form-section">
-                <div class="form-section__header">
-                    <span class="material-symbols-outlined form-section__icon">
-                        person
-                    </span>
-                    <span class="form-section__title">Cliente y Fecha</span>
-                </div>
-                <div class="row g-3">
-                    <div class="col-12 col-md-6">
-                        <label asp-for="PersonId" class="form-label">Cliente / Persona</label>
-                        <select asp-for="PersonId" asp-items="ViewBag.PersonList"
-                                class="form-select">
-                            <option value="">— Seleccione —</option>
-                        </select>
-                        <span asp-validation-for="PersonId" class="text-danger"></span>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label asp-for="IssueDate" class="form-label">Fecha de Emisión</label>
-                        <input asp-for="IssueDate" class="form-control" type="date" />
-                        <span asp-validation-for="IssueDate" class="text-danger"></span>
-                    </div>
-                </div>
-            </div>
-
-            @* Estado *@
-            <div class="form-section">
-                <div class="form-section__header">
-                    <span class="material-symbols-outlined form-section__icon">
-                        toggle_on
-                    </span>
-                    <span class="form-section__title">Estado</span>
-                </div>
-                <div class="col-12 col-md-6">
-                    <label asp-for="StatusId" class="form-label">Estado del Documento</label>
-                    <select asp-for="StatusId" asp-items="ViewBag.StatusList"
-                            class="form-select">
-                        <option value="">— Seleccione —</option>
-                    </select>
-                    <span asp-validation-for="StatusId" class="text-danger"></span>
-                </div>
-            </div>
-
-            <div class="form-actions form-actions--end">
-                <a asp-action="Index" class="btn btn-light">Cancelar</a>
-                <button type="submit" class="btn btn-primary" id="submitBtn">
-                    <span class="material-symbols-outlined">save</span>
-                    Guardar documento
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" id="btnConfirmarLinea" class="btn btn-primary">
+                    <span class="material-symbols-outlined" style="font-size:17px">check</span>
+                    Confirmar
                 </button>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}
+    }}

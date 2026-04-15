@@ -147,26 +147,4 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
-    <script>
-        function calcular() {
-            const qty      = parseFloat(document.getElementById('quantity').value)      || 0;
-            const price    = parseFloat(document.getElementById('unitPrice').value)     || 0;
-            const discount = parseFloat(document.getElementById('discountAmount').value)|| 0;
-            const taxPct   = parseFloat(document.getElementById('taxPercentage').value) || 0;
-
-            const subtotal = Math.max((qty * price) - discount, 0);
-            const tax      = Math.round(subtotal * (taxPct / 100) * 100) / 100;
-            const total    = subtotal + tax;
-
-            document.getElementById('previewSubtotal').textContent = `$${subtotal.toFixed(2)}`;
-            document.getElementById('previewTax').textContent      = `$${tax.toFixed(2)}`;
-            document.getElementById('previewTotal').textContent    = `$${total.toFixed(2)}`;
-        }
-
-        ['quantity','unitPrice','discountAmount','taxPercentage']
-            .forEach(id => document.getElementById(id)
-                ?.addEventListener('input', calcular));
-
-        calcular();
-    </script>
 }
