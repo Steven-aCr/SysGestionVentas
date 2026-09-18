@@ -1,5 +1,4 @@
-﻿using Microsoft.Identity.Client;
-using SysGestionVentas.DAL;
+﻿using SysGestionVentas.DAL;
 using SysGestionVentas.EN;
 using SysGestionVentas.EN.Pagination;
 using SysGestionVentas.EN.ViewModels;

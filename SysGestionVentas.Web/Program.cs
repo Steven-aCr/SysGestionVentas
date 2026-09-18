@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using SysGestionVentas.DAL;
+using Microsoft.EntityFrameworkCore;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +20,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("SoloCliente", p => p.RequireRole("Cliente"));
 });
 
-builder.Services.AddDbContext<DbContexto>();
+//builder.Services.AddDbContext<DbContexto>(); se repite, si da error, comentar la linea 37 y descomentar esta.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession(options =>
 {
@@ -27,6 +29,17 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 builder.Services.AddHttpContextAccessor();
+
+// 1. Obtener la cadena de conexión desde appsettings.json
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// 2. Registrar DbContacto o DbContexto con Pomelo MySql
+builder.Services.AddDbContext<DbContexto>(options =>
+    options.UseMySql(
+        connectionString,
+        ServerVersion.AutoDetect(connectionString) // Detecta automáticamente la versión de tu servidor MySQL
+    )
+);
 
 var app = builder.Build();
 

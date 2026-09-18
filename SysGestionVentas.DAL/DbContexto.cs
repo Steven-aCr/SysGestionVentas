@@ -115,13 +115,13 @@ namespace SysGestionVentas.DAL
                 return;
             }
 
-            optionsBuilder.UseSqlServer(
+            /*optionsBuilder.UseSqlServer(
                 "Data Source=BDGestionVentas.mssql.somee.com; Initial Catalog=BDGestionVentas;" +
                 "User ID=DevCore_SQLLogin_1; Password=u7z7prei6q;" +
                 "Connect Timeout=30;Encrypt=False;" +
                 "Trust Server Certificate=False;" +
                 "Application Intent=ReadWrite; Multi Subnet Failover=False;" +
-                "Command Timeout=30");
+                "Command Timeout=30");*/
         }
 
         #endregion
