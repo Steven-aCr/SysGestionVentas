@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SysGestionVentas.ApiClient\SysGestionVentas.ApiClient.csproj" />
     <ProjectReference Include="..\SysGestionVentas.BL\SysGestionVentas.BL.csproj" />
     <ProjectReference Include="..\SysGestionVentas.DAL\SysGestionVentas.DAL.csproj" />
     <ProjectReference Include="..\SysGestionVentas.EN\SysGestionVentas.EN.csproj" />
