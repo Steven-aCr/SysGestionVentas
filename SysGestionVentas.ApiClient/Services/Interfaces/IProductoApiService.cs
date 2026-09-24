@@ -1,10 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using SysGestionVentas.ApiClient.DTOs.Producto;
 
 namespace SysGestionVentas.ApiClient.Services.Interfaces
 {
-    internal class IProductoApiService
+    public interface IProductoApiService
     {
+        Task<List<ProductoSalida>> ObtenerTodosAsync();
+        Task<ProductoSalida?> ObtenerPorIdAsync(int id);
+        Task<bool> CrearAsync(ProductoGuardar dto);
+        Task<bool> ModificarAsync(ProductoModificar dto);
+        Task<bool> EliminarAsync(int id);
     }
 }
