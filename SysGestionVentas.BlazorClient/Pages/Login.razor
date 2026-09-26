@@ -1,0 +1,70 @@
+﻿@page "/login"
+@using SysGestionVentas.BlazorClient.DTOs
+@using SysGestionVentas.ApiClient.Services.Interfaces
+@inject IAuthApiService AuthService
+@inject NavigationManager Navigation
+
+<div class="container mt-5 d-flex justify-content-center">
+    <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
+        <h3 class="text-center mb-4">Iniciar Sesión</h3>
+
+        <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label class="form-label">Correo electrónico</label>
+                <input type="email" class="form-control" @bind="loginModel.Email" placeholder="correo@ejemplo.com" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                <input type="password" class="form-control" @bind="loginModel.Password" placeholder="••••••••" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mt-2" disabled="@cargando">
+                @if (cargando)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    <span>Conectando a Render...</span>
+                }
+                else
+                {
+                    <span>Ingresar</span>
+                }
+            </button>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(mensajeError))
+        {
+            <div class="alert alert-danger mt-3 text-center" role="alert">
+                @mensajeError
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private LoginDTOs loginModel = new();
+    private string mensajeError = "";
+    private bool cargando = false;
+
+    private async Task HandleLogin()
+    {
+        cargando = true;
+        mensajeError = "";
+
+        var result = await AuthService.LoginAsync(loginModel);
+
+        if (result != null && !string.IsNullOrEmpty(result.Token))
+        {
+            Console.WriteLine($"Token recibido: {result.Token}");
+            Navigation.NavigateTo("/");
+        }
+        else
+        {
+            mensajeError = "Credenciales incorrectas o el servidor en Render está iniciando.";
+        }
+
+        cargando = false;
+    }
+}

@@ -1,0 +1,106 @@
+﻿@page "/inventario"
+@inject HttpClient Http
+
+<PageTitle>Inventario - Control de Stock</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Estado de Inventario</h2>
+        <a href="movimientos-inventario" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left-right me-1"></i> Ver Movimientos
+        </a>
+    </div>
+
+    @if (cargando)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Cargando estado del inventario...</p>
+        </div>
+    }
+    else if (inventarioList == null || !inventarioList.Any())
+    {
+        <div class="alert alert-info text-center">No hay registros de inventario disponibles.</div>
+    }
+    else
+    {
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-hover align-middle bg-white mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Producto</th>
+                        <th>Ubicación / Almacén</th>
+                        <th>Stock Actual</th>
+                        <th>Stock Mínimo</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in inventarioList)
+                    {
+                        <tr>
+                            <td>@item.Id</td>
+                            <td class="fw-bold">@item.ProductoNombre</td>
+                            <td>@item.Ubicacion</td>
+                            <td>
+                                <span class="fs-6 fw-bold">@item.CantidadStock</span>
+                            </td>
+                            <td>@item.StockMinimo</td>
+                            <td>
+                                @if (item.CantidadStock <= 0)
+                                {
+                                    <span class="badge bg-danger">Agotado</span>
+                                }
+                                else if (item.CantidadStock <= item.StockMinimo)
+                                {
+                                    <span class="badge bg-warning text-dark">Stock Bajo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Disponible</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<InventarioDto>? inventarioList;
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarInventario();
+    }
+
+    private async Task CargarInventario()
+    {
+        cargando = true;
+        try
+        {
+            inventarioList = await Http.GetFromJsonAsync<List<InventarioDto>>("api/inventario");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar inventario: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    public class InventarioDto
+    {
+        public long Id { get; set; }
+        public string ProductoNombre { get; set; } = string.Empty;
+        public string Ubicacion { get; set; } = "Almacén Principal";
+        public int CantidadStock { get; set; }
+        public int StockMinimo { get; set; }
+    }
+}

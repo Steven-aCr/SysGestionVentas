@@ -1,0 +1,104 @@
+﻿@page "/categorias"
+@inject HttpClient Http
+
+<PageTitle>Categorías - Inventario</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Formulario lateral -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Nueva Categoría</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" class="form-control" @bind="nuevaCategoria.Nombre" placeholder="Ej. Electrónica" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea class="form-control" @bind="nuevaCategoria.Descripcion" rows="3"></textarea>
+                    </div>
+                    <button class="btn btn-primary w-100" @onclick="GuardarCategoria" disabled="@guardando">
+                        @(guardando ? "Guardando..." : "Guardar Categoría")
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla principal -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">Listado de Categorías</h5>
+                </div>
+                <div class="card-body p-0">
+                    @if (categorias == null)
+                    {
+                        <p class="p-3 text-muted">Cargando categorías...</p>
+                    }
+                    else
+                    {
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var cat in categorias)
+                                {
+                                    <tr>
+                                        <td>@cat.Id</td>
+                                        <td>@cat.Nombre</td>
+                                        <td>@cat.Descripcion</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<CategoriaDto>? categorias;
+    private CategoriaDto nuevaCategoria = new();
+    private bool guardando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCategorias();
+    }
+
+    private async Task CargarCategorias()
+    {
+        categorias = await Http.GetFromJsonAsync<List<CategoriaDto>>("api/categorias");
+    }
+
+    private async Task GuardarCategoria()
+    {
+        if (string.IsNullOrWhiteSpace(nuevaCategoria.Nombre)) return;
+
+        guardando = true;
+        var response = await Http.PostAsJsonAsync("api/categorias", nuevaCategoria);
+        if (response.IsSuccessStatusCode)
+        {
+            nuevaCategoria = new();
+            await CargarCategorias();
+        }
+        guardando = false;
+    }
+
+    public class CategoriaDto
+    {
+        public long Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Descripcion { get; set; } = string.Empty;
+    }
+}

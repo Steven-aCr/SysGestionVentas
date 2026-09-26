@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-
 using SysGestionVentas.ApiClient.Config;
 using SysGestionVentas.ApiClient.Services.Implementaciones;
 using SysGestionVentas.ApiClient.Services.Interfaces;
@@ -19,16 +18,23 @@ if (apiConfig == null || string.IsNullOrWhiteSpace(apiConfig.BaseUrl))
         "No se encontró la configuración de la API.");
 }
 
-builder.Services.AddHttpClient<IProductoApiService, ProductoApiService>(client =>
+// Registro de servicios HTTP tipados (Nombres estandarizados en singular)
+builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
     client.BaseAddress = new Uri(apiConfig.BaseUrl));
 
-builder.Services.AddHttpClient<IInventarioApiService, InventarioApiService>(client =>
+builder.Services.AddHttpClient<IProductoApiService, ProductoApiService>(client =>
     client.BaseAddress = new Uri(apiConfig.BaseUrl));
 
 builder.Services.AddHttpClient<ICategoriaApiService, CategoriaApiService>(client =>
     client.BaseAddress = new Uri(apiConfig.BaseUrl));
 
+builder.Services.AddHttpClient<IInventarioApiService, InventarioApiService>(client =>
+    client.BaseAddress = new Uri(apiConfig.BaseUrl));
+
 builder.Services.AddHttpClient<IMovimientoInventarioApiService, MovimientoInventarioApiService>(client =>
+    client.BaseAddress = new Uri(apiConfig.BaseUrl));
+
+builder.Services.AddHttpClient<IUsuarioApiServices, UsuarioApiServices>(client =>
     client.BaseAddress = new Uri(apiConfig.BaseUrl));
 
 await builder.Build().RunAsync();

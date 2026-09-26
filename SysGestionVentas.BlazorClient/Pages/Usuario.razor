@@ -1,0 +1,39 @@
+﻿@page "\usuario"
+@using SysGestionVentas.BlazorClient.DTOs
+@using SysGestionVentas.BlazorClient.Services.Interfaces
+@inject IUsuarioApiServices UsuarioServices
+
+<h3>Gestión de Usuarios</h3>
+
+@if (usuarios == null)
+{
+    <p><em>Cargando usuarios...</em></p>
+}
+else if (!usuarios.Any())
+{
+    <p>No hay usuarios registrados.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var usuario in usuarios)
+            {
+                <tr>
+                    <td>@usuario.Nombre</td>
+                    <td>@usuario.Email</td>
+                    <td>
+                        <button class="btn btn-danger" @onclick="() => EliminarUsuario(usuario.Id)">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
