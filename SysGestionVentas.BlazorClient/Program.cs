@@ -6,35 +6,48 @@ using SysGestionVentas.ApiClient.Services.Interfaces;
 using SysGestionVentas.BlazorClient;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
+
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+// Obtener configuración de la API
 var apiConfig = new ApiConfig();
 builder.Configuration.GetSection("ApiConfig").Bind(apiConfig);
 
-if (apiConfig == null || string.IsNullOrWhiteSpace(apiConfig.BaseUrl))
+if (string.IsNullOrWhiteSpace(apiConfig.BaseUrl))
 {
     throw new InvalidOperationException(
         "No se encontró la configuración de la API.");
 }
 
-// Registro de servicios HTTP tipados (Nombres estandarizados en singular)
+// Autenticación
 builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
-    client.BaseAddress = new Uri(apiConfig.BaseUrl));
+{
+    client.BaseAddress = new Uri(apiConfig.BaseUrl);
+});
 
+// Productos
 builder.Services.AddHttpClient<IProductoApiService, ProductoApiService>(client =>
-    client.BaseAddress = new Uri(apiConfig.BaseUrl));
+{
+    client.BaseAddress = new Uri(apiConfig.BaseUrl);
+});
 
+// Categorías
 builder.Services.AddHttpClient<ICategoriaApiService, CategoriaApiService>(client =>
-    client.BaseAddress = new Uri(apiConfig.BaseUrl));
+{
+    client.BaseAddress = new Uri(apiConfig.BaseUrl);
+});
 
+// Inventario
 builder.Services.AddHttpClient<IInventarioApiService, InventarioApiService>(client =>
-    client.BaseAddress = new Uri(apiConfig.BaseUrl));
+{
+    client.BaseAddress = new Uri(apiConfig.BaseUrl);
+});
 
+// Movimientos de inventario
 builder.Services.AddHttpClient<IMovimientoInventarioApiService, MovimientoInventarioApiService>(client =>
-    client.BaseAddress = new Uri(apiConfig.BaseUrl));
-
-builder.Services.AddHttpClient<IUsuarioApiServices, UsuarioApiServices>(client =>
-    client.BaseAddress = new Uri(apiConfig.BaseUrl));
+{
+    client.BaseAddress = new Uri(apiConfig.BaseUrl);
+});
 
 await builder.Build().RunAsync();

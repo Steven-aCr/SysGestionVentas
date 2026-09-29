@@ -1,6 +1,8 @@
 ﻿@page "/login"
-@using SysGestionVentas.BlazorClient.DTOs
+
+@using SysGestionVentas.ApiClient.DTOs.Auth
 @using SysGestionVentas.ApiClient.Services.Interfaces
+
 @inject IAuthApiService AuthService
 @inject NavigationManager Navigation
 
@@ -13,19 +15,31 @@
 
             <div class="mb-3">
                 <label class="form-label">Correo electrónico</label>
-                <input type="email" class="form-control" @bind="loginModel.Email" placeholder="correo@ejemplo.com" required />
+                <input type="email"
+                       class="form-control"
+                       @bind="loginModel.Email"
+                       placeholder="correo@ejemplo.com"
+                       required />
             </div>
 
             <div class="mb-3">
                 <label class="form-label">Contraseña</label>
-                <input type="password" class="form-control" @bind="loginModel.Password" placeholder="••••••••" required />
+                <input type="password"
+                       class="form-control"
+                       @bind="loginModel.Password"
+                       placeholder="••••••••"
+                       required />
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 mt-2" disabled="@cargando">
+            <button type="submit"
+                    class="btn btn-primary w-100 mt-2"
+                    disabled="@cargando">
+
                 @if (cargando)
                 {
-                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                    <span>Conectando a Render...</span>
+                    <span class="spinner-border spinner-border-sm me-2"
+                          role="status"></span>
+                    <span>Iniciando sesión...</span>
                 }
                 else
                 {
@@ -34,7 +48,7 @@
             </button>
         </EditForm>
 
-        @if (!string.IsNullOrEmpty(mensajeError))
+        @if (!string.IsNullOrWhiteSpace(mensajeError))
         {
             <div class="alert alert-danger mt-3 text-center" role="alert">
                 @mensajeError
@@ -44,27 +58,39 @@
 </div>
 
 @code {
-    private LoginDTOs loginModel = new();
-    private string mensajeError = "";
-    private bool cargando = false;
+    private LoginRequest loginModel = new();
+    private string mensajeError = string.Empty;
+    private bool cargando;
 
     private async Task HandleLogin()
     {
         cargando = true;
-        mensajeError = "";
+        mensajeError = string.Empty;
 
-        var result = await AuthService.LoginAsync(loginModel);
-
-        if (result != null && !string.IsNullOrEmpty(result.Token))
+        try
         {
-            Console.WriteLine($"Token recibido: {result.Token}");
-            Navigation.NavigateTo("/");
-        }
-        else
-        {
-            mensajeError = "Credenciales incorrectas o el servidor en Render está iniciando.";
-        }
+            var result = await AuthService.LoginAsync(loginModel);
 
-        cargando = false;
+            if (result is not null &&
+                !string.IsNullOrWhiteSpace(result.Token))
+            {
+                Navigation.NavigateTo("/");
+                return;
+            }
+
+            mensajeError = "Correo electrónico o contraseña incorrectos.";
+        }
+        catch (HttpRequestException)
+        {
+            mensajeError = "No fue posible comunicarse con el servidor.";
+        }
+        catch (TaskCanceledException)
+        {
+            mensajeError = "El servidor tardó demasiado en responder.";
+        }
+        finally
+        {
+            cargando = false;
+        }
     }
 }
