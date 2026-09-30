@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using SysGestionVentas.ApiClient.DTOs.Auth;
 using SysGestionVentas.ApiClient.Services.Interfaces;
 
@@ -15,18 +16,14 @@ namespace SysGestionVentas.ApiClient.Services.Implementaciones
 
         public async Task<LoginResponse?> LoginAsync(LoginRequest loginRequest)
         {
-            var response = await _httpClient.PostAsJsonAsync(
-                "api/auth/login",
-                loginRequest
-            );
+            var response = await _httpClient.PostAsJsonAsync("api/auth/login", loginRequest);
 
-            if (!response.IsSuccessStatusCode)
-            {
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.BadRequest)
                 return null;
-            }
 
-            return await response.Content
-                .ReadFromJsonAsync<LoginResponse>();
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadFromJsonAsync<LoginResponse>();
         }
     }
 }

@@ -48,6 +48,13 @@
             </button>
         </EditForm>
 
+        @if (cargando)
+        {
+            <p class="text-muted small text-center mt-3 mb-0">
+                Si el servidor estaba inactivo, la primera respuesta puede tardar hasta un minuto.
+            </p>
+        }
+
         @if (!string.IsNullOrWhiteSpace(mensajeError))
         {
             <div class="alert alert-danger mt-3 text-center" role="alert">
