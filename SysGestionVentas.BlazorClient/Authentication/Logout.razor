@@ -1,0 +1,31 @@
+﻿@page "/logout"
+
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Authorization
+@using SysGestionVentas.BlazorClient.Authentication
+
+@inject ITokenStorage TokenStorage
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Cerrar sesión</PageTitle>
+
+<div class="container mt-5">
+    <div class="text-center">
+        <p>Cerrando sesión...</p>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await TokenStorage.RemoveTokenAsync();
+
+        if (AuthenticationStateProvider is JwtAuthenticationStateProvider jwtProvider)
+        {
+            jwtProvider.NotifyUserLogout();
+        }
+
+        Navigation.NavigateTo("/login", replace: true);
+    }
+}

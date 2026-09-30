@@ -1,0 +1,109 @@
+﻿@page "/inventario"
+
+@using Microsoft.AspNetCore.Authorization
+@using SysGestionVentas.ApiClient.DTOs.Inventario
+@using SysGestionVentas.ApiClient.Services.Interfaces
+
+@attribute [Authorize(Roles = "Administrador")]
+
+@inject IInventarioApiService InventarioService
+
+<PageTitle>Inventario - Control de Stock</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Estado de Inventario</h2>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" @onclick="CargarInventario" disabled="@cargando">
+                Actualizar
+            </button>
+
+            <a href="/movimientoinventario" class="btn btn-outline-primary">
+                Ver Movimientos
+            </a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(mensajeError))
+    {
+        <div class="alert alert-danger">@mensajeError</div>
+    }
+
+    @if (cargando)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Cargando estado del inventario...</p>
+        </div>
+    }
+    else if (inventarios.Count == 0)
+    {
+        <div class="alert alert-info text-center">No hay registros de inventario.</div>
+    }
+    else
+    {
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-hover align-middle bg-white mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>ID Producto</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var inventario in inventarios)
+                    {
+                        <tr>
+                            <td>@inventario.Id</td>
+                            <td>@inventario.IdProducto</td>
+                            <td class="fw-bold">@inventario.NombreProducto</td>
+
+                            <td>
+                                @* Umbral visual de stock bajo: 5 unidades o menos se marca en rojo. *@
+                                <span class="badge @(inventario.Cantidad > 5 ? "bg-success" : "bg-danger")">
+                                    @inventario.Cantidad
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<InventarioSalida> inventarios = new();
+
+    private bool cargando;
+    private string? mensajeError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarInventario();
+    }
+
+    private async Task CargarInventario()
+    {
+        cargando = true;
+        mensajeError = null;
+
+        try
+        {
+            inventarios = await InventarioService.ObtenerTodosAsync();
+        }
+        catch (Exception ex)
+        {
+            inventarios = new();
+            mensajeError = $"No fue posible cargar el inventario: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+}

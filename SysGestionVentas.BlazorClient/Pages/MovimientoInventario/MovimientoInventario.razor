@@ -1,0 +1,107 @@
+﻿@page "/movimientoinventario"
+
+@using Microsoft.AspNetCore.Authorization
+@using SysGestionVentas.ApiClient.DTOs.MovimientoInventario
+@using SysGestionVentas.ApiClient.Services.Interfaces
+
+@attribute [Authorize(Roles = "Administrador")]
+
+@inject IMovimientoInventarioApiService MovimientoService
+
+<PageTitle>Movimientos de Inventario</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Movimientos de Inventario</h2>
+
+        <button class="btn btn-outline-secondary" @onclick="CargarMovimientos" disabled="@cargando">
+            Actualizar
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(mensajeError))
+    {
+        <div class="alert alert-danger">@mensajeError</div>
+    }
+
+    @if (cargando)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Cargando historial de movimientos...</p>
+        </div>
+    }
+    else if (movimientos.Count == 0)
+    {
+        <div class="alert alert-info text-center">No se han registrado movimientos.</div>
+    }
+    else
+    {
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table table-striped align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Inventario</th>
+                        <th>Tipo</th>
+                        <th>Cantidad</th>
+                        <th>Costo unitario</th>
+                        <th>Stock anterior</th>
+                        <th>Stock nuevo</th>
+                        <th>Fecha</th>
+                        <th>Notas</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var movimiento in movimientos)
+                    {
+                        <tr>
+                            <td>@movimiento.IdMovimientoInventario</td>
+                            <td>@movimiento.IdInventario</td>
+                            <td>@movimiento.IdTipoMovimiento</td>
+                            <td class="fw-bold">@movimiento.Cantidad</td>
+                            <td>$@movimiento.CostoUnitario.ToString("F2")</td>
+                            <td>@(movimiento.StockAnterior?.ToString() ?? "-")</td>
+                            <td>@(movimiento.StockNuevo?.ToString() ?? "-")</td>
+                            <td>@movimiento.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@(string.IsNullOrWhiteSpace(movimiento.Notas) ? "-" : movimiento.Notas)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<MovimientoInventarioSalida> movimientos = new();
+
+    private bool cargando;
+    private string? mensajeError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarMovimientos();
+    }
+
+    private async Task CargarMovimientos()
+    {
+        cargando = true;
+        mensajeError = null;
+
+        try
+        {
+            movimientos = await MovimientoService.ObtenerTodosAsync();
+        }
+        catch (Exception ex)
+        {
+            movimientos = new();
+            mensajeError = $"No fue posible cargar los movimientos: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+}

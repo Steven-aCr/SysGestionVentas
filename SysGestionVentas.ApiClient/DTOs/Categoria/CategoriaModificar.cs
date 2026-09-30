@@ -4,12 +4,28 @@ namespace SysGestionVentas.ApiClient.DTOs.Categoria
 {
     public class CategoriaModificar
     {
-        [Required(ErrorMessage = "El ID de la categoría es obligatorio.")]
-        public int Id { get; set; }
+        [Required(ErrorMessage = "El id de la categoría es obligatorio.")]
+        [Range(1, int.MaxValue, ErrorMessage = "El id de la categoría debe ser mayor a 0.")]
+        public int IdCategoria { get; set; }
 
-        [Display(Name = "Nombre de Categoría")]
-        [Required(ErrorMessage = "El campo {0} es obligatorio.")]
-        [StringLength(50, ErrorMessage = "El campo {0} no debe tener más de {1} caracteres.")]
+        [Display(Name = "Nombre")]
+        [Required(ErrorMessage = "El nombre es obligatorio.")]
+        [StringLength(
+            50,
+            MinimumLength = 3,
+            ErrorMessage = "El nombre debe tener entre 3 y 50 caracteres."
+        )]
         public string Nombre { get; set; } = string.Empty;
+
+        [Display(Name = "Descripción")]
+        [StringLength(
+            255,
+            ErrorMessage = "La descripción no puede exceder los 255 caracteres."
+        )]
+        public string? Descripcion { get; set; }
+
+        [Required(ErrorMessage = "El estado es obligatorio.")]
+        [Range(1, int.MaxValue, ErrorMessage = "El estado debe ser mayor a 0.")]
+        public int IdEstado { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using SysGestionVentas.ApiClient.DTOs.Categoria;
 using SysGestionVentas.ApiClient.Services.Interfaces;
 
@@ -6,6 +7,8 @@ namespace SysGestionVentas.ApiClient.Services.Implementaciones
 {
     public class CategoriaApiService : ICategoriaApiService
     {
+        private const string Endpoint = "api/categorias";
+
         private readonly HttpClient _httpClient;
 
         public CategoriaApiService(HttpClient httpClient)
@@ -15,31 +18,68 @@ namespace SysGestionVentas.ApiClient.Services.Implementaciones
 
         public async Task<List<CategoriaSalida>> ObtenerTodosAsync()
         {
-            var respuesta = await _httpClient.GetFromJsonAsync<List<CategoriaSalida>>("api/categoria");
-            return respuesta ?? new List<CategoriaSalida>();
+            using var respuesta = await _httpClient.GetAsync(Endpoint);
+
+            respuesta.EnsureSuccessStatusCode();
+
+            return await respuesta.Content
+                       .ReadFromJsonAsync<List<CategoriaSalida>>()
+                   ?? new List<CategoriaSalida>();
         }
 
         public async Task<CategoriaSalida?> ObtenerPorIdAsync(int id)
         {
-            return await _httpClient.GetFromJsonAsync<CategoriaSalida>($"api/categoria/{id}");
+            using var respuesta =
+                await _httpClient.GetAsync($"{Endpoint}/{id}");
+
+            if (respuesta.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+
+            respuesta.EnsureSuccessStatusCode();
+
+            return await respuesta.Content
+                .ReadFromJsonAsync<CategoriaSalida>();
         }
 
-        public async Task<bool> CrearAsync(CategoriaGuardar dto)
+        public async Task<CategoriaSalida?> CrearAsync(
+            CategoriaGuardar dto)
         {
-            var respuesta = await _httpClient.PostAsJsonAsync("api/categoria", dto);
-            return respuesta.IsSuccessStatusCode;
+            using var respuesta =
+                await _httpClient.PostAsJsonAsync(Endpoint, dto);
+
+            respuesta.EnsureSuccessStatusCode();
+
+            return await respuesta.Content
+                .ReadFromJsonAsync<CategoriaSalida>();
         }
 
-        public async Task<bool> ModificarAsync(CategoriaModificar dto)
+        public async Task<CategoriaSalida?> ModificarAsync(
+            CategoriaModificar dto)
         {
-            var respuesta = await _httpClient.PutAsJsonAsync($"api/categoria/{dto.Id}", dto);
-            return respuesta.IsSuccessStatusCode;
+            using var respuesta =
+                await _httpClient.PutAsJsonAsync(Endpoint, dto);
+
+            respuesta.EnsureSuccessStatusCode();
+
+            return await respuesta.Content
+                .ReadFromJsonAsync<CategoriaSalida>();
         }
 
         public async Task<bool> EliminarAsync(int id)
         {
-            var respuesta = await _httpClient.DeleteAsync($"api/categoria/{id}");
-            return respuesta.IsSuccessStatusCode;
+            using var respuesta =
+                await _httpClient.DeleteAsync($"{Endpoint}/{id}");
+
+            if (respuesta.StatusCode == HttpStatusCode.NotFound)
+            {
+                return false;
+            }
+
+            respuesta.EnsureSuccessStatusCode();
+
+            return true;
         }
     }
 }

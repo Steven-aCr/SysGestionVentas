@@ -1,0 +1,331 @@
+﻿@page "/categorias"
+
+@using Microsoft.AspNetCore.Authorization
+@using SysGestionVentas.ApiClient.DTOs.Categoria
+@using SysGestionVentas.ApiClient.Services.Interfaces
+
+@attribute [Authorize(Roles = "Administrador")]
+
+@inject ICategoriaApiService CategoriaService
+
+<PageTitle>Categorías</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Categorías</h2>
+        <button class="btn btn-outline-secondary" @onclick="CargarCategorias" disabled="@cargando">
+            Actualizar
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(mensajeError))
+    {
+        <div class="alert alert-danger" role="alert">@mensajeError</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(mensajeExito))
+    {
+        <div class="alert alert-success" role="alert">@mensajeExito</div>
+    }
+
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">@(editando ? "Modificar Categoría" : "Nueva Categoría")</h5>
+                </div>
+
+                <div class="card-body">
+                    @if (editando)
+                    {
+                        <EditForm Model="@categoriaModificar" OnValidSubmit="@ModificarCategoria">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+
+                            <div class="mb-3">
+                                <label class="form-label">Nombre</label>
+                                <InputText class="form-control" @bind-Value="categoriaModificar.Nombre" />
+                                <ValidationMessage For="@(() => categoriaModificar.Nombre)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <InputTextArea class="form-control" rows="3" @bind-Value="categoriaModificar.Descripcion" />
+                                <ValidationMessage For="@(() => categoriaModificar.Descripcion)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Estado</label>
+                                <InputNumber class="form-control" @bind-Value="categoriaModificar.IdEstado" />
+                                <ValidationMessage For="@(() => categoriaModificar.IdEstado)" />
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary" disabled="@procesando">
+                                    @(procesando ? "Guardando..." : "Guardar cambios")
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="CancelarEdicion" disabled="@procesando">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </EditForm>
+                    }
+                    else
+                    {
+                        <EditForm Model="@categoriaGuardar" OnValidSubmit="@CrearCategoria">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+
+                            <div class="mb-3">
+                                <label class="form-label">Nombre</label>
+                                <InputText class="form-control" @bind-Value="categoriaGuardar.Nombre" />
+                                <ValidationMessage For="@(() => categoriaGuardar.Nombre)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <InputTextArea class="form-control" rows="3" @bind-Value="categoriaGuardar.Descripcion" />
+                                <ValidationMessage For="@(() => categoriaGuardar.Descripcion)" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100" disabled="@procesando">
+                                @(procesando ? "Guardando..." : "Registrar Categoría")
+                            </button>
+                        </EditForm>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Categorías registradas</h5>
+                </div>
+
+                <div class="card-body p-0">
+                    @if (cargando)
+                    {
+                        <div class="text-center p-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="text-muted mt-2 mb-0">Cargando categorías...</p>
+                        </div>
+                    }
+                    else if (categorias.Count == 0)
+                    {
+                        <div class="p-4 text-center text-muted">No hay categorías registradas.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Descripción</th>
+                                        <th>Estado</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach (var categoria in categorias)
+                                    {
+                                        <tr>
+                                            <td>@categoria.IdCategoria</td>
+                                            <td class="fw-semibold">@categoria.Nombre</td>
+
+                                            <td>
+                                                @(string.IsNullOrWhiteSpace(categoria.Descripcion) ? "-" : categoria.Descripcion)
+                                            </td>
+
+                                            <td>@categoria.IdEstado</td>
+
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => PrepararEdicion(categoria)">
+                                                    Editar
+                                                </button>
+
+                                                <button class="btn btn-sm btn-outline-danger"
+                                                        @onclick="() => EliminarCategoria(categoria.IdCategoria)"
+                                                        disabled="@procesando">
+                                                    Eliminar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<CategoriaSalida> categorias = new();
+    private CategoriaGuardar categoriaGuardar = new();
+    private CategoriaModificar categoriaModificar = new();
+
+    private bool cargando;
+    private bool procesando;
+    private bool editando;
+
+    private string? mensajeError;
+    private string? mensajeExito;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCategorias();
+    }
+
+    private async Task CargarCategorias()
+    {
+        cargando = true;
+        mensajeError = null;
+
+        try
+        {
+            categorias = await CategoriaService.ObtenerTodosAsync();
+        }
+        catch (Exception ex)
+        {
+            categorias = new();
+            mensajeError = $"No fue posible cargar las categorías: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CrearCategoria()
+    {
+        procesando = true;
+        LimpiarMensajes();
+
+        try
+        {
+            var categoria = await CategoriaService.CrearAsync(categoriaGuardar);
+
+            if (categoria is null)
+            {
+                mensajeError = "No fue posible registrar la categoría.";
+                return;
+            }
+
+            categoriaGuardar = new CategoriaGuardar();
+            mensajeExito = "Categoría registrada correctamente.";
+
+            await CargarCategorias();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"No fue posible registrar la categoría: {ex.Message}";
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+
+    // Copia los datos de la fila seleccionada a un DTO de edición
+    // independiente, para no mutar directamente el objeto de la tabla.
+    private void PrepararEdicion(CategoriaSalida categoria)
+    {
+        LimpiarMensajes();
+
+        categoriaModificar = new CategoriaModificar
+        {
+            IdCategoria = categoria.IdCategoria,
+            Nombre = categoria.Nombre,
+            Descripcion = categoria.Descripcion,
+            IdEstado = categoria.IdEstado
+        };
+
+        editando = true;
+    }
+
+    private async Task ModificarCategoria()
+    {
+        procesando = true;
+        LimpiarMensajes();
+
+        try
+        {
+            var categoria = await CategoriaService.ModificarAsync(categoriaModificar);
+
+            if (categoria is null)
+            {
+                mensajeError = "No fue posible modificar la categoría.";
+                return;
+            }
+
+            editando = false;
+            categoriaModificar = new CategoriaModificar();
+            mensajeExito = "Categoría modificada correctamente.";
+
+            await CargarCategorias();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"No fue posible modificar la categoría: {ex.Message}";
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+
+    private async Task EliminarCategoria(int id)
+    {
+        procesando = true;
+        LimpiarMensajes();
+
+        try
+        {
+            var eliminada = await CategoriaService.EliminarAsync(id);
+
+            if (!eliminada)
+            {
+                mensajeError = "La categoría no existe.";
+                return;
+            }
+
+            // Si la categoría eliminada era la que estaba en edición,
+            // se cierra el formulario para no dejarlo apuntando a un registro inexistente.
+            if (categoriaModificar.IdCategoria == id)
+            {
+                CancelarEdicion();
+            }
+
+            mensajeExito = "Categoría eliminada correctamente.";
+
+            await CargarCategorias();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"No fue posible eliminar la categoría: {ex.Message}";
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+
+    private void CancelarEdicion()
+    {
+        editando = false;
+        categoriaModificar = new CategoriaModificar();
+        LimpiarMensajes();
+    }
+
+    private void LimpiarMensajes()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+    }
+}

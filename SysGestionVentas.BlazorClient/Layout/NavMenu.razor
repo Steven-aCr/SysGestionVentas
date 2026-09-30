@@ -1,6 +1,9 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">ApiInventario.Client</a>
+        <a class="navbar-brand" href="">SysGestionVentas</a>
+
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -9,47 +12,92 @@
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
     <nav class="flex-column">
+
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Inicio
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
+                Inicio
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="producto">
-                <span class="bi bi-box-seam-nav-menu" aria-hidden="true"></span> Productos
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="categoria">
-                <span class="bi bi-tags-nav-menu" aria-hidden="true"></span> Categorías
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="inventario">
-                <span class="bi bi-journal-text-nav-menu" aria-hidden="true"></span> Inventario
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="movimientoinventario">
-                <span class="bi bi-arrow-left-right-nav-menu" aria-hidden="true"></span> Movimientos
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="usuario">
-                <span class="bi bi-people-nav-menu" aria-hidden="true"></span> Usuarios
-            </NavLink>
-        </div>
-        <div class="nav-item px-3 mt-3">
-            <NavLink class="nav-link text-warning" href="login">
-                <span class="bi bi-box-arrow-in-right-nav-menu" aria-hidden="true"></span> Iniciar Sesión
-            </NavLink>
-        </div>
+
+        <AuthorizeView Roles="Cliente">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="catalogo">
+                        <span class="bi bi-grid-fill-nav-menu" aria-hidden="true"></span>
+                        Catálogo
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="Administrador">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="productos">
+                        <span class="bi bi-box-seam-fill-nav-menu" aria-hidden="true"></span>
+                        Productos
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="categorias">
+                        <span class="bi bi-tags-fill-nav-menu" aria-hidden="true"></span>
+                        Categorías
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="inventario">
+                        <span class="bi bi-clipboard-data-fill-nav-menu" aria-hidden="true"></span>
+                        Inventario
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="movimientoinventario">
+                        <span class="bi bi-arrow-left-right" aria-hidden="true"></span>
+                        Movimientos
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="usuario">
+                        <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span>
+                        Usuarios
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="logout">
+                        <span class="bi bi-box-arrow-right" aria-hidden="true"></span>
+                        Cerrar sesión
+                    </NavLink>
+                </div>
+            </Authorized>
+
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="login">
+                        <span class="bi bi-box-arrow-in-right" aria-hidden="true"></span>
+                        Iniciar sesión
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+
     </nav>
 </div>
 
 @code {
     private bool collapseNavMenu = true;
 
+    // En móvil el menú arranca colapsado; en escritorio el CSS lo ignora
+    // y siempre se muestra expandido.
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     private void ToggleNavMenu()

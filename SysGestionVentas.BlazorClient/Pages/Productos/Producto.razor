@@ -1,0 +1,376 @@
+﻿@page "/productos"
+
+@using Microsoft.AspNetCore.Authorization
+@using SysGestionVentas.ApiClient.DTOs.Categoria
+@using SysGestionVentas.ApiClient.DTOs.Producto
+@using SysGestionVentas.ApiClient.Services.Interfaces
+
+@attribute [Authorize(Roles = "Administrador")]
+
+@inject IProductoApiService ProductoService
+@inject ICategoriaApiService CategoriaService
+
+<PageTitle>Productos</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Productos</h2>
+        <button class="btn btn-outline-secondary" @onclick="CargarDatos" disabled="@cargando">
+            Actualizar
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(mensajeError))
+    {
+        <div class="alert alert-danger" role="alert">@mensajeError</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(mensajeExito))
+    {
+        <div class="alert alert-success" role="alert">@mensajeExito</div>
+    }
+
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">@(editando ? "Modificar Producto" : "Nuevo Producto")</h5>
+                </div>
+
+                <div class="card-body">
+                    @if (editando)
+                    {
+                        <EditForm Model="@productoModificar" OnValidSubmit="@ModificarProducto">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+
+                            <div class="mb-3">
+                                <label class="form-label">Nombre</label>
+                                <InputText class="form-control" @bind-Value="productoModificar.Nombre" />
+                                <ValidationMessage For="@(() => productoModificar.Nombre)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <InputTextArea class="form-control" rows="3" @bind-Value="productoModificar.Descripcion" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Código de barras</label>
+                                <InputText class="form-control" @bind-Value="productoModificar.CodigoBarras" />
+                                <ValidationMessage For="@(() => productoModificar.CodigoBarras)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">URL de imagen</label>
+                                <InputText class="form-control" @bind-Value="productoModificar.ImagenUrl" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Categoría</label>
+                                <InputSelect class="form-select" @bind-Value="productoModificar.IdCategoria">
+                                    <option value="0">Seleccione una categoría</option>
+                                    @foreach (var categoria in categorias)
+                                    {
+                                        <option value="@categoria.IdCategoria">@categoria.Nombre</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => productoModificar.IdCategoria)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Estado</label>
+                                <InputNumber class="form-control" @bind-Value="productoModificar.IdEstado" />
+                                <ValidationMessage For="@(() => productoModificar.IdEstado)" />
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary" disabled="@procesando">
+                                    @(procesando ? "Guardando..." : "Guardar cambios")
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" @onclick="CancelarEdicion" disabled="@procesando">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </EditForm>
+                    }
+                    else
+                    {
+                        <EditForm Model="@productoGuardar" OnValidSubmit="@CrearProducto">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+
+                            <div class="mb-3">
+                                <label class="form-label">Nombre</label>
+                                <InputText class="form-control" @bind-Value="productoGuardar.Nombre" />
+                                <ValidationMessage For="@(() => productoGuardar.Nombre)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Descripción</label>
+                                <InputTextArea class="form-control" rows="3" @bind-Value="productoGuardar.Descripcion" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Código de barras</label>
+                                <InputText class="form-control" @bind-Value="productoGuardar.CodigoBarras" />
+                                <ValidationMessage For="@(() => productoGuardar.CodigoBarras)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">URL de imagen</label>
+                                <InputText class="form-control" @bind-Value="productoGuardar.ImagenUrl" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Categoría</label>
+                                <InputSelect class="form-select" @bind-Value="productoGuardar.IdCategoria">
+                                    <option value="0">Seleccione una categoría</option>
+                                    @foreach (var categoria in categorias)
+                                    {
+                                        <option value="@categoria.IdCategoria">@categoria.Nombre</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => productoGuardar.IdCategoria)" />
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100" disabled="@procesando">
+                                @(procesando ? "Guardando..." : "Registrar Producto")
+                            </button>
+                        </EditForm>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Productos registrados</h5>
+                </div>
+
+                <div class="card-body p-0">
+                    @if (cargando)
+                    {
+                        <div class="text-center p-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2 mb-0 text-muted">Cargando productos...</p>
+                        </div>
+                    }
+                    else if (productos.Count == 0)
+                    {
+                        <div class="p-4 text-center text-muted">No hay productos registrados.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Producto</th>
+                                        <th>Código</th>
+                                        <th>Categoría</th>
+                                        <th>Estado</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach (var producto in productos)
+                                    {
+                                        <tr>
+                                            <td>@producto.IdProducto</td>
+
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    @if (!string.IsNullOrWhiteSpace(producto.ImagenUrl))
+                                                    {
+                                                        <img src="@producto.ImagenUrl"
+                                                             alt="@producto.Nombre"
+                                                             width="45"
+                                                             height="45"
+                                                             style="object-fit:cover"
+                                                             class="rounded" />
+                                                    }
+
+                                                    <div>
+                                                        <div class="fw-semibold">@producto.Nombre</div>
+                                                        @if (!string.IsNullOrWhiteSpace(producto.Descripcion))
+                                                        {
+                                                            <small class="text-muted">@producto.Descripcion</small>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <td>@producto.CodigoBarras</td>
+                                            <td>@ObtenerNombreCategoria(producto.IdCategoria)</td>
+                                            <td>@producto.IdEstado</td>
+
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-outline-primary" @onclick="() => PrepararEdicion(producto)">
+                                                    Editar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ProductoSalida> productos = new();
+    private List<CategoriaSalida> categorias = new();
+    private ProductoGuardar productoGuardar = new();
+    private ProductoModificar productoModificar = new();
+
+    private bool cargando;
+    private bool procesando;
+    private bool editando;
+
+    private string? mensajeError;
+    private string? mensajeExito;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    // Productos y categorías se cargan en paralelo porque el formulario
+    // necesita ambos catálogos antes de poder mostrarse correctamente.
+    private async Task CargarDatos()
+    {
+        cargando = true;
+        mensajeError = null;
+
+        try
+        {
+            var productosTask = ProductoService.ObtenerTodosAsync();
+            var categoriasTask = CategoriaService.ObtenerTodosAsync();
+
+            await Task.WhenAll(productosTask, categoriasTask);
+
+            productos = await productosTask;
+            categorias = await categoriasTask;
+        }
+        catch (Exception ex)
+        {
+            productos = new();
+            categorias = new();
+            mensajeError = $"No fue posible cargar los datos: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task CrearProducto()
+    {
+        procesando = true;
+        LimpiarMensajes();
+
+        try
+        {
+            var producto = await ProductoService.CrearAsync(productoGuardar);
+
+            if (producto is null)
+            {
+                mensajeError = "No fue posible registrar el producto.";
+                return;
+            }
+
+            productoGuardar = new ProductoGuardar();
+            mensajeExito = "Producto registrado correctamente.";
+
+            await CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"No fue posible registrar el producto: {ex.Message}";
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+
+    // Copia los datos del producto seleccionado a un DTO de edición
+    // independiente, para no mutar directamente el objeto de la tabla.
+    private void PrepararEdicion(ProductoSalida producto)
+    {
+        LimpiarMensajes();
+
+        productoModificar = new ProductoModificar
+        {
+            IdProducto = producto.IdProducto,
+            Nombre = producto.Nombre,
+            Descripcion = producto.Descripcion,
+            CodigoBarras = producto.CodigoBarras,
+            ImagenUrl = producto.ImagenUrl,
+            IdEstado = producto.IdEstado,
+            IdCategoria = producto.IdCategoria
+        };
+
+        editando = true;
+    }
+
+    private async Task ModificarProducto()
+    {
+        procesando = true;
+        LimpiarMensajes();
+
+        try
+        {
+            var producto = await ProductoService.ModificarAsync(productoModificar);
+
+            if (producto is null)
+            {
+                mensajeError = "No fue posible modificar el producto.";
+                return;
+            }
+
+            editando = false;
+            productoModificar = new ProductoModificar();
+            mensajeExito = "Producto modificado correctamente.";
+
+            await CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"No fue posible modificar el producto: {ex.Message}";
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+
+    private void CancelarEdicion()
+    {
+        editando = false;
+        productoModificar = new ProductoModificar();
+        LimpiarMensajes();
+    }
+
+    private string ObtenerNombreCategoria(int idCategoria)
+    {
+        return categorias
+                   .FirstOrDefault(x => x.IdCategoria == idCategoria)
+                   ?.Nombre
+               ?? $"Categoría #{idCategoria}";
+    }
+
+    private void LimpiarMensajes()
+    {
+        mensajeError = null;
+        mensajeExito = null;
+    }
+}

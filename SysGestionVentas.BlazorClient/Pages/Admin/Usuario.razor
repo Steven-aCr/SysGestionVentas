@@ -1,0 +1,19 @@
+﻿@page "/usuario"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Administrador")]
+
+<PageTitle>Gestión de Usuarios</PageTitle>
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Gestión de Usuarios</h2>
+    </div>
+
+    <div class="alert alert-info">
+        La página se encuentra protegida para el rol Administrador.
+        La gestión de usuarios se habilitará cuando el contrato de usuarios
+        de ApiClient esté disponible.
+    </div>
+
+</div>

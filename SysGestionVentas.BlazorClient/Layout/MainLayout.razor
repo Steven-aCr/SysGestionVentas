@@ -1,5 +1,7 @@
 ﻿@inherits LayoutComponentBase
 
+@using Microsoft.AspNetCore.Components.Authorization
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -7,7 +9,29 @@
 
     <main>
         <div class="top-row px-4">
-            <span class="text-muted small">Sistema de Inventario Blazor WebAssembly</span>
+            <AuthorizeView>
+                <Authorized Context="authContext">
+                    <div class="d-flex align-items-center gap-3">
+                        <span><strong>@authContext.User.Identity?.Name</strong></span>
+
+                        @* El badge de rol es solo informativo; no controla acceso. *@
+                        @if (authContext.User.IsInRole("Administrador"))
+                        {
+                            <span class="badge bg-primary">Administrador</span>
+                        }
+                        else if (authContext.User.IsInRole("Cliente"))
+                        {
+                            <span class="badge bg-secondary">Cliente</span>
+                        }
+
+                        <a href="/logout">Cerrar sesión</a>
+                    </div>
+                </Authorized>
+
+                <NotAuthorized>
+                    <a href="/login">Iniciar sesión</a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
 
         <article class="content px-4">

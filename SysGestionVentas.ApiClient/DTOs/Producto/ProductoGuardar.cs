@@ -4,22 +4,39 @@ namespace SysGestionVentas.ApiClient.DTOs.Producto
 {
     public class ProductoGuardar
     {
-        [Display(Name = "Nombre de Producto")]
-        [Required(ErrorMessage = "El campo {0} es obligatorio.")]
-        [StringLength(100, ErrorMessage = "El campo {0} no debe tener más de {1} caracteres.")]
+        [Display(Name = "Nombre")]
+        [Required(ErrorMessage = "El nombre es obligatorio.")]
+        [StringLength(
+            150,
+            MinimumLength = 3,
+            ErrorMessage = "El nombre debe tener entre 3 y 150 caracteres."
+        )]
         public string Nombre { get; set; } = string.Empty;
 
         [Display(Name = "Descripción")]
-        [StringLength(250, ErrorMessage = "El campo {0} no debe tener más de {1} caracteres.")]
+        [StringLength(
+            255,
+            ErrorMessage = "La descripción no puede exceder los 255 caracteres."
+        )]
         public string? Descripcion { get; set; }
 
-        [Display(Name = "Precio")]
-        [Required(ErrorMessage = "El campo {0} es obligatorio.")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "El {0} debe ser mayor a 0.")]
-        public decimal Precio { get; set; }
+        [Display(Name = "Código de barras")]
+        [Required(ErrorMessage = "El código de barras es obligatorio.")]
+        [StringLength(
+            100,
+            ErrorMessage = "El código de barras no puede exceder los 100 caracteres."
+        )]
+        public string CodigoBarras { get; set; } = string.Empty;
+
+        [Display(Name = "URL de imagen")]
+        [StringLength(
+            500,
+            ErrorMessage = "La URL de la imagen no puede exceder los 500 caracteres."
+        )]
+        public string? ImagenUrl { get; set; }
 
         [Display(Name = "Categoría")]
-        [Required(ErrorMessage = "El campo {0} es obligatorio.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar una categoría.")]
         public int IdCategoria { get; set; }
     }
 }
