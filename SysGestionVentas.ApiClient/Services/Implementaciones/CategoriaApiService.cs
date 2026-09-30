@@ -15,30 +15,30 @@ namespace SysGestionVentas.ApiClient.Services.Implementaciones
 
         public async Task<List<CategoriaSalida>> ObtenerTodosAsync()
         {
-            var respuesta = await _httpClient.GetFromJsonAsync<List<CategoriaSalida>>("api/categoria");
+            var respuesta = await _httpClient.GetFromJsonAsync<List<CategoriaSalida>>("api/categorias");
             return respuesta ?? new List<CategoriaSalida>();
         }
 
         public async Task<CategoriaSalida?> ObtenerPorIdAsync(int id)
         {
-            return await _httpClient.GetFromJsonAsync<CategoriaSalida>($"api/categoria/{id}");
+            return await _httpClient.GetFromJsonAsync<CategoriaSalida>($"api/categorias/{id}");
         }
 
         public async Task<bool> CrearAsync(CategoriaGuardar dto)
         {
-            var respuesta = await _httpClient.PostAsJsonAsync("api/categoria", dto);
+            var respuesta = await _httpClient.PostAsJsonAsync("api/categorias", dto);
             return respuesta.IsSuccessStatusCode;
         }
 
         public async Task<bool> ModificarAsync(CategoriaModificar dto)
         {
-            var respuesta = await _httpClient.PutAsJsonAsync($"api/categoria/{dto.Id}", dto);
+            var respuesta = await _httpClient.PutAsJsonAsync("api/categorias", dto);
             return respuesta.IsSuccessStatusCode;
         }
 
         public async Task<bool> EliminarAsync(int id)
         {
-            var respuesta = await _httpClient.DeleteAsync($"api/categoria/{id}");
+            var respuesta = await _httpClient.DeleteAsync($"api/categorias/{id}");
             return respuesta.IsSuccessStatusCode;
         }
     }

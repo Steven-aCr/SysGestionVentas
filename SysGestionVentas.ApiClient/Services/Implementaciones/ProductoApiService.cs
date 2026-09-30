@@ -15,24 +15,24 @@ namespace SysGestionVentas.ApiClient.Services.Implementaciones
 
         public async Task<List<ProductoSalida>> ObtenerTodosAsync()
         {
-            var respuesta = await _httpClient.GetFromJsonAsync<List<ProductoSalida>>("api/producto");
+            var respuesta = await _httpClient.GetFromJsonAsync<List<ProductoSalida>>("api/productos");
             return respuesta ?? new List<ProductoSalida>();
         }
 
         public async Task<ProductoSalida?> ObtenerPorIdAsync(int id)
         {
-            return await _httpClient.GetFromJsonAsync<ProductoSalida>($"api/producto/{id}");
+            return await _httpClient.GetFromJsonAsync<ProductoSalida>($"api/productos/{id}");
         }
 
         public async Task<bool> CrearAsync(ProductoGuardar dto)
         {
-            var respuesta = await _httpClient.PostAsJsonAsync("api/producto", dto);
+            var respuesta = await _httpClient.PostAsJsonAsync("api/productos", dto);
             return respuesta.IsSuccessStatusCode;
         }
 
         public async Task<bool> ModificarAsync(ProductoModificar dto)
         {
-            var respuesta = await _httpClient.PutAsJsonAsync($"api/producto/{dto.Id}", dto);
+            var respuesta = await _httpClient.PutAsJsonAsync("api/productos", dto);
             return respuesta.IsSuccessStatusCode;
         }
 
