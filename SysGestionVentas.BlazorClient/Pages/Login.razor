@@ -4,6 +4,7 @@
 @using SysGestionVentas.ApiClient.Services.Interfaces
 
 @inject IAuthApiService AuthService
+@inject JwtAuthenticationStateProvider AuthProvider
 @inject NavigationManager Navigation
 
 <div class="container mt-5 d-flex justify-content-center">
@@ -65,6 +66,9 @@
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
     private LoginRequest loginModel = new();
     private string mensajeError = string.Empty;
     private bool cargando;
@@ -81,7 +85,16 @@
             if (result is not null &&
                 !string.IsNullOrWhiteSpace(result.Token))
             {
-                Navigation.NavigateTo("/");
+                // Guarda el JWT en localStorage y notifica a toda la app
+                await AuthProvider.MarkUserAsAuthenticatedAsync(result.Token);
+
+                // Solo se aceptan rutas locales
+                var destino = !string.IsNullOrWhiteSpace(ReturnUrl)
+                              && Uri.IsWellFormedUriString(ReturnUrl, UriKind.Relative)
+                    ? ReturnUrl
+                    : "/";
+
+                Navigation.NavigateTo(destino);
                 return;
             }
 

@@ -4,7 +4,6 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using SysGestionVentas.BlazorClient.Authentication
 
-@inject ITokenStorage TokenStorage
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager Navigation
 
@@ -19,11 +18,10 @@
 @code {
     protected override async Task OnInitializedAsync()
     {
-        await TokenStorage.RemoveTokenAsync();
-
         if (AuthenticationStateProvider is JwtAuthenticationStateProvider jwtProvider)
         {
-            jwtProvider.NotifyUserLogout();
+            // Borra authToken de localStorage y avisa a toda la app
+            await jwtProvider.MarkUserAsLoggedOutAsync();
         }
 
         Navigation.NavigateTo("/login", replace: true);
