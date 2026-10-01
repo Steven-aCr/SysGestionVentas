@@ -1,6 +1,8 @@
-﻿namespace SysGestionVentas.BlazorClient.Authentication
+﻿namespace SysGestionVentas.BlazorClient.Authentication;
+
+public interface ITokenStorage
 {
-    public class ITokenStorage
-    {
-    }
+    Task SaveAsync(string token);
+    Task<string?> GetAsync();
+    Task RemoveAsync();
 }
