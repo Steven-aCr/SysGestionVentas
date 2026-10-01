@@ -1,6 +1,7 @@
 ﻿@page "/movimientoinventario"
 
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components
 @using SysGestionVentas.ApiClient.DTOs.MovimientoInventario
 @using SysGestionVentas.ApiClient.Services.Interfaces
 
@@ -11,97 +12,432 @@
 <PageTitle>Movimientos de Inventario</PageTitle>
 
 <div class="container mt-4">
+
     <div class="d-flex justify-content-between align-items-center mb-4">
+
         <h2>Movimientos de Inventario</h2>
 
-        <button class="btn btn-outline-secondary" @onclick="CargarMovimientos" disabled="@cargando">
+        <button class="btn btn-outline-secondary"
+                @onclick="CargarMovimientos"
+                disabled="@cargando">
             Actualizar
         </button>
+
     </div>
 
-    @if (!string.IsNullOrWhiteSpace(mensajeError))
-    {
-        <div class="alert alert-danger">@mensajeError</div>
-    }
+    <div class="row">
 
-    @if (cargando)
-    {
-        <div class="text-center my-5">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-2 text-muted">Cargando historial de movimientos...</p>
-        </div>
-    }
-    else if (movimientos.Count == 0)
-    {
-        <div class="alert alert-info text-center">No se han registrado movimientos.</div>
-    }
-    else
-    {
-        <div class="table-responsive shadow-sm rounded">
-            <table class="table table-striped align-middle mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th>ID</th>
-                        <th>Inventario</th>
-                        <th>Tipo</th>
-                        <th>Cantidad</th>
-                        <th>Costo unitario</th>
-                        <th>Stock anterior</th>
-                        <th>Stock nuevo</th>
-                        <th>Fecha</th>
-                        <th>Notas</th>
-                    </tr>
-                </thead>
+        <div class="col-lg-4 mb-4">
 
-                <tbody>
-                    @foreach (var movimiento in movimientos)
+            <div class="card shadow-sm">
+
+                <div class="card-header bg-dark text-white">
+
+                    <h5 class="mb-0">
+                        Registrar Movimiento
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <EditForm Model="@nuevoMovimiento"
+                              OnValidSubmit="@GuardarMovimiento">
+
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                ID Inventario
+                            </label>
+
+                            <InputNumber class="form-control"
+                                         @bind-Value="nuevoMovimiento.IdInventario" />
+
+                            <ValidationMessage
+                                For="@(() => nuevoMovimiento.IdInventario)" />
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Tipo de movimiento
+                            </label>
+
+                            <InputSelect class="form-select"
+                                         @bind-Value="nuevoMovimiento.IdTipoMovimiento">
+
+                                <option value="0">
+                                    Seleccione...
+                                </option>
+
+                                <option value="1">
+                                    Entrada
+                                </option>
+
+                                <option value="2">
+                                    Salida
+                                </option>
+
+                                <option value="3">
+                                    Ajuste
+                                </option>
+
+                                <option value="4">
+                                    Devolución
+                                </option>
+
+                                <option value="5">
+                                    Transferencia
+                                </option>
+
+                            </InputSelect>
+
+                            <ValidationMessage
+                                For="@(() => nuevoMovimiento.IdTipoMovimiento)" />
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Cantidad
+                            </label>
+
+                            <InputNumber class="form-control"
+                                         @bind-Value="nuevoMovimiento.Cantidad" />
+
+                            <ValidationMessage
+                                For="@(() => nuevoMovimiento.Cantidad)" />
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Costo unitario
+                            </label>
+
+                            <InputNumber class="form-control"
+                                         @bind-Value="nuevoMovimiento.CostoUnitario" />
+
+                            <ValidationMessage
+                                For="@(() => nuevoMovimiento.CostoUnitario)" />
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Notas
+                            </label>
+
+                            <InputTextArea class="form-control"
+                                           rows="3"
+                                           @bind-Value="nuevoMovimiento.Notas" />
+
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-primary w-100"
+                                disabled="@procesando">
+
+                            @(procesando
+                                ? "Procesando..."
+                                : "Registrar Movimiento")
+
+                        </button>
+
+                    </EditForm>
+
+                    @if (!string.IsNullOrWhiteSpace(mensajeError))
                     {
-                        <tr>
-                            <td>@movimiento.IdMovimientoInventario</td>
-                            <td>@movimiento.IdInventario</td>
-                            <td>@movimiento.IdTipoMovimiento</td>
-                            <td class="fw-bold">@movimiento.Cantidad</td>
-                            <td>$@movimiento.CostoUnitario.ToString("F2")</td>
-                            <td>@(movimiento.StockAnterior?.ToString() ?? "-")</td>
-                            <td>@(movimiento.StockNuevo?.ToString() ?? "-")</td>
-                            <td>@movimiento.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
-                            <td>@(string.IsNullOrWhiteSpace(movimiento.Notas) ? "-" : movimiento.Notas)</td>
-                        </tr>
+                        <div class="alert alert-danger mt-3 mb-0">
+                            @mensajeError
+                        </div>
                     }
-                </tbody>
-            </table>
+
+                    @if (!string.IsNullOrWhiteSpace(mensajeExito))
+                    {
+                        <div class="alert alert-success mt-3 mb-0">
+                            @mensajeExito
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
         </div>
-    }
+
+        <div class="col-lg-8">
+
+            <div class="card shadow-sm">
+
+                <div class="card-header bg-white">
+
+                    <h5 class="mb-0">
+                        Historial de Movimientos
+                    </h5>
+
+                </div>
+
+                <div class="card-body p-0">
+
+                    @if (cargando)
+                    {
+                        <div class="text-center p-5">
+
+                            <div class="spinner-border text-primary"
+                                 role="status">
+                            </div>
+
+                            <p class="mt-2 mb-0 text-muted">
+                                Cargando movimientos...
+                            </p>
+
+                        </div>
+                    }
+                    else if (movimientos.Count == 0)
+                    {
+                        <div class="p-4 text-center text-muted">
+                            No hay movimientos registrados.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+
+                            <table class="table table-striped align-middle mb-0">
+
+                                <thead class="table-light">
+
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Fecha</th>
+                                        <th>Inventario</th>
+                                        <th>Tipo</th>
+                                        <th>Cantidad</th>
+                                        <th>Costo</th>
+                                        <th>Usuario</th>
+                                        <th>Notas</th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    @foreach (var mov in movimientos)
+                                    {
+                                        <tr>
+
+                                            <td>
+                                                @mov.IdMovimientoInventario
+                                            </td>
+
+                                            <td>
+                                                @mov.FechaCreacion.ToString("dd/MM/yyyy HH:mm")
+                                            </td>
+
+                                            <td>
+                                                @mov.IdInventario
+                                            </td>
+
+                                            <td>
+
+                                                <span class="badge @ClaseTipo(mov.IdTipoMovimiento)">
+                                                    @NombreTipo(mov.IdTipoMovimiento)
+                                                </span>
+
+                                            </td>
+
+                                            <td>
+                                                @mov.Cantidad
+                                            </td>
+
+                                            <td>
+                                                $@mov.CostoUnitario.ToString("F2")
+                                            </td>
+
+                                            <td>
+                                                @mov.CreadoPorUsuario
+                                            </td>
+
+                                            <td>
+                                                @(string.IsNullOrWhiteSpace(mov.Notas)
+                                                    ? "-"
+                                                    : mov.Notas)
+                                            </td>
+
+                                        </tr>
+                                    }
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
 @code {
-    private List<MovimientoInventarioSalida> movimientos = new();
+
+    [SupplyParameterFromQuery(Name = "inventario")]
+    public int? IdInventarioFiltro { get; set; }
+
+
+    private List<MovimientoInventarioSalida> movimientos =
+        new();
+
+    private MovimientoInventarioGuardar nuevoMovimiento =
+        new();
+
 
     private bool cargando;
+
+    private bool procesando;
+
     private string? mensajeError;
 
-    protected override async Task OnInitializedAsync()
+    private string? mensajeExito;
+
+
+    protected override async Task OnParametersSetAsync()
     {
+        if (IdInventarioFiltro is > 0)
+        {
+            nuevoMovimiento.IdInventario =
+                IdInventarioFiltro.Value;
+        }
+
         await CargarMovimientos();
     }
+
 
     private async Task CargarMovimientos()
     {
         cargando = true;
+
         mensajeError = null;
 
         try
         {
-            movimientos = await MovimientoService.ObtenerTodosAsync();
+            if (IdInventarioFiltro is > 0)
+            {
+                movimientos =
+                    await MovimientoService
+                        .ObtenerPorInventarioAsync(
+                            IdInventarioFiltro.Value);
+            }
+            else
+            {
+                movimientos =
+                    await MovimientoService
+                        .ObtenerTodosAsync();
+            }
         }
         catch (Exception ex)
         {
-            movimientos = new();
-            mensajeError = $"No fue posible cargar los movimientos: {ex.Message}";
+            movimientos =
+                new List<MovimientoInventarioSalida>();
+
+            mensajeError =
+                $"No fue posible cargar los movimientos: {ex.Message}";
         }
         finally
         {
             cargando = false;
         }
+    }
+
+
+    private async Task GuardarMovimiento()
+    {
+        procesando = true;
+
+        mensajeError = null;
+
+        mensajeExito = null;
+
+        try
+        {
+            var guardado =
+                await MovimientoService.GuardarAsync(
+                    nuevoMovimiento);
+
+            if (guardado is null)
+            {
+                mensajeError =
+                    "No fue posible registrar el movimiento.";
+
+                return;
+            }
+
+            var idInventario =
+                nuevoMovimiento.IdInventario;
+
+            nuevoMovimiento =
+                new MovimientoInventarioGuardar
+                {
+                    IdInventario =
+                        idInventario
+                };
+
+            mensajeExito =
+                "Movimiento registrado correctamente.";
+
+            await CargarMovimientos();
+        }
+        catch (Exception ex)
+        {
+            mensajeError =
+                $"No fue posible registrar el movimiento: {ex.Message}";
+        }
+        finally
+        {
+            procesando = false;
+        }
+    }
+
+
+    private static string NombreTipo(
+        int idTipoMovimiento)
+    {
+        return idTipoMovimiento switch
+        {
+            1 => "Entrada",
+            2 => "Salida",
+            3 => "Ajuste",
+            4 => "Devolución",
+            5 => "Transferencia",
+            _ => $"Tipo {idTipoMovimiento}"
+        };
+    }
+
+
+    private static string ClaseTipo(
+        int idTipoMovimiento)
+    {
+        return idTipoMovimiento switch
+        {
+            1 => "bg-success",
+            2 => "bg-danger",
+            3 => "bg-warning text-dark",
+            4 => "bg-info text-dark",
+            5 => "bg-secondary",
+            _ => "bg-dark"
+        };
     }
 }

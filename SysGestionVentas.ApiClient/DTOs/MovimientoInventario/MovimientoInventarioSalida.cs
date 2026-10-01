@@ -12,16 +12,12 @@
 
         public string? Notas { get; set; }
 
-        public DateTime FechaCreacion { get; set; }
+        public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
         public int CreadoPorUsuario { get; set; }
 
         public int IdInventario { get; set; }
 
         public int? IdDetalleDocumento { get; set; }
-
-        public int? StockAnterior { get; set; }
-
-        public int? StockNuevo { get; set; }
     }
 }

@@ -7,16 +7,24 @@ namespace SysGestionVentas.ApiClient.DTOs.Inventario
 {
     public class InventarioModificar
     {
-        [Required(ErrorMessage = "El ID del inventario es obligatorio.")]
-        public int Id { get; set; }
+        [Required]
+        [Range(1, int.MaxValue)]
+        public int IdInventario { get; set; }
 
-        [Display(Name = "Producto")]
-        [Required(ErrorMessage = "El campo {0} es obligatorio.")]
-        public int IdProducto { get; set; }
+        [Required]
+        [Range(typeof(decimal), "0", "999999999999")]
+        public decimal PrecioCompra { get; set; }
 
-        [Display(Name = "Cantidad")]
-        [Required(ErrorMessage = "El campo {0} es obligatorio.")]
-        [Range(0, int.MaxValue, ErrorMessage = "La {0} no puede ser un número negativo.")]
-        public int Cantidad { get; set; }
+        [Required]
+        [Range(typeof(decimal), "0", "999999999999")]
+        public decimal PrecioVenta { get; set; }
+
+        [Required]
+        [Range(0, int.MaxValue)]
+        public int StockMinimo { get; set; }
+
+        [Required]
+        [Range(1, int.MaxValue)]
+        public int IdEstado { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using SysGestionVentas.ApiClient.DTOs.MovimientoInventario;
 using SysGestionVentas.ApiClient.Services.Interfaces;
 
@@ -7,6 +8,7 @@ namespace SysGestionVentas.ApiClient.Services.Implementaciones
     public class MovimientoInventarioApiService
         : IMovimientoInventarioApiService
     {
+        private const string Endpoint = "api/movimientos-inventario";
         private readonly HttpClient _httpClient;
 
         public MovimientoInventarioApiService(HttpClient httpClient)
@@ -16,22 +18,21 @@ namespace SysGestionVentas.ApiClient.Services.Implementaciones
 
         public async Task<List<MovimientoInventarioSalida>> ObtenerTodosAsync()
         {
-            var respuesta = await _httpClient
-                .GetFromJsonAsync<List<MovimientoInventarioSalida>>(
-                    "api/movimientos-inventario");
+            using var respuesta = await _httpClient.GetAsync(Endpoint);
+            respuesta.EnsureSuccessStatusCode();
 
-            return respuesta ?? new List<MovimientoInventarioSalida>();
+            return await respuesta.Content
+                   .ReadFromJsonAsync<List<MovimientoInventarioSalida>>()
+                   ?? new List<MovimientoInventarioSalida>();
         }
 
         public async Task<MovimientoInventarioSalida?> ObtenerPorIdAsync(int id)
         {
-            var respuesta = await _httpClient.GetAsync(
-                $"api/movimientos-inventario/{id}");
+            using var respuesta = 
+                await _httpClient.GetAsync($"{Endpoint}/{id}");
 
-            if (respuesta.StatusCode == System.Net.HttpStatusCode.NotFound)
-            {
+            if(respuesta.StatusCode == HttpStatusCode.NotFound)
                 return null;
-            }
 
             respuesta.EnsureSuccessStatusCode();
 
@@ -40,23 +41,23 @@ namespace SysGestionVentas.ApiClient.Services.Implementaciones
         }
 
         public async Task<List<MovimientoInventarioSalida>>
-            ObtenerPorInventarioAsync(int idInventario)
+            ObtenerPorInventarioAsync(int IdInventario)
         {
-            var respuesta = await _httpClient
-                .GetFromJsonAsync<List<MovimientoInventarioSalida>>(
-                    $"api/movimientos-inventario/inventario/{idInventario}");
+            using var respuesta = await _httpClient.GetAsync(
+                $"{Endpoint}/inventario/{IdInventario}");
 
-            return respuesta ?? new List<MovimientoInventarioSalida>();
+            respuesta.EnsureSuccessStatusCode();
+
+            return await respuesta.Content
+                .ReadFromJsonAsync<List<MovimientoInventarioSalida>>()
+                ?? new List<MovimientoInventarioSalida>();
         }
 
         public async Task<MovimientoInventarioSalida?> GuardarAsync(
             MovimientoInventarioGuardar movimiento)
         {
-            // El cálculo del stock no se realiza aquí.
-            // C# únicamente envía el movimiento y Java aplica la regla de negocio.
-            var respuesta = await _httpClient.PostAsJsonAsync(
-                "api/movimientos-inventario",
-                movimiento);
+            using var respuesta = await 
+                _httpClient.PostAsJsonAsync(Endpoint, movimiento);
 
             respuesta.EnsureSuccessStatusCode();
 

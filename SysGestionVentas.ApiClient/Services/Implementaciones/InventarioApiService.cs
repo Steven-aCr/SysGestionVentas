@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Net;
 using System.Net.Http.Json;
 using SysGestionVentas.ApiClient.DTOs.Inventario;
 using SysGestionVentas.ApiClient.Services.Interfaces;
@@ -9,6 +7,7 @@ namespace SysGestionVentas.ApiClient.Services.Implementaciones
 {
     public class InventarioApiService : IInventarioApiService
     {
+        private const string Endpoint = "api/inventario";
         private readonly HttpClient _httpClient;
 
         public InventarioApiService(HttpClient httpClient)
@@ -18,31 +17,55 @@ namespace SysGestionVentas.ApiClient.Services.Implementaciones
 
         public async Task<List<InventarioSalida>> ObtenerTodosAsync()
         {
-            var respuesta = await _httpClient.GetFromJsonAsync<List<InventarioSalida>>("api/inventario");
-            return respuesta ?? new List<InventarioSalida>();
+            using var respuesta = await _httpClient.GetAsync(Endpoint);
+
+            respuesta.EnsureSuccessStatusCode();
+
+            return await respuesta.Content
+                       .ReadFromJsonAsync<List<InventarioSalida>>()
+                   ?? new List<InventarioSalida>();
         }
 
-        public async Task<InventarioSalida?> ObtenerPorIdAsync(int id)
+        public async Task<InventarioSalida?> ObtenerPorProductoAsync(
+            int idProducto)
         {
-            return await _httpClient.GetFromJsonAsync<InventarioSalida>($"api/inventario/{id}");
+            using var respuesta =
+                await _httpClient.GetAsync(
+                    $"{Endpoint}/producto/{idProducto}");
+
+            if (respuesta.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+
+            respuesta.EnsureSuccessStatusCode();
+
+            return await respuesta.Content
+                .ReadFromJsonAsync<InventarioSalida>();
         }
 
-        public async Task<bool> CrearAsync(InventarioGuardar dto)
+        public async Task<InventarioSalida?> CrearAsync(
+            InventarioGuardar dto)
         {
-            var respuesta = await _httpClient.PostAsJsonAsync("api/inventario", dto);
-            return respuesta.IsSuccessStatusCode;
+            using var respuesta =
+                await _httpClient.PostAsJsonAsync(Endpoint, dto);
+
+            respuesta.EnsureSuccessStatusCode();
+
+            return await respuesta.Content
+                .ReadFromJsonAsync<InventarioSalida>();
         }
 
-        public async Task<bool> ModificarAsync(InventarioModificar dto)
+        public async Task<InventarioSalida?> ModificarAsync(
+            InventarioModificar dto)
         {
-            var respuesta = await _httpClient.PutAsJsonAsync($"api/inventario/{dto.Id}", dto);
-            return respuesta.IsSuccessStatusCode;
-        }
+            using var respuesta =
+                await _httpClient.PutAsJsonAsync(Endpoint, dto);
 
-        public async Task<bool> EliminarAsync(int id)
-        {
-            var respuesta = await _httpClient.DeleteAsync($"api/inventario/{id}");
-            return respuesta.IsSuccessStatusCode;
+            respuesta.EnsureSuccessStatusCode();
+
+            return await respuesta.Content
+                .ReadFromJsonAsync<InventarioSalida>();
         }
     }
 }
