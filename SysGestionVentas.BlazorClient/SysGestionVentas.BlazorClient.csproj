@@ -32,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Authentication\Logout.razor" />
     <None Include="Pages\Categorias\Categoria.razor" />
     <None Include="Pages\MovimientoInventario\MovimientoInventario.razor" />
     <None Include="Pages\Productos\Producto.razor" />

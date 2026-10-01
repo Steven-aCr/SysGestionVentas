@@ -1,0 +1,103 @@
+﻿@page "/catalogo"
+@attribute [Authorize(Roles = "Cliente,Administrador")]
+
+@using Microsoft.AspNetCore.Authorization
+@using SysGestionVentas.ApiClient.DTOs.Categoria
+@using SysGestionVentas.ApiClient.DTOs.Producto
+@using SysGestionVentas.ApiClient.Services.Interfaces
+
+@inject IProductoApiService ProductoService
+@inject ICategoriaApiService CategoriaService
+
+<PageTitle>Catálogo</PageTitle>
+
+<h3 class="mb-3">Catálogo de productos</h3>
+
+@if (cargando)
+{
+    <div class="text-center my-5">
+        <div class="spinner-border" role="status"></div>
+        <p class="text-muted small mt-2">Cargando productos...</p>
+    </div>
+}
+else if (!string.IsNullOrEmpty(mensajeError))
+{
+    <div class="alert alert-danger">@mensajeError</div>
+}
+else
+{
+    <div class="row g-2 mb-4">
+        <div class="col-md-6">
+            <input class="form-control"
+                   placeholder="Buscar producto..."
+                   @bind="busqueda"
+                   @bind:event="oninput" />
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" @bind="categoriaId">
+                <option value="0">Todas las categorías</option>
+                @foreach (var c in categorias)
+                {
+                    <option value="@c.IdCategoria">@c.Nombre</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    @if (!ProductosFiltrados.Any())
+    {
+        <p class="text-muted">No se encontraron productos.</p>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-3 g-3">
+            @foreach (var p in ProductosFiltrados)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <span class="badge bg-secondary mb-2">@NombreDeCategoria(p.IdCategoria)</span>
+                            <h5 class="card-title">@p.Nombre</h5>
+                            <p class="card-text text-muted">@p.Descripcion</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private List<ProductoSalida> productos = new();
+    private List<CategoriaSalida> categorias = new();
+    private string busqueda = string.Empty;
+    private int categoriaId;
+    private bool cargando = true;
+    private string mensajeError = string.Empty;
+
+    private IEnumerable<ProductoSalida> ProductosFiltrados =>
+        productos.Where(p =>
+            (categoriaId == 0 || p.IdCategoria == categoriaId) &&
+            (string.IsNullOrWhiteSpace(busqueda) ||
+             p.Nombre.Contains(busqueda, StringComparison.OrdinalIgnoreCase)));
+
+    private string NombreDeCategoria(int idCategoria) =>
+        categorias.FirstOrDefault(c => c.IdCategoria == idCategoria)?.Nombre ?? "Sin categoría";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            productos = await ProductoService.ObtenerTodosAsync();
+            categorias = await CategoriaService.ObtenerTodosAsync();
+        }
+        catch (HttpRequestException)
+        {
+            mensajeError = "No fue posible cargar el catálogo. Intenta de nuevo.";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+}
